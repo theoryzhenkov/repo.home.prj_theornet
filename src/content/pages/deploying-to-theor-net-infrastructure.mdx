@@ -6,7 +6,7 @@ ntpp:
   - about-home-theor-net
 ---
 
-## Registry App (GHCR)
+
 
 ### 1. Dockerfile
 
@@ -94,26 +94,3 @@ just deploy          # nixos-rebuild on the server
 Watchtower handles subsequent image updates automatically.
 
 ---
-
-## Local App
-
-### 1. Create app config
-
-```bash
-cd nixos
-just app create my-app   # generates apps/my-app.yaml with defaults
-```
-
-Edit the generated YAML — the image defaults to `local/my-app:latest`.
-
-### 2. Build and deploy
-
-```bash
-docker build -t local/my-app:latest /path/to/app
-cd nixos
-just app generate          # update Nix config
-just app deploy my-app     # push image to server via SSH
-just deploy                # apply NixOS config (needed for first deploy)
-```
-
-For subsequent updates, rebuild the image and run `just app deploy my-app`.
