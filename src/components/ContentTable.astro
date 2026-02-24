@@ -6,7 +6,7 @@ interface Column {
   label: string;
   sortable?: boolean;
   filterable?: boolean;
-  type?: 'text' | 'date' | 'link' | 'url' | 'status';
+  type?: 'text' | 'date' | 'link' | 'url' | 'status' | 'links';
 }
 
 interface Props {
@@ -56,6 +56,14 @@ function formatValue(value: unknown, type?: string): string {
     return value.join(', ');
   }
   return String(value);
+}
+
+// Extract entries from a links record
+function getLinksEntries(value: unknown): [string, string][] {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return Object.entries(value) as [string, string][];
+  }
+  return [];
 }
 
 // Get sortable value for data attribute
@@ -120,16 +128,32 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
             const sortValue = getSortValue(value, col.type);
             const isPageLink = col.type === 'link' && linkToPage;
             const isUrl = col.type === 'url' && value;
+            const isLinks = col.type === 'links' && value && typeof value === 'object';
             const isStatus = col.type === 'status';
-            
+            const linksEntries = isLinks ? getLinksEntries(value) : [];
+
             return (
-              <td 
+              <td
                 data-field={col.field}
                 data-sort-value={sortValue}
                 data-filter-value={col.filterable ? String(value ?? '') : undefined}
               >
                 {isPageLink ? (
                   <a href={String(row._href)}>{displayValue}</a>
+                ) : isLinks ? (
+                  <span class="links-cell">
+                    {linksEntries.map(([type, url], i) => (
+                      <>
+                        {i > 0 && ', '}
+                        <a href={String(url)} class="external-link" target="_blank" rel="noopener noreferrer">
+                          {type}
+                          <svg class="external-icon" viewBox="0 0 16 16" aria-hidden="true">
+                            <path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5H4.5v9h9V9.75a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 13.25 15H3.75A1.75 1.75 0 0 1 2 13.25V3.75C2 2.784 2.784 2 3.75 2Zm6.854.22a.75.75 0 0 1 .896-.22l3 1.5a.75.75 0 0 1 .126 1.238l-3 2.5a.75.75 0 0 1-.96-1.152l1.564-1.303-5.47 5.47a.75.75 0 0 1-1.06-1.06l5.47-5.47-1.303 1.564a.75.75 0 0 1-1.152-.96l1.5-3a.75.75 0 0 1 .389-.107Z" fill="currentColor"/>
+                          </svg>
+                        </a>
+                      </>
+                    ))}
+                  </span>
                 ) : isUrl ? (
                   <a href={String(value)} class="external-link" target="_blank" rel="noopener noreferrer">
                     {new URL(String(value)).hostname.replace('www.', '')}
@@ -320,13 +344,13 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
   }
 
   .filter-group label {
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     color: var(--color-text-muted);
   }
 
   .filter-group select {
     padding: 2px 6px;
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     color: var(--color-text);
     background-color: var(--color-bg);
     border: 1px solid var(--color-border);
@@ -345,7 +369,7 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
   .content-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
   }
 
   .content-table th,
@@ -359,7 +383,7 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
     font-weight: 700;
     color: var(--color-text);
     background-color: var(--color-bg-subtle);
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
   }
 
   .content-table th.sortable {
@@ -428,7 +452,7 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
   }
 
   .status-badge {
-    font-size: 0.75rem;
+    font-size: var(--text-2xs);
     text-transform: capitalize;
     color: var(--color-text-muted);
   }

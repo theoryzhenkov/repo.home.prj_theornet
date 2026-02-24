@@ -15,47 +15,19 @@ export interface EdgeStyle {
  * which need concrete values.
  */
 export const EDGE_STYLES: Record<EdgeType, EdgeStyle> = {
-  ntpp: {
+  up: {
     color: '#000055',   // --color-accent
     width: 2,
     dasharray: '',
     directed: true,
-    label: 'NTPP — deeply contained in',
+    label: 'Up / Down — hierarchy',
   },
-  tpp: {
-    color: '#000055',
+  is: {
+    color: '#006600',   // --color-success
     width: 1.5,
     dasharray: '6 3',
     directed: true,
-    label: 'TPP — tangentially part of',
-  },
-  po: {
-    color: '#885500',   // --color-warning
-    width: 1.5,
-    dasharray: '',
-    directed: false,
-    label: 'PO — partially overlapped',
-  },
-  ec: {
-    color: '#666666',   // --color-text-subtle
-    width: 1,
-    dasharray: '',
-    directed: false,
-    label: 'EC — externally connected',
-  },
-  eq: {
-    color: '#006600',   // --color-success
-    width: 2.5,
-    dasharray: '',
-    directed: false,
-    label: 'EQ — equal',
-  },
-  dc: {
-    color: '#cccccc',   // --color-border
-    width: 1,
-    dasharray: '3 3',
-    directed: false,
-    label: 'DC — disconnected',
+    label: 'Is / Has — classification',
   },
   next: {
     color: '#000055',
@@ -64,12 +36,12 @@ export const EDGE_STYLES: Record<EdgeType, EdgeStyle> = {
     directed: true,
     label: 'Next / Prev — sequential',
   },
-  r: {
+  ref: {
     color: '#aaaaaa',
     width: 0.75,
     dasharray: '1 3',
     directed: true,
-    label: 'R — reference link',
+    label: 'Ref — reference link',
   },
 };
 
@@ -79,16 +51,29 @@ export function cssVar(name: string, fallback: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 }
 
+/** Runtime-resolved node/label colors. Populated by resolveRuntimeColors(). */
+export const NODE_COLORS = {
+  fill: '#444',
+  fillHighlight: '#000055',
+  stroke: '#999',
+  strokeHighlight: '#000055',
+  labelFill: '#111',
+  fontFamily: 'system-ui, sans-serif',
+};
+
 /**
  * Resolve runtime CSS variable colors. Call once on the client after DOM ready.
  */
 export function resolveRuntimeColors(): void {
-  EDGE_STYLES.ntpp.color = cssVar('--color-accent', '#000055');
-  EDGE_STYLES.tpp.color = cssVar('--color-accent', '#000055');
-  EDGE_STYLES.po.color = cssVar('--color-warning', '#885500');
-  EDGE_STYLES.ec.color = cssVar('--color-text-subtle', '#666666');
-  EDGE_STYLES.eq.color = cssVar('--color-success', '#006600');
-  EDGE_STYLES.dc.color = cssVar('--color-border', '#cccccc');
+  EDGE_STYLES.up.color = cssVar('--color-accent', '#000055');
+  EDGE_STYLES.is.color = cssVar('--color-success', '#006600');
   EDGE_STYLES.next.color = cssVar('--color-accent', '#000055');
-  EDGE_STYLES.r.color = cssVar('--color-border', '#cccccc');
+  EDGE_STYLES.ref.color = cssVar('--color-border', '#cccccc');
+
+  NODE_COLORS.fill = cssVar('--color-text-muted', '#444');
+  NODE_COLORS.fillHighlight = cssVar('--color-accent', '#000055');
+  NODE_COLORS.stroke = cssVar('--color-border', '#999');
+  NODE_COLORS.strokeHighlight = cssVar('--color-accent', '#000055');
+  NODE_COLORS.labelFill = cssVar('--color-text', '#111');
+  NODE_COLORS.fontFamily = cssVar('--font-sans', 'system-ui, sans-serif');
 }

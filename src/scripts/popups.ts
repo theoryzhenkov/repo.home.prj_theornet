@@ -5,9 +5,6 @@
 interface PopupData {
   title: string;
   description?: string;
-  excerpt?: string;
-  status?: string;
-  tags?: string[];
 }
 
 type PopupIndex = Record<string, PopupData>;
@@ -39,10 +36,6 @@ function createPopupElement(): HTMLElement {
     <div class="link-popup-content">
       <h4 class="link-popup-title"></h4>
       <p class="link-popup-description"></p>
-      <div class="link-popup-meta">
-        <span class="link-popup-status"></span>
-        <span class="link-popup-tags"></span>
-      </div>
     </div>
   `;
   document.body.appendChild(popupElement);
@@ -68,27 +61,9 @@ function showPopup(target: HTMLElement, data: PopupData) {
   // Fill content
   const title = popup.querySelector('.link-popup-title') as HTMLElement;
   const description = popup.querySelector('.link-popup-description') as HTMLElement;
-  const status = popup.querySelector('.link-popup-status') as HTMLElement;
-  const tags = popup.querySelector('.link-popup-tags') as HTMLElement;
-  
+
   title.textContent = data.title;
   description.textContent = data.description || '';
-  
-  // Only show meta section if there's status or tags
-  const meta = popup.querySelector('.link-popup-meta') as HTMLElement;
-  const hasStatus = !!data.status;
-  const hasTags = data.tags && data.tags.length > 0;
-  
-  if (hasStatus || hasTags) {
-    meta.style.display = '';
-    status.textContent = hasStatus ? data.status!.replace('-', ' ') : '';
-    status.dataset.status = data.status || '';
-    status.style.display = hasStatus ? '' : 'none';
-    tags.textContent = hasTags ? data.tags!.join(', ') : '';
-    tags.style.display = hasTags ? '' : 'none';
-  } else {
-    meta.style.display = 'none';
-  }
   
   // Position popup
   const rect = target.getBoundingClientRect();

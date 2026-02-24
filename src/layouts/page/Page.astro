@@ -21,9 +21,10 @@ interface Props {
   currentSlug?: string;
   relations?: PageRelations;
   pageInfoMap?: PageInfoMap;
+  links?: Record<string, string>;
 }
 
-const { title, description, created, modified, headings, breadcrumbs = [], currentSlug = '', relations, pageInfoMap } = Astro.props;
+const { title, description, created, modified, headings, breadcrumbs = [], currentSlug = '', relations, pageInfoMap, links } = Astro.props;
 const descriptionHtml = description ? marked.parseInline(description) : undefined;
 const descriptionPlain = description?.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 ---
@@ -46,7 +47,7 @@ const descriptionPlain = description?.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
             <Breadcrumb breadcrumbs={breadcrumbs} currentSlug={currentSlug} />
             <h1>{title}</h1>
             {descriptionHtml && <p class="text-text-muted italic mb-2" set:html={descriptionHtml} />}
-            {relations && pageInfoMap && <TopRelations relations={relations} pages={pageInfoMap} />}
+            {relations && pageInfoMap && <TopRelations relations={relations} pages={pageInfoMap} links={links} />}
             <Metadata created={created} modified={modified} />
           </header>
 

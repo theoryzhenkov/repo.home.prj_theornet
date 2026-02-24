@@ -16,46 +16,18 @@ function getTitle(slug: string): string {
   return pages.get(slug)?.title ?? slug;
 }
 
-const hasRi = relations.ri.length > 0;
-const hasPo = relations.po.length > 0;
-const hasEc = relations.ec.length > 0;
-const hasAny = hasRi || hasPo || hasEc;
+const hasRefi = relations.refi.length > 0;
+const hasAny = hasRefi;
 ---
 
 {hasAny && (
   <>
-    {hasRi && (
+    {hasRefi && (
       <section class="aside-panel">
-        <h2 class="aside-panel-title">References inverse (Ri)</h2>
+        <h2 class="aside-panel-title">Referenced by</h2>
         <div class="aside-panel-content">
           <ul class="aside-panel-list" data-style="inline">
-            {relations.ri.map((slug) => (
-              <li><a href={getHref(slug)}>{getTitle(slug)}</a></li>
-            ))}
-          </ul>
-        </div>
-      </section>
-    )}
-
-    {hasPo && (
-      <section class="aside-panel">
-        <h2 class="aside-panel-title">Partially overlapped (PO)</h2>
-        <div class="aside-panel-content">
-          <ul class="aside-panel-list" data-style="inline">
-            {relations.po.map((slug) => (
-              <li><a href={getHref(slug)}>{getTitle(slug)}</a></li>
-            ))}
-          </ul>
-        </div>
-      </section>
-    )}
-
-    {hasEc && (
-      <section class="aside-panel">
-        <h2 class="aside-panel-title">Externally connected (EC)</h2>
-        <div class="aside-panel-content">
-          <ul class="aside-panel-list" data-style="inline">
-            {relations.ec.map((slug) => (
+            {relations.refi.map((slug) => (
               <li><a href={getHref(slug)}>{getTitle(slug)}</a></li>
             ))}
           </ul>

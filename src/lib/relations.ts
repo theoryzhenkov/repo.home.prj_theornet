@@ -1,21 +1,19 @@
 import { getCollection } from 'astro:content';
 
+export interface RelationTarget {
+  slug: string;
+  label?: string;
+}
+
 export interface PageRelations {
-  // Topological (RCC-8)
-  ntpp: string[];    // this page is deeply contained in...
-  nttpi: string[];   // pages deeply contained in this one (inferred)
-  tpp: string[];     // this page is tangentially part of...
-  tppi: string[];    // pages tangentially part of this one (inferred)
-  po: string[];      // partially overlapped with...
-  ec: string[];      // externally connected to...
-  eq: string[];      // equivalent to...
-  dc: string[];      // disconnected from (metadata-only)
-  // Semantic
+  up: RelationTarget[];
+  down: RelationTarget[];
+  is: RelationTarget[];
+  has: RelationTarget[];
   next?: string;
   prev?: string;
-  // References (auto-extracted from markdown links)
-  r: string[];       // pages this page links to
-  ri: string[];      // pages that link to this page
+  ref: string[];
+  refi: string[];
 }
 
 export interface PageInfo {
@@ -27,23 +25,32 @@ export type RelationsGraph = Map<string, PageRelations>;
 export type PageInfoMap = Map<string, PageInfo>;
 
 interface RawRelations {
-  ntpp?: string[];
-  tpp?: string[];
-  po?: string[];
-  ec?: string[];
-  eq?: string[];
-  dc?: string[];
+  up?: Record<string, string | null>;
+  is?: Record<string, string | null>;
   next?: string;
   prev?: string;
 }
 
+function parseRelationMap(map?: Record<string, string | null>): RelationTarget[] {
+  if (!map) return [];
+  return Object.entries(map).map(([slug, label]) => ({
+    slug,
+    ...(label ? { label } : {}),
+  }));
+}
+
 function emptyRelations(): PageRelations {
   return {
-    ntpp: [], nttpi: [],
-    tpp: [], tppi: [],
-    po: [], ec: [], eq: [], dc: [],
-    r: [], ri: [],
+    up: [], down: [],
+    is: [], has: [],
+    ref: [], refi: [],
   };
+}
+
+function addUniqueTarget(arr: RelationTarget[], slug: string, label?: string): void {
+  if (!arr.some(t => t.slug === slug)) {
+    arr.push({ slug, ...(label ? { label } : {}) });
+  }
 }
 
 function addUnique(arr: string[], value: string): void {
@@ -102,15 +109,11 @@ function extractLinkSlugs(body: string, sourceSlug: string, knownSlugs: Set<stri
  * Build a relations graph from all pages with bidirectional inference.
  *
  * Inference rules:
- * - A.ntpp includes B  -> B.nttpi includes A
- * - A.tpp includes B   -> B.tppi includes A
- * - A.po includes B    -> B.po includes A   (symmetric)
- * - A.ec includes B    -> B.ec includes A   (symmetric)
- * - A.eq includes B    -> B.eq includes A   (symmetric)
- * - A.dc includes B    -> B.dc includes A   (symmetric)
- * - A.next = B         -> B.prev = A
- * - A.prev = B         -> B.next = A
- * - Markdown link A->B -> A.r includes B, B.ri includes A
+ * - A.up includes B   -> B.down includes A
+ * - A.is includes B   -> B.has includes A
+ * - A.next = B        -> B.prev = A
+ * - A.prev = B        -> B.next = A
+ * - Markdown link A->B -> A.ref includes B, B.refi includes A
  */
 export async function buildRelationsGraph(): Promise<{
   graph: RelationsGraph;
@@ -130,76 +133,48 @@ export async function buildRelationsGraph(): Promise<{
     pages.set(slug, { slug, title: data.title });
 
     const rel = emptyRelations();
-    if (data.ntpp) rel.ntpp = [...data.ntpp];
-    if (data.tpp) rel.tpp = [...data.tpp];
-    if (data.po) rel.po = [...data.po];
-    if (data.ec) rel.ec = [...data.ec];
-    if (data.eq) rel.eq = [...data.eq];
-    if (data.dc) rel.dc = [...data.dc];
+    rel.up = parseRelationMap(data.up);
+    rel.is = parseRelationMap(data.is);
     rel.next = data.next;
     rel.prev = data.prev;
 
-    // Extract R (references) from markdown links
+    // Extract ref (references) from markdown links
     const body = page.body || '';
-    rel.r = extractLinkSlugs(body, slug, knownSlugs);
+    rel.ref = extractLinkSlugs(body, slug, knownSlugs);
 
     graph.set(slug, rel);
   }
 
   // Second pass: infer bidirectional relations
   for (const [slug, rel] of graph) {
-    // NTPP -> NTPPi
-    for (const target of rel.ntpp) {
-      const targetRel = graph.get(target);
-      if (targetRel) addUnique(targetRel.nttpi, slug);
+    // up -> down
+    for (const target of rel.up) {
+      const targetRel = graph.get(target.slug);
+      if (targetRel) addUniqueTarget(targetRel.down, slug, target.label);
     }
 
-    // TPP -> TPPi
-    for (const target of rel.tpp) {
-      const targetRel = graph.get(target);
-      if (targetRel) addUnique(targetRel.tppi, slug);
+    // is -> has
+    for (const target of rel.is) {
+      const targetRel = graph.get(target.slug);
+      if (targetRel) addUniqueTarget(targetRel.has, slug, target.label);
     }
 
-    // PO (symmetric)
-    for (const target of rel.po) {
-      const targetRel = graph.get(target);
-      if (targetRel) addUnique(targetRel.po, slug);
-    }
-
-    // EC (symmetric)
-    for (const target of rel.ec) {
-      const targetRel = graph.get(target);
-      if (targetRel) addUnique(targetRel.ec, slug);
-    }
-
-    // EQ (symmetric)
-    for (const target of rel.eq) {
-      const targetRel = graph.get(target);
-      if (targetRel) addUnique(targetRel.eq, slug);
-    }
-
-    // DC (symmetric)
-    for (const target of rel.dc) {
-      const targetRel = graph.get(target);
-      if (targetRel) addUnique(targetRel.dc, slug);
-    }
-
-    // Next -> Prev
+    // next -> prev
     if (rel.next) {
       const nextRel = graph.get(rel.next);
       if (nextRel && !nextRel.prev) nextRel.prev = slug;
     }
 
-    // Prev -> Next
+    // prev -> next
     if (rel.prev) {
       const prevRel = graph.get(rel.prev);
       if (prevRel && !prevRel.next) prevRel.next = slug;
     }
 
-    // R -> Ri
-    for (const target of rel.r) {
+    // ref -> refi
+    for (const target of rel.ref) {
       const targetRel = graph.get(target);
-      if (targetRel) addUnique(targetRel.ri, slug);
+      if (targetRel) addUnique(targetRel.refi, slug);
     }
   }
 
@@ -207,8 +182,8 @@ export async function buildRelationsGraph(): Promise<{
 }
 
 /**
- * Get the breadcrumb trail for a page by walking up the PP chain.
- * Prefers NTPP, falls back to TPP. Returns array from root to current page.
+ * Get the breadcrumb trail for a page by walking up the `up` chain.
+ * Returns array from root to current page.
  */
 export function getBreadcrumbs(
   slug: string,
@@ -227,8 +202,7 @@ export function getBreadcrumbs(
     const rel = graph.get(current);
     if (!rel) break;
 
-    // Walk up: prefer NTPP, fall back to TPP
-    current = rel.ntpp[0] ?? rel.tpp[0];
+    current = rel.up[0]?.slug;
   }
 
   return breadcrumbs;

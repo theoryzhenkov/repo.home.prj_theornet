@@ -1,43 +1,34 @@
-# Astro Starter Kit: Minimal
+---
+scope: root
+summary: "Entry point for the home.theor.net project"
+modified: 2026-03-14
+reviewed: 2026-03-14
+dependents:
+  - path: docs/L0-content
+  - path: docs/L0-infrastructure
+  - path: docs/L0-ui
+---
+
+# home.theor.net
+
+Theo Ryzhenkov's personal website. Static site built with Astro 5, served from Hetzner via Docker + nginx.
+
+Pages are MDX files interconnected through an RCC-8 topological relation system and auto-extracted markdown links. The site uses Pagefind for search and D3 for a graph visualization of page relations.
+
+## Navigation
+
+| Spec | Scope | What it covers |
+| ---- | ----- | -------------- |
+| [docs/L0-content](docs/L0-content.md) | L0 | Content model, MDX pages, RCC-8 relations |
+| [docs/L0-infrastructure](docs/L0-infrastructure.md) | L0 | Build pipeline, Docker, deployment to Hetzner |
+| [docs/L0-ui](docs/L0-ui.md) | L0 | Components, layout, design system (DSRD) |
+
+## Quick reference
 
 ```sh
-bun create astro@latest -- --template minimal
+just dev        # local dev server on :4321
+just build      # build to dist/
+just docker-run # build & serve via Docker on :8080
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
-
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `bun install`             | Installs dependencies                            |
-| `bun dev`             | Starts local dev server at `localhost:4321`      |
-| `bun build`           | Build your production site to `./dist/`          |
-| `bun preview`         | Preview your build locally, before deploying     |
-| `bun astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `bun astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Stack: Astro 5, MDX, Tailwind 4, D3, Pagefind, Bun.

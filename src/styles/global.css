@@ -50,15 +50,23 @@
   --radius-lg: 4px;
   --radius-full: 9999px;
 
+  /* ─── Font Sizes (non-heading) ─── */
+  --text-base: 1rem;        /* 16px — body text */
+  --text-sm: 0.875rem;      /* 14px — secondary text, pre, callout titles */
+  --text-xs: 0.8rem;        /* 12.8px — metadata, breadcrumbs, TOC, footnotes */
+  --text-2xs: 0.75rem;      /* 12px — panel titles, badges, captions */
+
   /* ─── Transitions ─── */
   --ease-out: ease-out;
   --transition-duration-fast: 50ms;
   --transition-duration-normal: 100ms;
+  --transition-duration-medium: 150ms;
 }
 
 :root {
   color-scheme: light only;
   --height-header: 2.5rem;
+  --color-overlay: rgba(0, 0, 0, 0.3);
 }
 
 /* Design system layers */

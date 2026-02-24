@@ -2,8 +2,11 @@
 title: Projects
 description: A collection of personal projects, experiments, and creative endeavors.
 created: 2026-01-18
-tpp: [index]
+up:
+  index:
 ---
+
+A listing of all [project](/project) pages.
 
 import ContentTable from '@components/ContentTable.astro';
 
@@ -11,9 +14,8 @@ import ContentTable from '@components/ContentTable.astro';
   path="projects/"
   columns={[
     { field: "title", label: "Project", sortable: true, type: "link" },
-    { field: "status", label: "Status", filterable: true, type: "status" },
     { field: "description", label: "Description" },
-    { field: "url", label: "Link", type: "url" },
+    { field: "links", label: "Links", type: "links" },
     { field: "created", label: "Started", sortable: true, type: "date" },
   ]}
   defaultSort={{ field: "created", direction: "desc" }}

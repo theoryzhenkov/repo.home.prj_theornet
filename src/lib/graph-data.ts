@@ -12,15 +12,12 @@ export interface GraphEdge {
   type: EdgeType;
 }
 
-export type EdgeType = 'ntpp' | 'tpp' | 'po' | 'ec' | 'eq' | 'dc' | 'next' | 'r';
+export type EdgeType = 'up' | 'is' | 'next' | 'ref';
 
 export interface GraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
 }
-
-/** Symmetric relation types — only emit one edge per pair. */
-const SYMMETRIC: Set<string> = new Set(['po', 'ec', 'eq', 'dc']);
 
 /**
  * Build a full graph data structure (nodes + edges) from the relations graph.
@@ -38,34 +35,22 @@ export function buildGraphData(
     const info = pages.get(slug);
     if (!info) continue;
 
-    // Count total connections for sizing
     const connections =
-      rel.ntpp.length + rel.nttpi.length +
-      rel.tpp.length + rel.tppi.length +
-      rel.po.length + rel.ec.length +
-      rel.eq.length + rel.dc.length +
+      rel.up.length + rel.down.length +
+      rel.is.length + rel.has.length +
       (rel.next ? 1 : 0) + (rel.prev ? 1 : 0) +
-      rel.r.length + rel.ri.length;
+      rel.ref.length + rel.refi.length;
 
     nodes.push({ id: slug, title: info.title, connections });
 
-    // Directional: NTPP (source is deeply contained in target)
-    for (const target of rel.ntpp) {
-      edges.push({ source: slug, target, type: 'ntpp' });
-    }
-    // Directional: TPP (source is tangentially part of target)
-    for (const target of rel.tpp) {
-      edges.push({ source: slug, target, type: 'tpp' });
+    // Directional: up (source is part of target)
+    for (const target of rel.up) {
+      edges.push({ source: slug, target: target.slug, type: 'up' });
     }
 
-    // Symmetric relations — deduplicate by sorted key
-    for (const type of ['po', 'ec', 'eq', 'dc'] as EdgeType[]) {
-      for (const target of rel[type as keyof typeof rel] as string[]) {
-        const key = [slug, target].sort().join('::') + '::' + type;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        edges.push({ source: slug, target, type });
-      }
+    // Directional: is (source is a target)
+    for (const target of rel.is) {
+      edges.push({ source: slug, target: target.slug, type: 'is' });
     }
 
     // Directional: next (deduplicate with prev)
@@ -78,8 +63,8 @@ export function buildGraphData(
     }
 
     // Directional: references (source links to target)
-    for (const target of rel.r) {
-      edges.push({ source: slug, target, type: 'r' });
+    for (const target of rel.ref) {
+      edges.push({ source: slug, target, type: 'ref' });
     }
   }
 

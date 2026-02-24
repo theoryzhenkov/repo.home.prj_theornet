@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import type { GraphData, GraphNode, GraphEdge, EdgeType } from '@/lib/graph-data';
-import { EDGE_STYLES, resolveRuntimeColors } from './styles';
+import { EDGE_STYLES, NODE_COLORS, resolveRuntimeColors } from './styles';
 
 /* ── Types ────────────────────────────────────────────────────────── */
 
@@ -157,8 +157,8 @@ export function createGraph(
   // Circle
   nodeGs.append('circle')
     .attr('r', d => nodeRadius(d.connections))
-    .attr('fill', d => d.id === highlightNode ? '#000055' : '#444')
-    .attr('stroke', d => d.id === highlightNode ? '#000055' : '#999')
+    .attr('fill', d => d.id === highlightNode ? NODE_COLORS.fillHighlight : NODE_COLORS.fill)
+    .attr('stroke', d => d.id === highlightNode ? NODE_COLORS.strokeHighlight : NODE_COLORS.stroke)
     .attr('stroke-width', d => d.id === highlightNode ? 2.5 : 1);
 
   // Label
@@ -167,8 +167,8 @@ export function createGraph(
     .attr('x', d => nodeRadius(d.connections) + 4)
     .attr('y', 4)
     .attr('font-size', '11px')
-    .attr('font-family', 'system-ui, sans-serif')
-    .attr('fill', '#111')
+    .attr('font-family', NODE_COLORS.fontFamily)
+    .attr('fill', NODE_COLORS.labelFill)
     .attr('pointer-events', 'none');
 
   /* ── Drag ───────────────────────────────────────────────────── */
@@ -224,8 +224,8 @@ export function createGraph(
     .style('background', 'var(--color-bg, #fff)')
     .style('border', '1px solid var(--color-border, #ccc)')
     .style('padding', '4px 8px')
-    .style('font-size', '12px')
-    .style('font-family', 'system-ui, sans-serif')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-sans)')
     .style('color', 'var(--color-text, #111)')
     .style('opacity', '0')
     .style('transition', 'opacity 50ms ease-out')

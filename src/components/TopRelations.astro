@@ -1,12 +1,13 @@
 ---
-import type { PageRelations, PageInfoMap } from '@/lib/relations';
+import type { PageRelations, PageInfoMap, RelationTarget } from '@/lib/relations';
 
 interface Props {
   relations: PageRelations;
   pages: PageInfoMap;
+  links?: Record<string, string>;
 }
 
-const { relations, pages } = Astro.props;
+const { relations, pages, links } = Astro.props;
 
 function getHref(slug: string): string {
   return slug === 'index' ? '/' : `/${slug}/`;
@@ -18,64 +19,68 @@ function getTitle(slug: string): string {
 
 interface RelationRow {
   label: string;
-  abbr: string;
-  slugs: string[];
+  targets: RelationTarget[];
 }
 
 const rows: RelationRow[] = [];
 
-// PP relations: this page is part of...
-if (relations.ntpp.length > 0) {
-  rows.push({ label: 'Proper part', abbr: 'NTPP', slugs: relations.ntpp });
+if (relations.up.length > 0) {
+  rows.push({ label: 'Up', targets: relations.up });
 }
-if (relations.tpp.length > 0) {
-  rows.push({ label: 'Proper part', abbr: 'TPP', slugs: relations.tpp });
+if (relations.down.length > 0) {
+  rows.push({ label: 'Down', targets: relations.down });
 }
-
-// PPi relations: pages that are part of this one
-if (relations.nttpi.length > 0) {
-  rows.push({ label: 'Proper part inverse', abbr: 'NTPPi', slugs: relations.nttpi });
+if (relations.is.length > 0) {
+  rows.push({ label: 'Is', targets: relations.is });
 }
-if (relations.tppi.length > 0) {
-  rows.push({ label: 'Proper part inverse', abbr: 'TPPi', slugs: relations.tppi });
+if (relations.has.length > 0) {
+  rows.push({ label: 'Has', targets: relations.has });
 }
-
-// EQ
-if (relations.eq.length > 0) {
-  rows.push({ label: 'Equal', abbr: 'EQ', slugs: relations.eq });
-}
-
-// N / P
 if (relations.prev) {
-  rows.push({ label: 'Previous', abbr: 'P', slugs: [relations.prev] });
+  rows.push({ label: 'Prev', targets: [{ slug: relations.prev }] });
 }
 if (relations.next) {
-  rows.push({ label: 'Next', abbr: 'N', slugs: [relations.next] });
+  rows.push({ label: 'Next', targets: [{ slug: relations.next }] });
 }
 
 const hasRelations = rows.length > 0;
+const hasLinks = links && Object.keys(links).length > 0;
+const hasAny = hasRelations || hasLinks;
 ---
 
-{hasRelations && (
+{hasAny && (
   <aside class="top-relations">
     {rows.map((row) => (
       <div class="top-relations-row">
-        <span class="top-relations-label">{row.label} ({row.abbr}):</span>
-        {row.slugs.map((slug, i) => (
+        <span class="top-relations-label">{row.label}:</span>
+        {row.targets.map((target, i) => (
           <>
             {i > 0 && <span class="top-relations-sep">,</span>}
-            <a href={getHref(slug)}>{getTitle(slug)}</a>
+            <a href={getHref(target.slug)}>
+              {target.label ? `${target.label}: ` : ''}{getTitle(target.slug)}
+            </a>
           </>
         ))}
       </div>
     ))}
+    {hasLinks && (
+      <div class="top-relations-row">
+        <span class="top-relations-label">Links:</span>
+        {Object.entries(links!).map(([type, url], i) => (
+          <>
+            {i > 0 && <span class="top-relations-sep">,</span>}
+            <a href={url} target="_blank" rel="noopener noreferrer">{type}</a>
+          </>
+        ))}
+      </div>
+    )}
   </aside>
 )}
 
 <style>
   .top-relations {
     margin-bottom: theme(spacing.2);
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     color: var(--color-text-muted);
   }
 

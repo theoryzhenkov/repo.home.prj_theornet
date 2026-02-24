@@ -93,7 +93,7 @@
     padding: theme(spacing.3);
     background-color: var(--color-bg-muted);
     overflow-x: auto;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
   }
 
   pre code {
@@ -111,7 +111,6 @@
     width: 100%;
     margin: theme(spacing.3) 0;
     border-collapse: collapse;
-    font-size: 0.9rem;
   }
 
   th, td {
@@ -136,7 +135,7 @@
 
   figcaption {
     margin-top: theme(spacing.1);
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     color: var(--color-text-muted);
   }
 
