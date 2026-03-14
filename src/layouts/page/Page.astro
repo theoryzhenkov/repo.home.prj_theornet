@@ -6,7 +6,7 @@ import Metadata from '@components/Metadata.astro';
 import TOC from '@components/TOC.astro';
 import Footnotes from '@components/Footnotes.astro';
 import TopRelations from '@components/TopRelations.astro';
-import BottomRelations from '@components/BottomRelations.astro';
+
 import Search from '@components/Search.astro';
 import Breadcrumb from '@components/Breadcrumb.astro';
 import type { PageInfo, PageRelations, PageInfoMap } from '@/lib/relations';
@@ -57,7 +57,7 @@ const descriptionPlain = description?.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 
           <footer class="page-footer">
             <Footnotes />
-            {relations && pageInfoMap && <BottomRelations relations={relations} pages={pageInfoMap} />}
+
           </footer>
         </article>
       </main>

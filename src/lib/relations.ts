@@ -29,6 +29,8 @@ interface RawRelations {
   is?: Record<string, string | null>;
   next?: string;
   prev?: string;
+  ref?: string[];
+  refi?: string[];
 }
 
 function parseRelationMap(map?: Record<string, string | null>): RelationTarget[] {
@@ -72,37 +74,53 @@ function pathToSlug(path: string): string {
   return path.replace(/^\//, '');
 }
 
+interface ExtractedLinks {
+  ref: string[];
+  typed: { relation: string; slug: string }[];
+}
+
 /**
  * Extract internal link target slugs from raw MDX body.
+ * Handles both markdown links `[text](href)` and wiki-links `[[slug]]` / `rel::[[slug]]`.
  */
-function extractLinkSlugs(body: string, sourceSlug: string, knownSlugs: Set<string>): string[] {
-  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-  const slugs: string[] = [];
-  let match;
+function extractLinks(body: string, sourceSlug: string, knownSlugs: Set<string>): ExtractedLinks {
+  const result: ExtractedLinks = { ref: [], typed: [] };
 
+  // Markdown links
+  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  let match;
   while ((match = linkRegex.exec(body)) !== null) {
     const href = match[2];
+    if (href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto:')) continue;
 
-    // Skip external links, anchors, mailto
-    if (href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto:')) {
-      continue;
-    }
-
-    // Normalize to path
     let targetPath = href;
     if (targetPath.startsWith('./')) targetPath = targetPath.slice(1);
     if (!targetPath.startsWith('/')) targetPath = '/' + targetPath;
     if (targetPath.endsWith('/') && targetPath !== '/') targetPath = targetPath.slice(0, -1);
 
     const targetSlug = pathToSlug(targetPath);
-
-    // Only include if target exists and is not self-reference
-    if (knownSlugs.has(targetSlug) && targetSlug !== sourceSlug && !slugs.includes(targetSlug)) {
-      slugs.push(targetSlug);
+    if (knownSlugs.has(targetSlug) && targetSlug !== sourceSlug && !result.ref.includes(targetSlug)) {
+      result.ref.push(targetSlug);
     }
   }
 
-  return slugs;
+  // Wiki-links: optional relation prefix, slug, optional alias
+  const wikiRegex = /(?:(\w+)::)?\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+  while ((match = wikiRegex.exec(body)) !== null) {
+    const relation = match[1]; // optional prefix like "up", "ref", "is"
+    const slug = match[2].trim();
+    if (!knownSlugs.has(slug) || slug === sourceSlug) continue;
+
+    if (!relation || relation === 'ref') {
+      addUnique(result.ref, slug);
+    } else {
+      if (!result.typed.some(t => t.relation === relation && t.slug === slug)) {
+        result.typed.push({ relation, slug });
+      }
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -138,9 +156,34 @@ export async function buildRelationsGraph(): Promise<{
     rel.next = data.next;
     rel.prev = data.prev;
 
-    // Extract ref (references) from markdown links
+    // Extract refs from markdown links and wiki-links
     const body = page.body || '';
-    rel.ref = extractLinkSlugs(body, slug, knownSlugs);
+    const extracted = extractLinks(body, slug, knownSlugs);
+
+    // Merge frontmatter ref with auto-extracted refs
+    rel.ref = [...extracted.ref];
+    if (data.ref) {
+      for (const r of data.ref) {
+        if (knownSlugs.has(r) && r !== slug) addUnique(rel.ref, r);
+      }
+    }
+
+    // Frontmatter refi
+    if (data.refi) {
+      for (const r of data.refi) {
+        if (knownSlugs.has(r) && r !== slug) addUnique(rel.refi, r);
+      }
+    }
+
+    // Route typed inline relations (up::, is::, etc.)
+    for (const { relation, slug: targetSlug } of extracted.typed) {
+      if (relation === 'up') {
+        addUniqueTarget(rel.up, targetSlug);
+      } else if (relation === 'is') {
+        addUniqueTarget(rel.is, targetSlug);
+      }
+      // Other typed relations can be added here as needed
+    }
 
     graph.set(slug, rel);
   }
@@ -175,6 +218,12 @@ export async function buildRelationsGraph(): Promise<{
     for (const target of rel.ref) {
       const targetRel = graph.get(target);
       if (targetRel) addUnique(targetRel.refi, slug);
+    }
+
+    // refi -> ref (if A.refi=B explicitly, then B.ref+=A)
+    for (const target of rel.refi) {
+      const targetRel = graph.get(target);
+      if (targetRel) addUnique(targetRel.ref, slug);
     }
   }
 

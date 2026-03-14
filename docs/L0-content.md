@@ -1,8 +1,8 @@
 ---
 scope: L0
-summary: "Content model: MDX pages, RCC-8 topological relations, schema"
-modified: 2026-03-14
-reviewed: 2026-03-14
+summary: "Content model: MDX pages, relation graph, schema"
+modified: 2026-03-15
+reviewed: 2026-03-15
 depends:
   - path: README
 ---
@@ -17,33 +17,29 @@ Every MDX page has YAML frontmatter with required `title` and `created` fields, 
 
 ## Relations
 
-Pages link to each other through two orthogonal layers, both declared in frontmatter.
+Pages link to each other through declared frontmatter relations and auto-extracted references. The build-time graph builder (`src/lib/relations.ts`) infers inverse relations automatically.
 
-### Topological (RCC-8)
+### Hierarchy and typing
 
-Based on Region Connection Calculus. Each relation is a frontmatter array of slugs. The build-time graph inference (`src/lib/relations.ts`) adds inverse relations automatically.
+Declared as `Record<string, string | null>` in frontmatter, where keys are target slugs and values are optional labels.
 
 | Frontmatter key | Meaning | Inverse (inferred) |
 | --------------- | ------- | ------------------- |
-| `ntpp` | "this page is deeply contained in..." | `nttppi` on target |
-| `tpp` | "this page is tangentially part of..." | `tppi` on target |
-| `po` | partially overlaps with | symmetric |
-| `ec` | externally connected to | symmetric |
-| `eq` | equivalent to | symmetric |
-| `dc` | disconnected from (metadata-only) | symmetric |
+| `up` | "this page is contained in..." | `down` on target |
+| `is` | "this page is a type/instance of..." | `has` on target |
 
-Breadcrumbs walk up the `ntpp`/`tpp` chain to build a containment path from root to current page.
+Breadcrumbs walk up the `up` chain to build a containment path from root to current page.
 
-### Semantic
+### Sequential ordering
 
 | Key | Meaning | Inverse (inferred) |
 | --- | ------- | ------------------- |
-| `next` | next page in sequence | `prev` on target |
-| `prev` | previous page in sequence | `next` on target |
+| `next` | next page in sequence (string slug) | `prev` on target |
+| `prev` | previous page in sequence (string slug) | `next` on target |
 
 ### Auto-extracted references
 
-`relations.ts` parses each page's MDX body for internal markdown links and populates `r` (references) and `ri` (referenced-by) arrays. External links, anchors, and mailto are excluded.
+`relations.ts` parses each page's MDX body for internal markdown links and populates `ref` (references) and `refi` (referenced-by) arrays. External links, anchors, and mailto are excluded.
 
 ## Key files
 

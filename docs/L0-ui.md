@@ -1,10 +1,12 @@
 ---
 scope: L0
 summary: "UI components, layout system, and DSRD design tokens"
-modified: 2026-03-14
-reviewed: 2026-03-14
+modified: 2026-03-15
+reviewed: 2026-03-15
 depends:
   - path: README
+dependents:
+  - path: src/content/pages/theor-net-dsrd
 ---
 
 # UI and Design
@@ -39,7 +41,7 @@ The page template lives in `src/layouts/page/Page.astro`, rendered by the catch-
 | Component | Purpose |
 | --------- | ------- |
 | `Header.astro` | Sticky nav bar |
-| `Breadcrumb.astro` | RCC-8 containment path |
+| `Breadcrumb.astro` | Hierarchy path |
 | `TOC.astro` | Table of contents with scroll spy (`toc-scrollspy.ts`) |
 | `TopRelations.astro` / `BottomRelations.astro` | Display page relations |
 | `RelationsGraph.astro` | D3 force-directed graph of all pages |

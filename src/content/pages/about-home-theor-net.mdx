@@ -17,26 +17,24 @@ The Docker images for applications at *.theor.net are deployed to GHCR via a CI 
 
 ## Relational structure
 
-Website uses two orthogonal layers: **topological**, based on the [RCC-8](https://en.wikipedia.org/wiki/Region_connection_calculus), and **semantical**. 
+Website uses two orthogonal layers of relations between pages: **topological** (hierarchy) and **semantic** (ordering). A third layer, **auto-extracted**, is derived from content. All relations are declared in frontmatter as `Record<string, string | null>` — keys are page slugs, values are optional labels. Inverse relations are inferred automatically.
 
-### RCC-8
+### Topological
 
-| Relation | Implies | Semantics                          |
-| -------- | ------- | ---------------------------------- |
-| DC       | DC      | Disconnected                       |
-| EC       | EC      | Externally connected               |
-| EQ       | EQ      | Equal                              |
-| PO       | PO      | Partially overlapped               |
-| TPP      | TPPi    | Tangential proper part             |
-| TPPi     | TPP     | Tangential proper part inverse     |
-| NTPP     | NTPPi   | Non-tangential proper part         |
-| NTPPi    | NTPP    | Non-tangential proper part inverse |
+| Key  | Inverse | Meaning                                    |
+| ---- | ------- | ------------------------------------------ |
+| `up` | `down`  | This page is contained in / child of...    |
+| `is` | `has`   | This page is an instance of / belongs to...  |
 
-### Semantical
+### Semantic
 
-| Relation | Implies | Semantics          |
-| -------- | ------- | ------------------ |
-| N        | P       | Next               |
-| P        | N       | Previous           |
-| R        | Ri      | References         |
-| Ri       | R       | References inverse |
+| Key    | Inverse | Meaning                  |
+| ------ | ------- | ------------------------ |
+| `next` | `prev`  | Next page in sequence    |
+| `prev` | `next`  | Previous page in sequence |
+
+### Auto-extracted
+
+| Key   | Inverse | Meaning                                |
+| ----- | ------- | -------------------------------------- |
+| `ref` | `refi`  | References (from markdown links in body) |

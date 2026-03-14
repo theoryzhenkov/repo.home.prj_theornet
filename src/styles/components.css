@@ -276,4 +276,22 @@
     background-color: transparent;
     font-style: italic;
   }
+
+  /* ─── Inline TODO Markers ─── */
+  .todo-marker {
+    display: inline;
+    font-size: var(--text-sm);
+    color: var(--color-warning);
+    background-color: var(--color-highlight-subtle);
+    border: 1px dashed var(--color-warning);
+    border-radius: var(--radius-sm);
+    padding: 0 theme(spacing.1);
+  }
+
+  .todo-label {
+    font-weight: 700;
+    font-size: var(--text-2xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
 }

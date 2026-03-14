@@ -42,6 +42,12 @@ if (relations.prev) {
 if (relations.next) {
   rows.push({ label: 'Next', targets: [{ slug: relations.next }] });
 }
+if (relations.ref.length > 0) {
+  rows.push({ label: 'Ref', targets: relations.ref.map(s => ({ slug: s })) });
+}
+if (relations.refi.length > 0) {
+  rows.push({ label: 'Refi', targets: relations.refi.map(s => ({ slug: s })) });
+}
 
 const hasRelations = rows.length > 0;
 const hasLinks = links && Object.keys(links).length > 0;
