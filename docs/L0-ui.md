@@ -7,6 +7,9 @@ depends:
   - path: README
 dependents:
   - path: src/content/pages/theor-net-dsrd
+  - path: docs/L1-styles
+  - path: docs/L1-scripts
+  - path: docs/L1-routing
 ---
 
 # UI and Design

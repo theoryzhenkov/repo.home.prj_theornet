@@ -5,6 +5,9 @@ modified: 2026-03-15
 reviewed: 2026-03-15
 depends:
   - path: README
+dependents:
+  - path: docs/L1-relations
+  - path: docs/L1-routing
 ---
 
 # Content System
