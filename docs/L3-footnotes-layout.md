@@ -5,6 +5,7 @@ modified: 2026-03-15
 reviewed: 2026-03-15
 depends:
   - path: docs/L2-components
+  - path: docs/L2-reading-experience
 ---
 
 # Footnotes Layout Engine

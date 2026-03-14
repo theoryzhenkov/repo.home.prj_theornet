@@ -70,7 +70,7 @@ The graph-building logic is split into two layers:
 
 The function executes in two passes. The first pass iterates every page, parsing frontmatter relations, extracting links from the MDX body, and building each page's initial `PageRelations`. The second pass walks the graph and fires the inference rules above, adding inverse entries to target pages.
 
-Link extraction happens during the first pass. The `extractLinks` function scans the raw MDX body for markdown links (`[text](href)`) and wiki-links (`[[slug]]` or `relation::[[slug]]`). The extracted slugs populate the page's `ref` array, merged with any explicitly declared `ref` values from frontmatter.
+Link extraction happens during the first pass. The `extractLinkSlugs` function scans the raw MDX body for markdown links (`[text](href)`). The extracted slugs populate the page's `ref` array, merged with any explicitly declared `ref` values from frontmatter.
 
 ## Link extraction rules
 
@@ -83,8 +83,6 @@ Markdown links are included when they point to a known page slug. The following 
 - Links whose resolved slug does not match any page in the collection
 
 Relative paths are normalized: leading `./` is stripped, a leading `/` is ensured, and trailing slashes are removed. The resulting path is converted to a slug via `pathToSlug` (from `slugs.ts`).
-
-Wiki-links support an optional relation prefix (`up::[[slug]]`, `is::[[slug]]`). Prefixed wiki-links with `up` or `is` are routed into those typed relation arrays rather than `ref`. Unprefixed wiki-links and `ref::`-prefixed wiki-links go into `ref`. Wiki-links also support aliases (`[[slug|display text]]`), though the alias is ignored for relation purposes.
 
 ## getBreadcrumbs() contract
 
@@ -102,8 +100,8 @@ The function walks the `up` chain by always following `up[0]` (the first declare
 
 ## Key files
 
-- `src/lib/relations.ts` -- `PageRelations` interface, `buildGraphFromPages()`, `getBreadcrumbs()`, `extractLinks()`
+- `src/lib/relations.ts` -- `PageRelations` interface, `buildGraphFromPages()`, `getBreadcrumbs()`, `extractLinkSlugs()`
 - `src/lib/relations-graph.ts` -- `buildRelationsGraph()` (Astro wrapper, memoized)
-- `src/lib/slugs.ts` -- `slugToHref()`, `pathToSlug()`, `WIKILINK_PATTERN`
+- `src/lib/slugs.ts` -- `slugToHref()`, `pathToSlug()`
 - `src/lib/graph-data.ts` -- `GraphData` interfaces, `buildGraphData()`, `buildSubgraphData()`
 - `src/content.config.ts` -- Zod schema defining the frontmatter relation fields

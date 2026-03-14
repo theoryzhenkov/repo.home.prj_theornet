@@ -9,7 +9,7 @@ depends:
 
 # Remark Plugin Pipeline
 
-Three remark plugins process content during the Astro build: `remarkCallout`, `remarkTodo`, and `remarkWikilink`. They are registered in `astro.config.ts` and run in array order before rehype (standard unified pipeline).
+Two remark plugins process content during the Astro build: `remarkCallout` and `remarkTodo`. They are registered in `astro.config.ts` and run in array order before rehype (standard unified pipeline).
 
 ## Plugin registration
 
@@ -18,11 +18,11 @@ The same plugin array appears in two places in `astro.config.ts`:
 ```typescript
 integrations: [
   mdx({
-    remarkPlugins: [remarkCallout, remarkTodo, remarkWikilink],
+    remarkPlugins: [remarkCallout, remarkTodo],
   }),
 ],
 markdown: {
-  remarkPlugins: [remarkCallout, remarkTodo, remarkWikilink],
+  remarkPlugins: [remarkCallout, remarkTodo],
 },
 ```
 
@@ -77,32 +77,9 @@ Output HTML for `[TODO::]` (empty label):
 
 The `role="note"` attribute provides accessibility semantics. Visual styling (dashed warning-colored border, highlighted background) is defined in `src/styles/components.css` under `.todo-marker` and `.todo-label`.
 
-## remarkWikilink
-
-Custom plugin (`src/lib/remark-wikilink.ts`). Converts wikilink syntax into anchor tags.
-
-Regex: `WIKILINK_PATTERN` from `src/lib/slugs.ts` — `/(?:(\w+)::)?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g`
-
-Supported forms:
-
-| Input | Output |
-|---|---|
-| `[[my-page]]` | `<a href="/my-page/">my-page</a>` |
-| `[[my-page\|display text]]` | `<a href="/my-page/">display text</a>` |
-| `[[index]]` | `<a href="/">index</a>` |
-| `type::[[my-page]]` | `<a href="/my-page/">my-page</a>` (type stripped from HTML output) |
-
-The `index` slug is special-cased to produce `/` instead of `/index/`, via `slugToHref()` from `slugs.ts`.
-
-The optional `type::` prefix (capture group 1) is stripped from the rendered HTML, but it is used by `extractLinks()` in `relations.ts` to route typed wiki-links (e.g., `up::[[slug]]`) into the appropriate relation arrays rather than `ref`.
-
-The regex and `slugToHref` are shared with `relations.ts` via `src/lib/slugs.ts` to keep the two consumers in sync.
-
-Uses the same AST transformation pattern as `remarkTodo`: visit text nodes, split on matches, splice replacement nodes.
-
 ## Processing order
 
-Plugins run in array order: callout first, then todo, then wikilink. Since `remarkCallout` transforms blockquote nodes (not text nodes), it doesn't interfere with the two text-node plugins. `remarkTodo` and `remarkWikilink` both visit text nodes and splice replacements, but their regex patterns don't overlap (`[TODO::...]` vs `[[...]]`), so ordering between them doesn't matter in practice. If a text node contained both patterns, whichever runs first would split the node, and the second would need to visit the resulting fragments. The current order handles this correctly because `parent.children.splice()` inserts new nodes that the tree walker will still visit.
+Plugins run in array order: callout first, then todo. Since `remarkCallout` transforms blockquote nodes (not text nodes), it doesn't interfere with `remarkTodo` which visits text nodes.
 
 After remark plugins finish, the unified pipeline runs rehype (HTML processing). Shiki code highlighting happens at the rehype stage.
 
@@ -114,18 +91,14 @@ The MDX integration inherits `shikiConfig` from the `markdown` block automatical
 
 ## Edge cases
 
-**MDX component boundaries.** Remark plugins operate on the mdast (Markdown AST). Content inside imported MDX components (e.g., `<MyComponent>text</MyComponent>`) is parsed as JSX, not as markdown text nodes. The custom plugins will not transform `[TODO::...]` or `[[...]]` syntax that appears inside JSX component tags. The syntax must appear in regular markdown flow content to be processed.
+**MDX component boundaries.** Remark plugins operate on the mdast (Markdown AST). Content inside imported MDX components (e.g., `<MyComponent>text</MyComponent>`) is parsed as JSX, not as markdown text nodes. The `remarkTodo` plugin will not transform `[TODO::...]` syntax that appears inside JSX component tags. The syntax must appear in regular markdown flow content to be processed.
 
-**Multiple matches in one text node.** Both custom plugins handle multiple matches per node correctly. They iterate all regex matches, build an array of interleaved text/html children, and splice them in a single operation.
+**Multiple matches in one text node.** `remarkTodo` handles multiple matches per node correctly. It iterates all regex matches, builds an array of interleaved text/html children, and splices them in a single operation.
 
 **Empty/whitespace labels.** `remarkTodo` trims the label (`match[1].trim()`). An empty label like `[TODO::]` produces a span with just the "TODO" badge and no trailing text.
-
-**Wikilink slugs with spaces.** The wikilink regex captures everything between `[[` and `]]` (or `|`), trims it, and uses it directly in the `href`. Slugs with spaces would produce URLs with spaces, which is likely unintended. Content should use hyphenated slugs.
 
 ## Key files
 
 - `astro.config.ts` -- plugin registration, Shiki theme config
 - `src/lib/remark-todo.ts` -- TODO marker plugin
-- `src/lib/remark-wikilink.ts` -- wikilink plugin
-- `src/lib/slugs.ts` -- shared `WIKILINK_PATTERN` regex and `slugToHref()`
 - `src/styles/components.css` -- `.todo-marker`, `.todo-label`, `[data-callout*]` styles

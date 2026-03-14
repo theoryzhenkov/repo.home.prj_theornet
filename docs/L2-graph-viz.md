@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Graph visualization: data pipeline, D3 force renderer, interaction model"
-modified: 2026-03-15
-reviewed: 2026-03-15
+modified: 2026-03-19
+reviewed: 2026-03-19
 depends:
   - path: docs/L1-relations
   - path: docs/L1-scripts
@@ -106,12 +106,16 @@ The renderer appends an SVG to the container with `width`/`height` at 100% and a
 
 ## Edge styles
 
+Per the design vision, edge types are distinguished by **dash pattern and width**, not color. All edges share a single base color (`--color-text-subtle`) so the graph reads as a cohesive neutral structure. Type is communicated through line style:
+
 | Type | Color (CSS var) | Width | Dash pattern | Directed | Legend label |
 |------|-----------------|-------|--------------|----------|-------------|
-| `up` | `--color-accent` | 2 | solid | yes | Up / Down -- hierarchy |
-| `is` | `--color-success` | 1.5 | `6 3` | yes | Is / Has -- classification |
-| `next` | `--color-accent` | 1 | `2 4` | yes | Next / Prev -- sequential |
-| `ref` | `--color-border` | 0.75 | `1 3` | yes | Ref -- reference link |
+| `up` | `--color-text-subtle` | 2 | solid | yes | Up / Down -- hierarchy |
+| `is` | `--color-text-subtle` | 1.5 | `6 3` | yes | Is / Has -- classification |
+| `next` | `--color-text-subtle` | 1 | `2 4` | yes | Next / Prev -- sequential |
+| `ref` | `--color-text-subtle` | 0.75 | `1 3` | yes | Ref -- reference link |
+
+This follows the minimal semantic color principle: shape and line style differentiate, not color.
 
 ### Runtime color resolution
 

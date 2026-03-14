@@ -12,9 +12,3 @@ export function pathToSlug(path: string): string {
   if (path === '/') return 'index';
   return path.replace(/^\//, '').replace(/\/$/, '');
 }
-
-/**
- * Wiki-link pattern: optional `relation::` prefix, slug, optional `|alias`.
- * Groups: [1] relation (optional), [2] slug, [3] alias (optional).
- */
-export const WIKILINK_PATTERN = /(?:(\w+)::)?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;

@@ -51,13 +51,12 @@ The response includes every entry in the `pages` collection with no filtering. I
 
 ## Remark plugin pipeline
 
-Three remark plugins are configured identically for both `markdown` and `mdx` in `astro.config.ts`, applied in this order:
+Two remark plugins are configured identically for both `markdown` and `mdx` in `astro.config.ts`, applied in this order:
 
 1. `remarkCallout` (`@r4ai/remark-callout`) -- transforms blockquote-based callout syntax into styled callout elements.
 2. `remarkTodo` (custom, `src/lib/remark-todo.ts`) -- converts `[TODO::label]` markers in text nodes into `<span class="todo-marker">` HTML.
-3. `remarkWikilink` (custom, `src/lib/remark-wikilink.ts`) -- converts `[[slug]]` and `[[slug|alias]]` wikilink syntax into `<a>` tags. Also supports a `type::[[slug]]` prefix form, though the type is currently unused in the output HTML.
 
-All three plugins operate as AST visitors over text nodes. The two custom plugins (`remarkTodo`, `remarkWikilink`) splice text nodes into mixed text/HTML children in place, which means they are order-sensitive -- running one before the other would consume the text node, so both must handle non-overlapping patterns.
+Both plugins operate as AST visitors. `remarkCallout` transforms blockquote nodes, while `remarkTodo` visits text nodes and splices replacements in place.
 
 ## Shiki configuration
 
@@ -72,4 +71,3 @@ Code blocks use the `github-light` theme via Shiki, configured under `markdown.s
 - `src/pages/graph.astro` -- graph visualization route
 - `src/pages/popup-index.json.ts` -- JSON endpoint for link previews
 - `src/lib/remark-todo.ts` -- custom TODO marker plugin
-- `src/lib/remark-wikilink.ts` -- custom wikilink plugin

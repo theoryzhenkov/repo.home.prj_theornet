@@ -28,7 +28,6 @@
     opacity: 0;
     cursor: pointer;
     color: var(--color-text-subtle);
-    font-size: 0.8em;
 
     & svg {
       width: 0.7em;

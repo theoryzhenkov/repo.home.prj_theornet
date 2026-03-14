@@ -1,4 +1,4 @@
-import { WIKILINK_PATTERN, pathToSlug } from './slugs';
+import { pathToSlug } from './slugs';
 
 export interface RelationTarget {
   slug: string;
@@ -24,19 +24,24 @@ export interface PageInfo {
 export type RelationsGraph = Map<string, PageRelations>;
 export type PageInfoMap = Map<string, PageInfo>;
 
+export interface RawRelationEntry {
+  page: string;
+  label?: string;
+}
+
 export interface RawRelations {
-  up?: Record<string, string | null>;
-  is?: Record<string, string | null>;
+  up?: RawRelationEntry[];
+  is?: RawRelationEntry[];
   next?: string;
   prev?: string;
   ref?: string[];
   refi?: string[];
 }
 
-export function parseRelationMap(map?: Record<string, string | null>): RelationTarget[] {
-  if (!map) return [];
-  return Object.entries(map).map(([slug, label]) => ({
-    slug,
+export function parseRelationList(list?: RawRelationEntry[]): RelationTarget[] {
+  if (!list) return [];
+  return list.map(({ page, label }) => ({
+    slug: page,
     ...(label ? { label } : {}),
   }));
 }
@@ -59,21 +64,15 @@ export function addUnique(arr: string[], value: string): void {
   if (!arr.includes(value)) arr.push(value);
 }
 
-export interface ExtractedLinks {
-  ref: string[];
-  typed: { relation: string; slug: string }[];
-}
-
 /**
  * Extract internal link target slugs from raw MDX body.
- * Handles both markdown links `[text](href)` and wiki-links `[[slug]]` / `rel::[[slug]]`.
+ * Scans for markdown links `[text](href)` and returns slugs of known internal pages.
  */
-export function extractLinks(body: string, sourceSlug: string, knownSlugs: Set<string>): ExtractedLinks {
-  const result: ExtractedLinks = { ref: [], typed: [] };
-
-  // Markdown links
+export function extractLinkSlugs(body: string, sourceSlug: string, knownSlugs: Set<string>): string[] {
   const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const slugs: string[] = [];
   let match;
+
   while ((match = linkRegex.exec(body)) !== null) {
     const href = match[2];
     if (href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto:')) continue;
@@ -84,28 +83,12 @@ export function extractLinks(body: string, sourceSlug: string, knownSlugs: Set<s
     if (targetPath.endsWith('/') && targetPath !== '/') targetPath = targetPath.slice(0, -1);
 
     const targetSlug = pathToSlug(targetPath);
-    if (knownSlugs.has(targetSlug) && targetSlug !== sourceSlug && !result.ref.includes(targetSlug)) {
-      result.ref.push(targetSlug);
+    if (knownSlugs.has(targetSlug) && targetSlug !== sourceSlug && !slugs.includes(targetSlug)) {
+      slugs.push(targetSlug);
     }
   }
 
-  // Wiki-links: optional relation prefix, slug, optional alias
-  const wikiRegex = new RegExp(WIKILINK_PATTERN.source, WIKILINK_PATTERN.flags);
-  while ((match = wikiRegex.exec(body)) !== null) {
-    const relation = match[1];
-    const slug = match[2].trim();
-    if (!knownSlugs.has(slug) || slug === sourceSlug) continue;
-
-    if (!relation || relation === 'ref') {
-      addUnique(result.ref, slug);
-    } else {
-      if (!result.typed.some(t => t.relation === relation && t.slug === slug)) {
-        result.typed.push({ relation, slug });
-      }
-    }
-  }
-
-  return result;
+  return slugs;
 }
 
 /** Page-like input for buildGraphFromPages, decoupled from Astro's collection type. */
@@ -143,17 +126,16 @@ export function buildGraphFromPages(allPages: PageInput[]): {
     pages.set(slug, { slug, title: data.title });
 
     const rel = emptyRelations();
-    rel.up = parseRelationMap(data.up);
-    rel.is = parseRelationMap(data.is);
+    rel.up = parseRelationList(data.up);
+    rel.is = parseRelationList(data.is);
     rel.next = data.next;
     rel.prev = data.prev;
 
-    // Extract refs from markdown links and wiki-links
+    // Extract refs from markdown links
     const body = page.body || '';
-    const extracted = extractLinks(body, slug, knownSlugs);
+    rel.ref = extractLinkSlugs(body, slug, knownSlugs);
 
     // Merge frontmatter ref with auto-extracted refs
-    rel.ref = [...extracted.ref];
     if (data.ref) {
       for (const r of data.ref) {
         if (knownSlugs.has(r) && r !== slug) addUnique(rel.ref, r);
@@ -164,15 +146,6 @@ export function buildGraphFromPages(allPages: PageInput[]): {
     if (data.refi) {
       for (const r of data.refi) {
         if (knownSlugs.has(r) && r !== slug) addUnique(rel.refi, r);
-      }
-    }
-
-    // Route typed inline relations (up::, is::, etc.)
-    for (const { relation, slug: targetSlug } of extracted.typed) {
-      if (relation === 'up') {
-        addUniqueTarget(rel.up, targetSlug);
-      } else if (relation === 'is') {
-        addUniqueTarget(rel.is, targetSlug);
       }
     }
 

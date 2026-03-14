@@ -1,7 +1,11 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
-const relationMap = z.record(z.string(), z.string().nullable()).optional();
+const relationEntry = z.object({
+  page: z.string(),
+  label: z.string().optional(),
+});
+const relationList = z.array(relationEntry).optional();
 
 const pages = defineCollection({
   loader: glob({ pattern: '**/*.mdx', base: './src/content/pages' }),
@@ -10,9 +14,9 @@ const pages = defineCollection({
     description: z.string().optional(),
     created: z.coerce.date(),
     modified: z.coerce.date().optional(),
-    // Relations (slug → label, label can be null)
-    up: relationMap,
-    is: relationMap,
+    // Relations
+    up: relationList,
+    is: relationList,
     next: z.string().optional(),
     prev: z.string().optional(),
     ref: z.array(z.string()).optional(),

@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import mdx from '@astrojs/mdx';
 import remarkCallout from '@r4ai/remark-callout';
 import remarkTodo from './src/lib/remark-todo';
-import remarkWikilink from './src/lib/remark-wikilink';
+
 
 export default defineConfig({
   site: 'https://home.theor.net',
@@ -20,12 +20,12 @@ export default defineConfig({
 
   integrations: [
     mdx({
-      remarkPlugins: [remarkCallout, remarkTodo, remarkWikilink],
+      remarkPlugins: [remarkCallout, remarkTodo],
     }),
   ],
 
   markdown: {
-    remarkPlugins: [remarkCallout, remarkTodo, remarkWikilink],
+    remarkPlugins: [remarkCallout, remarkTodo],
     shikiConfig: {
       theme: 'github-light',
     },

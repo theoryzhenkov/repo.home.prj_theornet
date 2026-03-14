@@ -83,7 +83,6 @@
 
   code {
     font-family: var(--font-mono);
-    font-size: 0.9em;
     padding: 1px 4px;
     background-color: var(--color-bg-muted);
   }
@@ -93,7 +92,6 @@
     padding: theme(spacing.3);
     background-color: var(--color-bg-muted);
     overflow-x: auto;
-    font-size: var(--text-sm);
   }
 
   pre code {
@@ -135,7 +133,6 @@
 
   figcaption {
     margin-top: theme(spacing.1);
-    font-size: var(--text-sm);
     color: var(--color-text-muted);
   }
 

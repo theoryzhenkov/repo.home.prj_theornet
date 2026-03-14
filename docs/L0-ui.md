@@ -1,13 +1,14 @@
 ---
 scope: L0
 summary: "UI components, layout system, and DSRD design tokens"
-modified: 2026-03-15
-reviewed: 2026-03-15
+modified: 2026-03-19
+reviewed: 2026-03-19
 
 depends:
   - path: README
 dependents:
   - path: src/content/pages/theor-net-dsrd
+  - path: docs/L1-design-vision
   - path: docs/L1-styles
   - path: docs/L1-scripts
   - path: docs/L1-routing
@@ -17,9 +18,13 @@ dependents:
 
 ## Design philosophy
 
-Minimalist, text-first, information-dense. No shadows, sharp edges, small gaps, fast transitions (under 150ms). System UI fonts. The full design system is captured in the DSRD page on the site itself (`src/content/pages/theor-net-dsrd.mdx`), which includes a standalone reference HTML file. Note: the DSRD reference HTML is a point-in-time snapshot and may lag behind the actual styles in `src/styles/global.css`, which is the source of truth.
+Content-first, information-dense, textured. Scrapbook/collage aesthetic with coherent structural grid — different content types have visually distinct treatments held together by consistent typography and spatial rhythm. Texture over color: visual richness comes from layered grain, varied content framing, and typographic contrast (serif prose + monospace metadata), not from saturated palettes. Neutral/monochrome base with color used sparingly as semantic signal. Fast transitions (under 150ms), minimal functional animation only. Dual light/dark themes with manual toggle.
 
-Inspirations: Paul Graham, Dan Luu, Gwern, Joe Carlsmith.
+Typography: characterful serif for prose, monospace for metadata/code/relations. No system-font defaults as primary typeface.
+
+See `docs/L1-design-vision.md` for the full aesthetic direction. The DSRD page (`src/content/pages/theor-net-dsrd.mdx`) contains a standalone reference HTML file that may lag behind `src/styles/global.css`, which is the source of truth.
+
+Inspirations: Gwern (primary), Andy Matuschak, Edward Tufte, diegetic interfaces (conceptual).
 
 ## Font-size scale
 
@@ -36,7 +41,7 @@ Relative `em` units are used for elements that should scale with their parent co
 
 ## Layout
 
-Three-column grid (`page-grid`): left sidebar, content area (max `70ch`), right sidebar. Collapses to single column below 1024px. Sticky header with site logo and nav links.
+Three-column grid (`page-grid`): left sidebar (TOC), content area (max `70ch`), right sidebar (Tufte-style sidenotes). Collapses to single column below 1024px. Ambient status bar header showing reading context (progress, read time, freshness, content maturity).
 
 The page template lives in `src/layouts/page/Page.astro`, rendered by the catch-all route `src/pages/[...slug].astro`.
 

@@ -1,7 +1,6 @@
 ---
 const navItems = [
   { href: '/', label: 'Home' },
-  { href: '/about-home-theor-net', label: 'Site' },
   { href: '/me', label: 'Me' },
   { href: '/projects', label: 'Projects' },
   { href: '/blog', label: 'Blog' },
@@ -84,7 +83,6 @@ const currentPath = Astro.url.pathname;
   }
 
   .nav-link {
-    font-size: var(--text-sm);
     color: var(--color-text-muted);
     text-decoration: none;
   }
@@ -103,7 +101,6 @@ const currentPath = Astro.url.pathname;
     align-items: center;
     gap: theme(spacing.1);
     padding: theme(spacing.1) theme(spacing.2);
-    font-size: var(--text-sm);
     color: var(--color-text-muted);
     background: none;
     border: 1px solid var(--color-border);
@@ -116,7 +113,6 @@ const currentPath = Astro.url.pathname;
   }
 
   .search-shortcut {
-    font-size: var(--text-2xs);
     color: var(--color-text-subtle);
   }
 

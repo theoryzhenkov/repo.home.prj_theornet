@@ -224,7 +224,6 @@ export function createGraph(
     .style('background', 'var(--color-bg, #fff)')
     .style('border', '1px solid var(--color-border, #ccc)')
     .style('padding', '4px 8px')
-    .style('font-size', 'var(--text-2xs)')
     .style('font-family', 'var(--font-sans)')
     .style('color', 'var(--color-text, #111)')
     .style('opacity', '0')

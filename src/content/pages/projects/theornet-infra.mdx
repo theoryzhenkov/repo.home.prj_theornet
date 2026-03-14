@@ -1,0 +1,17 @@
+---
+title: TheoR.net Infrastructure
+description: NixOS + Terraform repository managing Hetzher machines and Porkbun DNS that together host theor.net
+created: 2026-03-15
+is:
+  - page: project
+links:
+  Github: https://github.com/theoryzhenkov/theor.net-infra
+---
+
+## Hosting
+
+Website is hosted on [Hetzner](https://www.hetzner.com/) servers, machine running on [NixOS](https://nixos.org/). I own domain name [theor.net](theor.net) with [Porkbun](https://porkbun.com/), and manage DNS with [Terraform](https://www.terraform.io/).
+
+The Docker images for applications at `*.theor.net` are deployed to GHCR via a CI pipeline. For more details about deploying a new application to theor.net, see the [deploy](/deploying-to-theor-net-infrastructure) page.
+
+[TODO::]

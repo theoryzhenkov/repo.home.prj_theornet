@@ -3,34 +3,8 @@ title: SPECial
 description: A lightweight specification and documentation standard for spec-driven development
 created: 2026-03-03
 is:
-  project:
+  - page: project
 links:
-  github: https://github.com/theoryzhenkov/SPECial
+  Website: https://theoryzhenkov.github.io/SPECial
+  GitHub: https://github.com/theoryzhenkov/SPECial
 ---
-
-# SPECial
-
-[Documentation](https://theoryzhenkov.github.io/SPECial/) · [GitHub](https://github.com/theoryzhenkov/SPECial)
-
-SPECial is a lightweight specification / documentation standard designed for spec-driven software development. It uses plain markdown files with structured frontmatter to track scope, dependencies, and staleness across a project's documentation.
-
-## Why SPECial?
-
-Documentation drifts from code. SPECial fights this with explicit dependency edges between spec files and automatic staleness detection — if a file you depend on changes, your file is flagged for review.
-
-## Features
-
-- **Scoped depth levels** (L0–L3) — from high-level motivation down to implementation details
-- **Dependency tracking** — declare which files depend on which, with optional section-level granularity
-- **Staleness detection** — `modified` and `reviewed` timestamps propagate through the dependency graph
-- **Zero tooling required** — works with any markdown renderer, compatible with mkdocs
-- **Configurable** via `special.conf.toml` — or use sensible defaults with no config at all
-
-## Scope Levels
-
-| Level | Answers |
-|---|---|
-| L0: Context | What is this domain, why does it exist? |
-| L1: Contracts | What are the interfaces, invariants, constraints? |
-| L2: Structure | What are the components, how do they interact? |
-| L3: Implementation | What are the patterns, edge cases, known issues? |
