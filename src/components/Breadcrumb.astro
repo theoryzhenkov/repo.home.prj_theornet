@@ -1,5 +1,6 @@
 ---
 import type { PageInfo } from '@/lib/relations';
+import { slugToHref } from '@/lib/slugs';
 
 interface Props {
   breadcrumbs: PageInfo[];
@@ -11,10 +12,6 @@ const { breadcrumbs, currentSlug } = Astro.props;
 // Don't render if no breadcrumbs or only current page
 if (breadcrumbs.length <= 1) {
   return null;
-}
-
-function getHref(slug: string): string {
-  return slug === 'index' ? '/' : `/${slug}/`;
 }
 ---
 
@@ -29,7 +26,7 @@ function getHref(slug: string): string {
         <li class="breadcrumb-item">
           {!isLast ? (
             <>
-              <a href={getHref(page.slug)} class="breadcrumb-link">
+              <a href={slugToHref(page.slug)} class="breadcrumb-link">
                 {label}
               </a>
               <span class="breadcrumb-separator" aria-hidden="true">/</span>

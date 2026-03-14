@@ -81,7 +81,7 @@ The `role="note"` attribute provides accessibility semantics. Visual styling (da
 
 Custom plugin (`src/lib/remark-wikilink.ts`). Converts wikilink syntax into anchor tags.
 
-Regex: `/(?:(\w+)::)?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g`
+Regex: `WIKILINK_PATTERN` from `src/lib/slugs.ts` — `/(?:(\w+)::)?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g`
 
 Supported forms:
 
@@ -90,11 +90,13 @@ Supported forms:
 | `[[my-page]]` | `<a href="/my-page/">my-page</a>` |
 | `[[my-page\|display text]]` | `<a href="/my-page/">display text</a>` |
 | `[[index]]` | `<a href="/">index</a>` |
-| `type::[[my-page]]` | `<a href="/my-page/">my-page</a>` (type captured but unused) |
+| `type::[[my-page]]` | `<a href="/my-page/">my-page</a>` (type stripped from HTML output) |
 
-The `index` slug is special-cased to produce `/` instead of `/index/`, matching the routing convention in `src/pages/index.astro`.
+The `index` slug is special-cased to produce `/` instead of `/index/`, via `slugToHref()` from `slugs.ts`.
 
-The optional `type::` prefix (capture group 1) is parsed but currently discarded in the HTML output. It exists to support typed relations (e.g., `parent::[[slug]]`) if the feature is extended later.
+The optional `type::` prefix (capture group 1) is stripped from the rendered HTML, but it is used by `extractLinks()` in `relations.ts` to route typed wiki-links (e.g., `up::[[slug]]`) into the appropriate relation arrays rather than `ref`.
+
+The regex and `slugToHref` are shared with `relations.ts` via `src/lib/slugs.ts` to keep the two consumers in sync.
 
 Uses the same AST transformation pattern as `remarkTodo`: visit text nodes, split on matches, splice replacement nodes.
 
@@ -125,4 +127,5 @@ The MDX integration inherits `shikiConfig` from the `markdown` block automatical
 - `astro.config.ts` -- plugin registration, Shiki theme config
 - `src/lib/remark-todo.ts` -- TODO marker plugin
 - `src/lib/remark-wikilink.ts` -- wikilink plugin
+- `src/lib/slugs.ts` -- shared `WIKILINK_PATTERN` regex and `slugToHref()`
 - `src/styles/components.css` -- `.todo-marker`, `.todo-label`, `[data-callout*]` styles

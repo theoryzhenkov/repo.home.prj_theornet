@@ -41,7 +41,7 @@ The grid is `aside-margin | main | (implicit right aside)`. Inside `<main>`:
 4. `TopRelations` -- relation rows (only if `relations` and `pageInfoMap` both present)
 5. `Metadata` -- created/modified dates
 6. `<slot />` wrapped in `.prose` -- the MDX content
-7. `Footnotes` -- in the page footer
+7. `Footnotes` -- after the prose content (JS-populated on narrow viewports)
 
 `TOC` sits in the left `aside-margin`. `Search` is placed after the grid (fixed-position modal). A `#popup-container` div follows for hover popups.
 
@@ -77,7 +77,7 @@ The script runs on both `DOMContentLoaded` and `astro:page-load` to support view
 
 | Component | Props | Slots | Behavior |
 | --- | --- | --- | --- |
-| `TopRelations` | `relations: PageRelations`, `pages: PageInfoMap`, `links?: Record<string, string>` | none | Renders relation rows (Up, Down, Is, Has, Prev, Next, Ref, Refi) as labeled link lists. Appends a "Links" row for external links if present. Each target links to `/{slug}/`. |
+| `TopRelations` | `relations: PageRelations`, `pages: PageInfoMap`, `links?: Record<string, string>` | none | Renders all relation rows (Up, Down, Is, Has, Prev, Next, Ref, Refi) as labeled link lists. Appends a "Links" row for external links if present. Uses `slugToHref()` from `slugs.ts` for link targets. |
 | `RelationsGraph` | `graph: RelationsGraph`, `pages: PageInfoMap`, `rootSlug: string`, `relationTypes?: EdgeType[]`, `depth?: number`, `height?: string` | none | Calls `buildSubgraphData` to extract a subgraph, serializes it as JSON into a `data-graph` attribute. Client-side JS (via `createGraph` from `@/scripts/graph/renderer`) renders a D3 force-directed graph. Defaults: depth 1, types `['up', 'is', 'next', 'ref']`, height `300px`. Draggable, not zoomable. |
 
 ### Search
@@ -97,14 +97,15 @@ The catch-all route `[...slug].astro` drives all page rendering:
 5. All of this, plus frontmatter fields (`title`, `description`, `created`, `modified`, `links`), is passed as props to `Page.astro`.
 6. `Page.astro` distributes props to child components without transformation, except for `description` which it processes into both an HTML and a plain-text variant.
 
-The graph is rebuilt per page at build time. There is no shared state or caching across pages during SSG.
+`buildRelationsGraph()` is memoized, so the graph is built once per build process and reused across all pages.
 
 ## Key files
 
 - `src/layouts/page/Page.astro` -- main layout, prop distribution, heading links script
 - `src/components/` -- all components listed above
 - `src/pages/[...slug].astro` -- data flow: collection query, graph build, prop assembly
-- `src/lib/relations.ts` -- `buildRelationsGraph`, `getBreadcrumbs`, `getPageRelations`, type definitions
+- `src/lib/relations.ts` -- `buildGraphFromPages`, `getBreadcrumbs`, `getPageRelations`, type definitions
+- `src/lib/relations-graph.ts` -- `buildRelationsGraph` (memoized Astro wrapper)
 - `src/lib/graph-data.ts` -- `buildSubgraphData`, `EdgeType`
 - `src/scripts/popups.ts`, `src/scripts/footnotes.ts`, `src/scripts/toc-scrollspy.ts` -- client-side behavior
 - `src/scripts/graph/renderer.ts` -- D3 graph rendering

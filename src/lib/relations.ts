@@ -1,4 +1,4 @@
-import { getCollection } from 'astro:content';
+import { WIKILINK_PATTERN, pathToSlug } from './slugs';
 
 export interface RelationTarget {
   slug: string;
@@ -24,7 +24,7 @@ export interface PageInfo {
 export type RelationsGraph = Map<string, PageRelations>;
 export type PageInfoMap = Map<string, PageInfo>;
 
-interface RawRelations {
+export interface RawRelations {
   up?: Record<string, string | null>;
   is?: Record<string, string | null>;
   next?: string;
@@ -33,7 +33,7 @@ interface RawRelations {
   refi?: string[];
 }
 
-function parseRelationMap(map?: Record<string, string | null>): RelationTarget[] {
+export function parseRelationMap(map?: Record<string, string | null>): RelationTarget[] {
   if (!map) return [];
   return Object.entries(map).map(([slug, label]) => ({
     slug,
@@ -41,7 +41,7 @@ function parseRelationMap(map?: Record<string, string | null>): RelationTarget[]
   }));
 }
 
-function emptyRelations(): PageRelations {
+export function emptyRelations(): PageRelations {
   return {
     up: [], down: [],
     is: [], has: [],
@@ -49,32 +49,17 @@ function emptyRelations(): PageRelations {
   };
 }
 
-function addUniqueTarget(arr: RelationTarget[], slug: string, label?: string): void {
+export function addUniqueTarget(arr: RelationTarget[], slug: string, label?: string): void {
   if (!arr.some(t => t.slug === slug)) {
     arr.push({ slug, ...(label ? { label } : {}) });
   }
 }
 
-function addUnique(arr: string[], value: string): void {
+export function addUnique(arr: string[], value: string): void {
   if (!arr.includes(value)) arr.push(value);
 }
 
-/**
- * Convert a page slug to its URL path.
- */
-function slugToPath(slug: string): string {
-  return slug === 'index' ? '/' : `/${slug}`;
-}
-
-/**
- * Convert a URL path back to a page slug.
- */
-function pathToSlug(path: string): string {
-  if (path === '/') return 'index';
-  return path.replace(/^\//, '');
-}
-
-interface ExtractedLinks {
+export interface ExtractedLinks {
   ref: string[];
   typed: { relation: string; slug: string }[];
 }
@@ -83,7 +68,7 @@ interface ExtractedLinks {
  * Extract internal link target slugs from raw MDX body.
  * Handles both markdown links `[text](href)` and wiki-links `[[slug]]` / `rel::[[slug]]`.
  */
-function extractLinks(body: string, sourceSlug: string, knownSlugs: Set<string>): ExtractedLinks {
+export function extractLinks(body: string, sourceSlug: string, knownSlugs: Set<string>): ExtractedLinks {
   const result: ExtractedLinks = { ref: [], typed: [] };
 
   // Markdown links
@@ -105,9 +90,9 @@ function extractLinks(body: string, sourceSlug: string, knownSlugs: Set<string>)
   }
 
   // Wiki-links: optional relation prefix, slug, optional alias
-  const wikiRegex = /(?:(\w+)::)?\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+  const wikiRegex = new RegExp(WIKILINK_PATTERN.source, WIKILINK_PATTERN.flags);
   while ((match = wikiRegex.exec(body)) !== null) {
-    const relation = match[1]; // optional prefix like "up", "ref", "is"
+    const relation = match[1];
     const slug = match[2].trim();
     if (!knownSlugs.has(slug) || slug === sourceSlug) continue;
 
@@ -123,8 +108,16 @@ function extractLinks(body: string, sourceSlug: string, knownSlugs: Set<string>)
   return result;
 }
 
+/** Page-like input for buildGraphFromPages, decoupled from Astro's collection type. */
+export interface PageInput {
+  id: string;
+  data: { title: string } & RawRelations;
+  body?: string;
+}
+
 /**
- * Build a relations graph from all pages with bidirectional inference.
+ * Build a relations graph from page data with bidirectional inference.
+ * Pure function — no Astro imports, fully testable.
  *
  * Inference rules:
  * - A.up includes B   -> B.down includes A
@@ -132,13 +125,12 @@ function extractLinks(body: string, sourceSlug: string, knownSlugs: Set<string>)
  * - A.next = B        -> B.prev = A
  * - A.prev = B        -> B.next = A
  * - Markdown link A->B -> A.ref includes B, B.refi includes A
+ * - A.refi = B (explicit) -> B.ref includes A
  */
-export async function buildRelationsGraph(): Promise<{
+export function buildGraphFromPages(allPages: PageInput[]): {
   graph: RelationsGraph;
   pages: PageInfoMap;
-}> {
-  const allPages = await getCollection('pages');
-
+} {
   const graph: RelationsGraph = new Map();
   const pages: PageInfoMap = new Map();
   const knownSlugs = new Set(allPages.map(p => p.id));
@@ -146,7 +138,7 @@ export async function buildRelationsGraph(): Promise<{
   // First pass: collect explicit relations, page info, and extract links
   for (const page of allPages) {
     const slug = page.id;
-    const data = page.data as { title: string } & RawRelations;
+    const data = page.data;
 
     pages.set(slug, { slug, title: data.title });
 
@@ -182,7 +174,6 @@ export async function buildRelationsGraph(): Promise<{
       } else if (relation === 'is') {
         addUniqueTarget(rel.is, targetSlug);
       }
-      // Other typed relations can be added here as needed
     }
 
     graph.set(slug, rel);
@@ -190,37 +181,31 @@ export async function buildRelationsGraph(): Promise<{
 
   // Second pass: infer bidirectional relations
   for (const [slug, rel] of graph) {
-    // up -> down
     for (const target of rel.up) {
       const targetRel = graph.get(target.slug);
       if (targetRel) addUniqueTarget(targetRel.down, slug, target.label);
     }
 
-    // is -> has
     for (const target of rel.is) {
       const targetRel = graph.get(target.slug);
       if (targetRel) addUniqueTarget(targetRel.has, slug, target.label);
     }
 
-    // next -> prev
     if (rel.next) {
       const nextRel = graph.get(rel.next);
       if (nextRel && !nextRel.prev) nextRel.prev = slug;
     }
 
-    // prev -> next
     if (rel.prev) {
       const prevRel = graph.get(rel.prev);
       if (prevRel && !prevRel.next) prevRel.next = slug;
     }
 
-    // ref -> refi
     for (const target of rel.ref) {
       const targetRel = graph.get(target);
       if (targetRel) addUnique(targetRel.refi, slug);
     }
 
-    // refi -> ref (if A.refi=B explicitly, then B.ref+=A)
     for (const target of rel.refi) {
       const targetRel = graph.get(target);
       if (targetRel) addUnique(targetRel.ref, slug);

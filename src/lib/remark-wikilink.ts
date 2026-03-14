@@ -1,8 +1,7 @@
 import type { Root, Text } from 'mdast';
 import type { Plugin } from 'unified';
 import { visit } from 'unist-util-visit';
-
-const WIKILINK_PATTERN = /(?:(\w+)::)?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+import { WIKILINK_PATTERN, slugToHref } from './slugs';
 
 const remarkWikilink: Plugin<[], Root> = () => {
   return (tree) => {
@@ -19,7 +18,7 @@ const remarkWikilink: Plugin<[], Root> = () => {
         const start = match.index!;
         const slug = match[2].trim();
         const alias = match[3]?.trim();
-        const href = slug === 'index' ? '/' : `/${slug}/`;
+        const href = slugToHref(slug);
         const display = alias ?? slug;
 
         if (start > lastEnd) {

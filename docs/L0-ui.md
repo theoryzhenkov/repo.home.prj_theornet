@@ -3,6 +3,7 @@ scope: L0
 summary: "UI components, layout system, and DSRD design tokens"
 modified: 2026-03-15
 reviewed: 2026-03-15
+
 depends:
   - path: README
 dependents:
@@ -46,7 +47,7 @@ The page template lives in `src/layouts/page/Page.astro`, rendered by the catch-
 | `Header.astro` | Sticky nav bar |
 | `Breadcrumb.astro` | Hierarchy path |
 | `TOC.astro` | Table of contents with scroll spy (`toc-scrollspy.ts`) |
-| `TopRelations.astro` / `BottomRelations.astro` | Display page relations |
+| `TopRelations.astro` | Display page relations (up, down, is, has, prev, next, ref, refi) |
 | `RelationsGraph.astro` | D3 force-directed graph of all pages |
 | `Search.astro` | Pagefind search integration |
 | `Footnote.astro` / `Footnotes.astro` | Inline footnotes with popup behavior (`footnotes.ts`) |

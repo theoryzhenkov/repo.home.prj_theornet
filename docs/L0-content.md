@@ -48,5 +48,7 @@ Breadcrumbs walk up the `up` chain to build a containment path from root to curr
 
 - `src/content.config.ts` -- collection definition and Zod schema
 - `src/content/pages/` -- all MDX content
-- `src/lib/relations.ts` -- graph builder, breadcrumbs, link extraction
+- `src/lib/relations.ts` -- relation types, link extraction, `buildGraphFromPages()`, breadcrumbs
+- `src/lib/relations-graph.ts` -- Astro-dependent `buildRelationsGraph()` wrapper (memoized)
+- `src/lib/slugs.ts` -- shared slug/URL utilities and wiki-link regex
 - `src/lib/graph-data.ts` -- D3 graph data preparation

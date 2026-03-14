@@ -1,5 +1,6 @@
 ---
 import type { PageRelations, PageInfoMap, RelationTarget } from '@/lib/relations';
+import { slugToHref } from '@/lib/slugs';
 
 interface Props {
   relations: PageRelations;
@@ -8,10 +9,6 @@ interface Props {
 }
 
 const { relations, pages, links } = Astro.props;
-
-function getHref(slug: string): string {
-  return slug === 'index' ? '/' : `/${slug}/`;
-}
 
 function getTitle(slug: string): string {
   return pages.get(slug)?.title ?? slug;
@@ -62,7 +59,7 @@ const hasAny = hasRelations || hasLinks;
         {row.targets.map((target, i) => (
           <>
             {i > 0 && <span class="top-relations-sep">,</span>}
-            <a href={getHref(target.slug)}>
+            <a href={slugToHref(target.slug)}>
               {target.label ? `${target.label}: ` : ''}{getTitle(target.slug)}
             </a>
           </>

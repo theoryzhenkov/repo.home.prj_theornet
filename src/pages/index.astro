@@ -1,7 +1,8 @@
 ---
 import { getEntry, render } from 'astro:content';
 import Page from '@layouts/page/Page.astro';
-import { buildRelationsGraph, getBreadcrumbs, getPageRelations } from '@/lib/relations';
+import { getBreadcrumbs, getPageRelations } from '@/lib/relations';
+import { buildRelationsGraph } from '@/lib/relations-graph';
 
 const entry = await getEntry('pages', 'index');
 if (!entry) {

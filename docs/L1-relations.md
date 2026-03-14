@@ -59,13 +59,14 @@ All relation fields are optional. The Zod schema in `content.config.ts` uses `.p
 
 The `next`/`prev` inference is asymmetric: explicit declarations win. If B already has a `prev` value (from its own frontmatter or an earlier inference pass), A's `next: B` will not overwrite it.
 
-## buildRelationsGraph() contract
+## buildGraphFromPages() / buildRelationsGraph()
 
-**Input**: Reads the entire `pages` collection via Astro's `getCollection('pages')`.
+The graph-building logic is split into two layers:
+
+- `buildGraphFromPages(pages)` in `relations.ts` -- pure function that takes page data and returns the graph. Fully testable without Astro imports.
+- `buildRelationsGraph()` in `relations-graph.ts` -- thin async wrapper that calls `getCollection('pages')` and delegates to `buildGraphFromPages`. Memoized so the graph is computed once per build, not per page.
 
 **Output**: Returns `{ graph: RelationsGraph, pages: PageInfoMap }` where `RelationsGraph` is `Map<string, PageRelations>` and `PageInfoMap` is `Map<string, PageInfo>` (slug + title pairs).
-
-**When it runs**: Called at build time (or dev-server startup). It is async because `getCollection` is async.
 
 The function executes in two passes. The first pass iterates every page, parsing frontmatter relations, extracting links from the MDX body, and building each page's initial `PageRelations`. The second pass walks the graph and fires the inference rules above, adding inverse entries to target pages.
 
@@ -81,7 +82,7 @@ Markdown links are included when they point to a known page slug. The following 
 - Links pointing to the source page itself (self-references)
 - Links whose resolved slug does not match any page in the collection
 
-Relative paths are normalized: leading `./` is stripped, a leading `/` is ensured, and trailing slashes are removed. The resulting path is converted to a slug via `pathToSlug`.
+Relative paths are normalized: leading `./` is stripped, a leading `/` is ensured, and trailing slashes are removed. The resulting path is converted to a slug via `pathToSlug` (from `slugs.ts`).
 
 Wiki-links support an optional relation prefix (`up::[[slug]]`, `is::[[slug]]`). Prefixed wiki-links with `up` or `is` are routed into those typed relation arrays rather than `ref`. Unprefixed wiki-links and `ref::`-prefixed wiki-links go into `ref`. Wiki-links also support aliases (`[[slug|display text]]`), though the alias is ignored for relation purposes.
 
@@ -101,6 +102,8 @@ The function walks the `up` chain by always following `up[0]` (the first declare
 
 ## Key files
 
-- `src/lib/relations.ts` -- `PageRelations` interface, `buildRelationsGraph()`, `getBreadcrumbs()`, link extraction
+- `src/lib/relations.ts` -- `PageRelations` interface, `buildGraphFromPages()`, `getBreadcrumbs()`, `extractLinks()`
+- `src/lib/relations-graph.ts` -- `buildRelationsGraph()` (Astro wrapper, memoized)
+- `src/lib/slugs.ts` -- `slugToHref()`, `pathToSlug()`, `WIKILINK_PATTERN`
 - `src/lib/graph-data.ts` -- `GraphData` interfaces, `buildGraphData()`, `buildSubgraphData()`
 - `src/content.config.ts` -- Zod schema defining the frontmatter relation fields
