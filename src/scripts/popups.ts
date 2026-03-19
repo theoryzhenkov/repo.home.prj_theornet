@@ -188,7 +188,7 @@ function handleLinkLeave(event: MouseEvent) {
 export function initPopups() {
   // Use event delegation on article (includes header, body, footer)
   // mouseover/mouseout bubble properly for event delegation (unlike mouseenter/mouseleave)
-  const article = document.querySelector('.article');
+  const article = document.querySelector('article');
   if (article) {
     article.addEventListener('mouseover', handleLinkHover as unknown as EventListener);
     article.addEventListener('mouseout', handleLinkLeave as unknown as EventListener);

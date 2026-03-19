@@ -3,6 +3,7 @@ interface Heading {
   depth: number;
   slug: string;
   text: string;
+  wordCount?: number;
 }
 
 interface Props {
@@ -11,60 +12,65 @@ interface Props {
 
 const { headings } = Astro.props;
 
-// Filter to only show h2 and h3
+const WPM = 238;
+
+// Filter to h2 and h3
 const tocHeadings = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+
+// Compute read time per heading: words from this heading to next heading of same/higher level
+function computeReadTime(wordCount: number | undefined): string {
+  if (wordCount === undefined || wordCount === 0) return '';
+  const minutes = wordCount / WPM;
+  if (minutes < 1) return '< 1m';
+  return `${Math.round(minutes)}m`;
+}
+
+// Group headings: each h2 starts a group, h3s belong to the preceding h2's group
+interface TocGroup {
+  entries: { heading: Heading; time: string }[];
+}
+
+const groups: TocGroup[] = [];
+let currentGroup: TocGroup | null = null;
+
+for (const heading of tocHeadings) {
+  const time = computeReadTime(heading.wordCount);
+  if (heading.depth === 2) {
+    currentGroup = { entries: [{ heading, time }] };
+    groups.push(currentGroup);
+  } else if (currentGroup) {
+    currentGroup.entries.push({ heading, time });
+  } else {
+    // h3 without a preceding h2 — create its own group
+    currentGroup = { entries: [{ heading, time }] };
+    groups.push(currentGroup);
+  }
+}
 ---
 
 {tocHeadings.length > 0 && (
-  <nav class="aside-panel" aria-label="Table of contents">
-    <h2 class="aside-panel-title">Contents</h2>
-    <ol class="aside-panel-list">
-      {tocHeadings.map((heading) => (
-        <li class="toc-item" data-depth={heading.depth}>
-          <a href={`#${heading.slug}`} class="toc-link">
-            {heading.text}
-          </a>
-        </li>
+  <nav class="toc" aria-label="Table of contents">
+    <span class="toc-label">CONTENTS</span>
+    <div class="toc-separator"></div>
+    <div class="toc-items">
+      {groups.map((group) => (
+        <div class="toc-group">
+          {group.entries.map((entry) => (
+            <a
+              class="toc-entry"
+              data-state="unread"
+              data-depth={entry.heading.depth}
+              href={`#${entry.heading.slug}`}
+            >
+              <span class="toc-text">{entry.heading.text}</span>
+              {entry.time && <span class="toc-time">{entry.time}</span>}
+            </a>
+          ))}
+        </div>
       ))}
-    </ol>
+    </div>
   </nav>
 )}
-
-<style>
-  .aside-panel {
-    overflow-y: auto;
-  }
-
-  .aside-panel-list {
-    border-left: 1px solid var(--color-border);
-  }
-
-  .toc-item {
-    margin-bottom: 0;
-  }
-
-  .toc-item[data-depth="3"] {
-    padding-left: theme(spacing.3);
-  }
-
-  .toc-link {
-    display: block;
-    padding: theme(spacing.1) theme(spacing.2);
-    color: var(--color-text-muted);
-    text-decoration: none;
-    line-height: var(--leading-snug);
-  }
-
-  .toc-link:hover {
-    color: var(--color-link);
-  }
-
-  .toc-link.active {
-    color: var(--color-text);
-    font-weight: 700;
-    background-color: var(--color-bg-subtle);
-  }
-</style>
 
 <script>
   import '@/scripts/toc-scrollspy';

@@ -1,132 +1,113 @@
 ---
 const navItems = [
-  { href: '/', label: 'Home' },
-  { href: '/me', label: 'Me' },
-  { href: '/projects', label: 'Projects' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/contact', label: 'Contact' },
-  { href: '/graph', label: 'Graph' },
+  { href: '/', label: 'index' },
+  { href: '/projects/', label: 'projects' },
+  { href: '/blog/', label: 'blog' },
+  { href: '/about/', label: 'about' },
 ];
 
 const currentPath = Astro.url.pathname;
 ---
 
 <header class="header">
-  <nav class="header-nav">
-    <a href="/" class="site-logo">
-      <img src="/cue-256x256-home-theor-net.png" alt="" class="logo-icon" />
-      <span class="logo-text">TheoR.net</span>
-    </a>
-    
-    <div class="nav-links">
-      {navItems.map((item) => (
-        <a 
-          href={item.href} 
-          class:list={['nav-link', { active: currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href)) }]}
-        >
-          {item.label}
-        </a>
-      ))}
-      
-      <button type="button" class="search-trigger" aria-label="Search" data-search-open>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <div class="header-inner">
+    <div class="header-left">
+      <a href="/" class="header-mark">theor.net</a>
+      <span class="header-sep">/</span>
+      <nav class="header-nav" aria-label="Main navigation">
+        {navItems.map((item) => (
+          <a
+            href={item.href}
+            class:list={[
+              'header-nav-link',
+              {
+                active:
+                  currentPath === item.href ||
+                  (item.href !== '/' && currentPath.startsWith(item.href)),
+              },
+            ]}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+      <button
+        type="button"
+        class="header-mobile-trigger"
+        aria-label="Toggle navigation"
+        aria-expanded="false"
+        data-nav-toggle
+      >
+        nav
+      </button>
+    </div>
+
+    <div class="header-center"></div>
+
+    <div class="header-right">
+      <button type="button" class="header-icon-btn" aria-label="Search" data-search-open>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.35-4.35" />
         </svg>
-        <span class="search-shortcut">⌘K</span>
+      </button>
+      <button type="button" class="header-icon-btn" aria-label="Toggle theme" data-theme-toggle>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5" />
+          <line x1="12" y1="1" x2="12" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="23" />
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+          <line x1="1" y1="12" x2="3" y2="12" />
+          <line x1="21" y1="12" x2="23" y2="12" />
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+        </svg>
       </button>
     </div>
+  </div>
+
+  <nav class="header-dropdown" aria-label="Mobile navigation" data-nav-dropdown hidden>
+    {navItems.map((item) => (
+      <a
+        href={item.href}
+        class:list={[
+          'header-dropdown-link',
+          {
+            active:
+              currentPath === item.href ||
+              (item.href !== '/' && currentPath.startsWith(item.href)),
+          },
+        ]}
+      >
+        {item.label}
+      </a>
+    ))}
   </nav>
+  <div class="header-progress" aria-hidden="true"></div>
 </header>
 
-<style>
-  .header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background-color: var(--color-bg);
-      border-bottom: 1px solid var(--color-border);
-  }
+<script>
+  import '@/scripts/reading-progress';
 
-  .header-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    max-width: var(--width-page);
-    margin: 0 auto;
-    padding: theme(spacing.2) theme(spacing.4);
-  }
+  function initHeader() {
+    // Mobile nav toggle
+    const toggle = document.querySelector('[data-nav-toggle]');
+    const dropdown = document.querySelector('[data-nav-dropdown]');
 
-  .site-logo {
-    display: flex;
-    align-items: center;
-    gap: theme(spacing.2);
-    font-weight: 700;
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  .site-logo:hover {
-    color: var(--color-link);
-  }
-
-  .logo-icon {
-    width: 1.25rem;
-    height: 1.25rem;
-    display: block;
-  }
-
-  .nav-links {
-    display: flex;
-    align-items: center;
-    gap: theme(spacing.4);
-  }
-
-  .nav-link {
-    color: var(--color-text-muted);
-    text-decoration: none;
-  }
-
-  .nav-link:hover {
-    color: var(--color-link);
-  }
-
-  .nav-link.active {
-    color: var(--color-text);
-    font-weight: 700;
-  }
-
-  .search-trigger {
-    display: flex;
-    align-items: center;
-    gap: theme(spacing.1);
-    padding: theme(spacing.1) theme(spacing.2);
-    color: var(--color-text-muted);
-    background: none;
-    border: 1px solid var(--color-border);
-    cursor: pointer;
-  }
-
-  .search-trigger:hover {
-    color: var(--color-text);
-    border-color: var(--color-text-muted);
-  }
-
-  .search-shortcut {
-    color: var(--color-text-subtle);
-  }
-
-  @media (width <= 640px) {
-    .header-nav {
-      padding: theme(spacing.2) theme(spacing.2);
-    }
-
-    .logo-text {
-      display: none;
-    }
-
-    .search-shortcut {
-      display: none;
+    if (toggle && dropdown) {
+      toggle.addEventListener('click', () => {
+        const expanded = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', String(!expanded));
+        dropdown.hidden = expanded;
+      });
     }
   }
-</style>
+
+  document.addEventListener('astro:page-load', initHeader);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeader);
+  } else {
+    initHeader();
+  }
+</script>

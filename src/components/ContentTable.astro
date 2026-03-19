@@ -25,7 +25,6 @@ const filteredPages = allPages.filter((page) => page.id.startsWith(path));
 // Build row data with all fields
 const rows = filteredPages.map((page) => {
   const data: Record<string, unknown> = { ...page.data };
-  // Add computed fields
   data._id = page.id;
   data._href = `/${page.id}`;
   return data;
@@ -48,9 +47,9 @@ for (const col of columns) {
 
 // Format value for display
 function formatValue(value: unknown, type?: string): string {
-  if (value === undefined || value === null) return '—';
+  if (value === undefined || value === null) return '\u2014';
   if (type === 'date' && value instanceof Date) {
-    return value.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    return value.toISOString().slice(0, 10);
   }
   if (Array.isArray(value)) {
     return value.join(', ');
@@ -82,9 +81,9 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
   {Object.keys(filterOptions).length > 0 && (
     <div class="content-table-filters">
       {columns.filter(col => col.filterable).map((col) => (
-        <div class="filter-group">
+        <div class="ct-filter-group">
           <label for={`${tableId}-filter-${col.field}`}>{col.label}</label>
-          <select 
+          <select
             id={`${tableId}-filter-${col.field}`}
             data-filter-field={col.field}
           >
@@ -102,18 +101,18 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
     <thead>
       <tr>
         {columns.map((col) => (
-          <th 
+          <th
             data-field={col.field}
             data-sortable={col.sortable ? 'true' : undefined}
             data-sort-type={col.type === 'date' ? 'numeric' : 'text'}
-            class:list={[{ sortable: col.sortable }]}
-            aria-sort={defaultSort?.field === col.field 
-              ? (defaultSort.direction === 'asc' ? 'ascending' : 'descending') 
+            class:list={['ct-th', { 'ct-th-sortable': col.sortable }]}
+            aria-sort={defaultSort?.field === col.field
+              ? (defaultSort.direction === 'asc' ? 'ascending' : 'descending')
               : undefined}
           >
-            <span class="th-content">
+            <span class="ct-th-content">
               {col.label}
-              {col.sortable && <span class="sort-indicator" aria-hidden="true"></span>}
+              {col.sortable && <span class="ct-sort-indicator" aria-hidden="true"></span>}
             </span>
           </th>
         ))}
@@ -121,7 +120,7 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
     </thead>
     <tbody>
       {rows.map((row) => (
-        <tr>
+        <tr class="ct-row">
           {columns.map((col) => {
             const value = row[col.field];
             const displayValue = formatValue(value, col.type);
@@ -137,17 +136,18 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
                 data-field={col.field}
                 data-sort-value={sortValue}
                 data-filter-value={col.filterable ? String(value ?? '') : undefined}
+                class="ct-td"
               >
                 {isPageLink ? (
-                  <a href={String(row._href)}>{displayValue}</a>
+                  <a href={String(row._href)} class="ct-title-link">{displayValue}</a>
                 ) : isLinks ? (
-                  <span class="links-cell">
+                  <span class="ct-links-cell">
                     {linksEntries.map(([type, url], i) => (
                       <>
                         {i > 0 && ', '}
-                        <a href={String(url)} class="external-link" target="_blank" rel="noopener noreferrer">
+                        <a href={String(url)} class="ct-external-link" target="_blank" rel="noopener noreferrer">
                           {type}
-                          <svg class="external-icon" viewBox="0 0 16 16" aria-hidden="true">
+                          <svg class="ct-external-icon" viewBox="0 0 16 16" aria-hidden="true">
                             <path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5H4.5v9h9V9.75a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 13.25 15H3.75A1.75 1.75 0 0 1 2 13.25V3.75C2 2.784 2.784 2 3.75 2Zm6.854.22a.75.75 0 0 1 .896-.22l3 1.5a.75.75 0 0 1 .126 1.238l-3 2.5a.75.75 0 0 1-.96-1.152l1.564-1.303-5.47 5.47a.75.75 0 0 1-1.06-1.06l5.47-5.47-1.303 1.564a.75.75 0 0 1-1.152-.96l1.5-3a.75.75 0 0 1 .389-.107Z" fill="currentColor"/>
                           </svg>
                         </a>
@@ -155,14 +155,17 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
                     ))}
                   </span>
                 ) : isUrl ? (
-                  <a href={String(value)} class="external-link" target="_blank" rel="noopener noreferrer">
+                  <a href={String(value)} class="ct-external-link" target="_blank" rel="noopener noreferrer">
                     {new URL(String(value)).hostname.replace('www.', '')}
-                    <svg class="external-icon" viewBox="0 0 16 16" aria-hidden="true">
+                    <svg class="ct-external-icon" viewBox="0 0 16 16" aria-hidden="true">
                       <path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5H4.5v9h9V9.75a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 13.25 15H3.75A1.75 1.75 0 0 1 2 13.25V3.75C2 2.784 2.784 2 3.75 2Zm6.854.22a.75.75 0 0 1 .896-.22l3 1.5a.75.75 0 0 1 .126 1.238l-3 2.5a.75.75 0 0 1-.96-1.152l1.564-1.303-5.47 5.47a.75.75 0 0 1-1.06-1.06l5.47-5.47-1.303 1.564a.75.75 0 0 1-1.152-.96l1.5-3a.75.75 0 0 1 .389-.107Z" fill="currentColor"/>
                     </svg>
                   </a>
                 ) : isStatus ? (
-                  <span class="status-badge" data-status={String(value ?? '').toLowerCase()}>
+                  <span
+                    class="ct-maturity"
+                    data-maturity={String(value ?? '').toLowerCase()}
+                  >
                     {displayValue}
                   </span>
                 ) : (
@@ -215,7 +218,6 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
         const field = th.getAttribute('data-field');
         if (!field) return;
 
-        // Toggle direction if same field, otherwise default to asc
         if (state.sortField === field) {
           state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
@@ -223,7 +225,6 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
           state.sortDirection = 'asc';
         }
 
-        // Update aria-sort attributes
         table.querySelectorAll('th[data-sortable]').forEach((t) => {
           t.removeAttribute('aria-sort');
         });
@@ -260,7 +261,7 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
       rows.sort((a, b) => {
         const aCell = a.querySelector(`td[data-field="${state.sortField}"]`);
         const bCell = b.querySelector(`td[data-field="${state.sortField}"]`);
-        
+
         const aVal = aCell?.getAttribute('data-sort-value') || '';
         const bVal = bCell?.getAttribute('data-sort-value') || '';
 
@@ -274,20 +275,19 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
         return state.sortDirection === 'asc' ? comparison : -comparison;
       });
 
-      // Re-append rows in sorted order
       rows.forEach((row) => tbody!.appendChild(row));
     }
 
     function applyFilters() {
       const rows = tbody!.querySelectorAll('tr');
-      
+
       rows.forEach((row) => {
         let visible = true;
-        
+
         for (const [field, filterValue] of Object.entries(state.filters)) {
           const cell = row.querySelector(`td[data-field="${field}"]`);
           const cellValue = cell?.getAttribute('data-filter-value') || '';
-          
+
           if (cellValue !== filterValue) {
             visible = false;
             break;
@@ -297,7 +297,6 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
         (row as HTMLElement).style.display = visible ? '' : 'none';
       });
 
-      // Update empty state
       const visibleRows = tbody!.querySelectorAll('tr:not([style*="display: none"])');
       const emptyMsg = wrapper.querySelector('.content-table-empty');
       if (emptyMsg) {
@@ -306,14 +305,12 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
     }
   }
 
-  // Initialize all content tables
   function initAllTables() {
     document.querySelectorAll('.content-table-wrapper').forEach((wrapper) => {
       initContentTable(wrapper as HTMLElement);
     });
   }
 
-  // Support Astro view transitions
   document.addEventListener('astro:page-load', initAllTables);
   if (document.readyState === 'complete') {
     initAllTables();
@@ -321,169 +318,3 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
     document.addEventListener('DOMContentLoaded', initAllTables);
   }
 </script>
-
-<style>
-  .content-table-wrapper {
-    margin: theme(spacing.3) 0;
-  }
-
-  .content-table-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: theme(spacing.3);
-    margin-bottom: theme(spacing.2);
-    padding: theme(spacing.2);
-    background-color: var(--color-bg-subtle);
-    border: 1px solid var(--color-border);
-  }
-
-  .filter-group {
-    display: flex;
-    align-items: center;
-    gap: theme(spacing.1);
-  }
-
-  .filter-group label {
-    color: var(--color-text-muted);
-  }
-
-  .filter-group select {
-    padding: 2px 6px;
-    color: var(--color-text);
-    background-color: var(--color-bg);
-    border: 1px solid var(--color-border);
-    cursor: pointer;
-  }
-
-  .filter-group select:hover {
-    border-color: var(--color-text-muted);
-  }
-
-  .filter-group select:focus {
-    outline: none;
-    border-color: var(--color-link);
-  }
-
-  .content-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .content-table th,
-  .content-table td {
-    padding: theme(spacing.1) theme(spacing.2);
-    text-align: left;
-    border: 1px solid var(--color-border);
-  }
-
-  .content-table th {
-    font-weight: 700;
-    color: var(--color-text);
-    background-color: var(--color-bg-subtle);
-  }
-
-  .content-table th.sortable {
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .content-table th.sortable:hover {
-    background-color: var(--color-bg-muted);
-  }
-
-  .th-content {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-  }
-
-  .sort-indicator {
-    display: inline-block;
-    width: 0;
-    height: 0;
-    border-left: 3px solid transparent;
-    border-right: 3px solid transparent;
-    opacity: 0.3;
-  }
-
-  th[aria-sort="ascending"] .sort-indicator {
-    border-bottom: 4px solid currentColor;
-    border-top: none;
-    opacity: 1;
-  }
-
-  th[aria-sort="descending"] .sort-indicator {
-    border-top: 4px solid currentColor;
-    border-bottom: none;
-    opacity: 1;
-  }
-
-  th:not([aria-sort]) .sort-indicator {
-    border-bottom: 3px solid currentColor;
-  }
-
-  .content-table tbody tr:hover {
-    background-color: var(--color-bg-subtle);
-  }
-
-  .content-table td a {
-    color: var(--color-link);
-    text-decoration: underline;
-  }
-
-  .content-table td a:hover {
-    color: var(--color-link-hover);
-  }
-
-  .external-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-  }
-
-  .external-icon {
-    width: 0.8em;
-    height: 0.8em;
-    opacity: 0.5;
-  }
-
-  .status-badge {
-    text-transform: capitalize;
-    color: var(--color-text-muted);
-  }
-
-  .status-badge[data-status="active"],
-  .status-badge[data-status="in-progress"],
-  .status-badge[data-status="wip"] {
-    color: var(--color-warning);
-  }
-
-  .status-badge[data-status="completed"],
-  .status-badge[data-status="done"],
-  .status-badge[data-status="finished"] {
-    color: var(--color-success);
-  }
-
-  .content-table-empty {
-    padding: theme(spacing.4);
-    text-align: center;
-    color: var(--color-text-subtle);
-  }
-
-  @media (width <= 640px) {
-    .content-table-filters {
-      flex-direction: column;
-      gap: theme(spacing.1);
-    }
-
-    .filter-group {
-      width: 100%;
-      justify-content: space-between;
-    }
-
-    .filter-group select {
-      flex: 1;
-      max-width: 200px;
-    }
-  }
-</style>
