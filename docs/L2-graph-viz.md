@@ -149,6 +149,35 @@ Default behavior navigates to the page: slug `'index'` maps to `'/'`, others to 
 
 The legend panel is collapsible via a toggle button. It is positioned absolutely in the top-left corner of the graph container.
 
+## Focus affordance
+
+The metadata strip on every article page includes a "graph" text link pointing to `/graph?focus={slug}`. This connects the reading flow to the graph visualization.
+
+### Metadata strip link
+
+The word `graph` appears in the context line (row 1 of the metadata strip), after the dates:
+
+```
+stable · 4 min · created 2025-06-12 · updated 2026-01-15 · graph
+```
+
+It is a teal link (`--color-accent`) in Commit Mono at `--text-xs`, matching the rest of the context line. No icon, no button chrome -- just a text link in the metadata row. The link is always present since every page is a node in the graph.
+
+### Graph page `?focus=slug` behavior
+
+The `/graph` page receives `?focus=slug` as a query parameter. On load, the graph should:
+
+1. Center the viewport on the focused node.
+2. Highlight the focused node with `--color-accent` fill and a slightly larger radius.
+3. Dim non-adjacent nodes to `opacity: 0.3` for 2 seconds, then fade back to full opacity.
+4. The focus effect is temporary orientation, not a permanent filter.
+
+The graph already supports node highlighting via click -- this reuses that mechanism on page load.
+
+### Why the metadata strip, not the header
+
+The header is persistent scroll chrome. A per-page affordance like "view in graph" belongs in the metadata strip where other per-page context lives. Putting it in the header would mean it competes with site-wide navigation during reading. A floating button would add a z-layer and positioning logic for a feature that does not warrant urgency.
+
 ## Key files
 
 | File | Role |

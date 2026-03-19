@@ -176,7 +176,7 @@ All hover transitions: `120ms ease`. No elaborate animations.
 | bar-height | MUST | Header bar is exactly 44px tall in both modes |
 | three-zones | MUST | Header contains left, center, and right zones as flex children |
 | article-center-empty | MUST | Article-mode center zone is empty; reading context lives in the metadata strip below the title |
-| listing-nav-center | MUST | Listing-mode center zone contains promoted nav links |
+| listing-center-empty | MUST | Listing-mode center zone is empty; nav links stay in the left zone on all page types |
 | progress-bar | MUST | Article pages show a 2px reading progress bar at the header bottom edge |
 | nav-always-reachable | MUST | All four nav destinations are reachable within one click/tap on every page |
 | mobile-collapse | MUST | Center zone collapses below 768px; nav moves to dropdown |

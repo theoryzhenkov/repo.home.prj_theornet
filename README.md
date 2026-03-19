@@ -33,8 +33,7 @@ Pages are MDX files interconnected through a relation system (`up/down`, `is/has
 | [docs/L2-header-nav](docs/L2-header-nav.md) | L2 | Header bar, navigation zones, mobile behavior |
 | [docs/L2-info-architecture](docs/L2-info-architecture.md) | L2 | Metadata model, consolidated strip, backlinks |
 | [docs/L2-information-density](docs/L2-information-density.md) | L2 | Density proposals: graph focus, link types, freshness |
-| [docs/L2-reading-experience](docs/L2-reading-experience.md) | L2 | TOC scroll spy, sidenote sync, link previews |
-| [docs/L2-toc-design](docs/L2-toc-design.md) | L2 | Enriched TOC: read time, depth lines, read state |
+| [docs/L2-reading-experience](docs/L2-reading-experience.md) | L2 | TOC, sidenotes, link previews, TOC enrichments |
 | [docs/L3-footnotes-layout](docs/L3-footnotes-layout.md) | L3 | Footnotes positioning, wide/narrow modes |
 | [docs/L3-link-system](docs/L3-link-system.md) | L3 | Link styling, icons, hover previews, chain popups |
 | [docs/L3-remark-plugins](docs/L3-remark-plugins.md) | L3 | remarkTodo, remarkCallout pipeline |

@@ -1,8 +1,8 @@
 ---
 scope: L1
 summary: "Aesthetic direction, visual language, and design rules for the site redesign"
-modified: 2026-03-19
-reviewed: 2026-03-19
+modified: 2026-03-20
+reviewed: 2026-03-20
 depends:
   - path: docs/L0-ui
 dependents:
@@ -12,7 +12,6 @@ dependents:
   - path: docs/L2-reading-experience
   - path: docs/L2-embedded-content
   - path: docs/L2-information-density
-  - path: docs/L2-toc-design
 ---
 
 # Design Vision
@@ -74,6 +73,16 @@ Both typefaces must be **characterful and unexpected** — not Inter, Roboto, Ar
 ### Scale
 
 Gwern-inspired: moderate mathematical scale (~1.25x ratio), dense but legible. Body text at 1rem (16px). Tighter letter-spacing on headlines, looser on small text.
+
+### Typography constraints
+
+Rules that protect readability and visual coherence across the site:
+
+1. **Two fonts only.** Literata (serif) and Commit Mono (monospace). No third typeface. Every text element uses one of these two — the serif/mono contrast is the design's core texture. Using a second monospace (e.g. IBM Plex Mono) or adding a sans-serif fragments the identity.
+2. **11px absolute floor.** No text smaller than 0.6875rem (11px). Text below this is unreadable for many users and renders inconsistently. The 11px size is reserved for tertiary monospace chrome (nav, breadcrumbs, uppercase labels).
+3. **Body-adjacent text matches body.** List items, blockquote prose, and other content that reads as part of the prose flow must use the same size and line-height as body text (16px / 1.45–1.65). Subtle size drops (e.g. 15px for lists) create invisible inconsistency.
+4. **Whole-pixel token values.** Font size tokens resolve to whole pixels at the default 16px root to avoid sub-pixel rendering variance.
+5. **Token-only sizing.** All non-heading font sizes use `--text-*` tokens from `L1-styles`. No raw values outside headings. See the font-size token invariant in `L1-styles`.
 
 ## Layout
 

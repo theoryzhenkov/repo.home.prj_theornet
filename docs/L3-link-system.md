@@ -88,6 +88,26 @@ Two styles (solid and dotted) are sufficient for us. The left-hook is clever but
 
 The rehype plugin classifies links by checking `href` against the site's own domain and the page collection. This replaces Gwern's Haskell/Hakyll compilation step.
 
+### Link type differentiation via underline style
+
+Beyond the internal/external split, link type is communicated through **underline style only** -- not color, not icons (the existing external link icon in prose.css stays as a secondary signal, but the underline is the primary encoding). This preserves the design vision's rule that accent color is reserved for interactive affordances uniformly, while adding a new information channel through a visual property that is already present.
+
+| Link type | Detection | Underline style | Rationale |
+| --- | --- | --- | --- |
+| Internal (same site) | `href` starts with `/` and matches a known page slug | Solid underline, `1px`, `--color-accent` | Default, most trusted -- stays within the knowledge graph |
+| External (general) | `href` starts with `http` and is not Wikipedia | Dashed underline, `1px`, `--color-text-subtle` | Signals departure; the muted color reduces visual pull toward exits |
+| Wikipedia | `href` contains `wikipedia.org` | Dotted underline, `1px`, `--color-text-subtle` | Reference lookup; distinct from general external because Wikipedia links are "look this up" rather than "go explore this" |
+| Anchor (same page) | `href` starts with `#` | No underline, teal text only | Same-page jumps do not need the "this goes somewhere" signal |
+
+CSS implementation uses `text-decoration-style` and `text-underline-offset`, keyed off attribute selectors:
+
+- `.prose a[href^="/"]` -- internal (solid, default)
+- `.prose a[href^="http"]` -- external (dashed)
+- `.prose a[href*="wikipedia.org"]` -- Wikipedia (dotted, more specific selector wins)
+- `.prose a[href^="#"]` -- anchor (no underline)
+
+Pure CSS, no JS. Four attribute selectors in `prose.css`. The link preview system already distinguishes internal from external for hover behavior, so no new detection logic is needed.
+
 ---
 
 ## 2. Link icons

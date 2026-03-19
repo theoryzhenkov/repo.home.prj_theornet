@@ -11,7 +11,6 @@ dependents:
   - path: docs/L3-footnotes-layout
   - path: docs/L3-link-system
   - path: docs/L2-information-density
-  - path: docs/L2-toc-design
 ---
 
 # Reading Experience
@@ -67,6 +66,146 @@ The transition between states uses `transition: opacity 150ms ease, border-color
 ### Mobile fallback
 
 Below `1024px`, the TOC is hidden entirely. The header's reading progress indicator (described in L1-design-vision) serves as the only scroll position feedback on narrow viewports. The TOC is not placed in a hamburger menu or collapsible drawer -- it adds too little value on small screens to justify the interaction cost.
+
+### TOC enrichments
+
+The TOC goes beyond a flat list of headings. Three enrichments were accepted based on a value/complexity evaluation (ranked best-first):
+
+| Rank | Feature | Value | Complexity | Rationale |
+| ---- | ------- | ----- | ---------- | --------- |
+| 1 | Section read time | High | Low | Build-time computation, 2-3 characters per entry, universally understood |
+| 2 | Nested depth lines | Medium | Low | Pure CSS, no runtime cost, immediate visual clarity gain |
+| 3 | Section read state | Medium | Medium | Piggybacks on existing observer, but needs careful visual interaction with active state |
+
+The guiding principle: **the TOC should help you decide what to read, not just show you what exists.** Every addition must pass the 180px-width scannability test: if you have to squint or parse complex visuals, it fails.
+
+#### Section read time
+
+Read time is the single highest-value enrichment. It answers "how long is this section?" and lets readers budget their attention.
+
+**Data source.** Computed at build time by the TOC extraction logic. For each heading, count words in the section (from this heading to the next heading of equal or higher level). Divide by 238 words per minute (average adult reading speed for technical content, slightly below the commonly cited 250 to account for code blocks and density). Round to nearest minute, minimum "< 1".
+
+**Display format.** The read time appears on the same line as the heading text, right-aligned, in a lighter color. Format: `2m`, `< 1m`, `12m`. No "min" or "minutes" -- the `m` suffix is universally understood and saves horizontal space. For sections under 1 minute: display `< 1m`. For sections of 1 minute or more: display the rounded number followed by `m`.
+
+**Typography:**
+
+- Font: `var(--font-mono)` (Commit Mono), consistent with the TOC's monospace treatment
+- Size: `var(--text-2xs)` (0.75rem / 12px) -- one step smaller than the heading text
+- Color: `var(--color-text-subtle)` (`#8A857C` light / `#7A756C` dark) -- the quietest text tier
+- Weight: `400` (regular) -- never bold, even when the heading is active
+- The read time does not change opacity or weight when the entry becomes active. It remains a static, quiet annotation.
+
+**Layout.** Each TOC entry becomes a flex row:
+
+```
+[heading text]                    [read time]
+```
+
+- Container: `display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem;`
+- Heading text: `flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`
+- Read time: `flex-shrink: 0;`
+
+The heading text truncates with ellipsis if it cannot fit alongside the read time.
+
+**Interaction with active state.** When a TOC entry becomes active (scroll-spy), the heading text receives the full active treatment (left border, semi-bold, full opacity). The read time remains unchanged -- same color, same weight, same opacity.
+
+#### Nested depth lines
+
+A thin vertical line connects the left edge of h3 entries to their parent h2, creating a clear visual tree. The line replaces the current indentation-only treatment with a stronger structural cue.
+
+**Geometry:**
+
+- The line is a `::before` pseudo-element on h3 entries, or more precisely, a continuous border on a grouping element.
+- Each h2 and its subsequent h3 children are wrapped in a group. The group's left edge has a `1px solid var(--color-border-subtle)` line that runs from the first h3 to the last h3 in that group.
+- h3 entries are indented `1rem` from the left, as currently specified.
+- The vertical line is positioned at `0.375rem` from the left edge of the TOC entry area.
+
+**Line styling:**
+
+- Width: `1px`
+- Color: `var(--color-border-subtle)` (`#D5D0C7` light / `#33302D` dark)
+- Continuous, not dashed. Dashed lines at 1px width become visually noisy.
+- The line does not touch the h2 entry itself -- it starts at the top of the first h3 and ends at the bottom of the last h3 in the group.
+
+**Interaction with active state.** When an h3 entry is active, the left border of the active entry (the 2px accent-colored line from scroll-spy) replaces the connector line for that entry's vertical extent. When the parent h2 is active, the connector line for its children remains visible but at its normal subtle color.
+
+#### Section read state
+
+Tracking which sections the reader has scrolled through and marking them as "visited" creates a sense of progress and helps readers resume interrupted reading.
+
+**State model.** Each TOC entry has three mutually exclusive visual states:
+
+| State | Meaning | How entered |
+| ----- | ------- | ----------- |
+| **Unread** | Reader has not scrolled through this section | Initial state for all entries |
+| **Active** | Reader is currently in this section | Scroll-spy detection (existing) |
+| **Read** | Reader has scrolled past this section | When entry transitions from active to inactive after 2s cumulative active time |
+
+Once a section has been active for at least 2 seconds cumulative, it is marked as read when it loses active status. The 2-second threshold prevents drive-by scrolling from marking sections as read. This state is sticky -- once read, always read (within the session).
+
+**Visual treatment:**
+
+| State | Opacity | Weight | Left border | Read time color |
+| ----- | ------- | ------ | ----------- | --------------- |
+| Unread | `0.5` | `400` | `2px transparent` | `var(--color-text-subtle)` |
+| Active | `1.0` | `600` | `2px var(--color-accent)` | `var(--color-text-subtle)` |
+| Read | `0.35` | `400` | `2px transparent` | `var(--color-text-subtle)` at `0.35` opacity |
+
+Read sections fade into the background, making unread sections stand out as "what is left to read." The effect is subtle -- `0.35` vs `0.5` opacity.
+
+**Data attribute:**
+
+```html
+<a class="toc-entry" data-state="unread" data-depth="2" href="#section-id">
+  <span class="toc-text">Section Title</span>
+  <span class="toc-time">3m</span>
+</a>
+```
+
+`data-state` takes values `unread`, `active`, or `read`. CSS targets these:
+
+```css
+.toc-entry[data-state="unread"] { opacity: 0.5; }
+.toc-entry[data-state="active"] { opacity: 1; font-weight: 600; border-left-color: var(--color-accent); }
+.toc-entry[data-state="read"]   { opacity: 0.35; }
+```
+
+**Timer implementation.** The scroll-spy observer already identifies the active heading. The read-state logic wraps this:
+
+1. When a heading becomes active, start a timer (2000ms).
+2. If the heading is still active when the timer fires, set `readSections.add(headingId)`.
+3. When a heading loses active status, if it is in `readSections`, set `data-state="read"`. Otherwise, set `data-state="unread"`.
+
+The `readSections` set persists for the page session (in-memory, not localStorage). Navigating away clears it.
+
+**Transition.** State changes use `transition: opacity 150ms ease`. The transition from active to read creates a gentle fade.
+
+#### Entry anatomy (combined)
+
+With all three enrichments applied, a single TOC entry looks like:
+
+```
+ | Background           3m
+ |   Gwern influence    < 1m
+ |   Prior art          2m
+   Implementation       5m
+   Results              4m      <-- active: bold, full opacity, accent border
+   Discussion           7m
+   Conclusion           1m      <-- read: dimmed
+```
+
+- "Background" is an h2 with three h3 children connected by a vertical line.
+- "Implementation" through "Conclusion" are h2 entries at flush left.
+- "Results" is the active entry (semi-bold, full opacity, accent left border).
+- "Conclusion" has been read (dimmer than the unread entries above "Results").
+- Read times are right-aligned in subtle monospace.
+
+#### Considered and rejected TOC enrichments
+
+- **Section-level prerequisites**: Wrong abstraction level. Prerequisite chains belong to page-level relations, not per-section TOC annotations.
+- **Collapsed sections indicator**: Edge case, not a pattern. `<details>` blocks are infrequent and a TOC icon for "this section has something expandable" is too vague to be actionable.
+- **TOC as minimap**: Incompatible with the 180px constraint and the scrapbook aesthetic. A proportional minimap becomes an unreadable smear. The header reading progress indicator already serves the "where am I" question.
+- **Section type indicators** (deferred): Interesting but requires content infrastructure that does not exist yet. Revisit if the site gains a section-level metadata system.
 
 ---
 
@@ -225,6 +364,19 @@ Link previews always render above sidenotes. If a preview appears in the right m
 | toc-active-visual | MUST | Active TOC entry has left border, semi-bold weight, and full opacity |
 | toc-no-shift | SHOULD | TOC active state change causes no layout shift in the TOC itself |
 | toc-hidden-narrow | MUST | TOC is hidden below 1024px |
+| toc-readtime-present | MUST | Every TOC entry displays a read time annotation |
+| toc-readtime-format | MUST | Read times use the format `Nm` or `< 1m`, never "minutes" or decimals |
+| toc-readtime-stable | MUST | Read time does not change opacity or weight when the entry becomes active |
+| toc-readtime-truncate | SHOULD | Heading text truncates with ellipsis before the read time is hidden |
+| toc-depth-line | MUST | h3 entries under a shared h2 parent are connected by a vertical line |
+| toc-depth-line-color | MUST | The connector line uses `var(--color-border-subtle)` |
+| toc-depth-line-active | SHOULD | The active entry's accent border visually replaces the connector for that entry's extent |
+| toc-readstate-three | MUST | Each TOC entry is in exactly one of three states: unread, active, or read |
+| toc-readstate-threshold | MUST | A section is only marked read after being active for at least 2 cumulative seconds |
+| toc-readstate-dim | MUST | Read entries have lower opacity (0.35) than unread entries (0.5) |
+| toc-readstate-sticky | MUST | Once marked read, an entry stays read for the page session |
+| toc-readstate-no-persist | MUST | Read state is not persisted to localStorage or any storage; it resets on navigation |
+| toc-width-fit | MUST | All TOC content fits within the ~200px left margin without horizontal overflow |
 | sidenote-sync | MUST | Each sidenote's top position equals its reference's offsetTop or the bottom of the previous sidenote, whichever is greater |
 | sidenote-gap | MUST | Stacked sidenotes have at least 8px gap between them |
 | sidenote-no-overlap | MUST | No two sidenotes overlap vertically |
@@ -241,11 +393,11 @@ Link previews always render above sidenotes. If a preview appears in the right m
 
 ## Key files
 
-- `src/scripts/toc-scrollspy.ts` -- TOC active state via IntersectionObserver
+- `src/scripts/toc-scrollspy.ts` -- TOC active state via IntersectionObserver, read state timer logic
 - `src/scripts/footnotes.ts` -- sidenote positioning engine, mode switching
 - `src/scripts/popups.ts` -- link preview trigger, positioning, dismissal
-- `src/components/TOC.astro` -- TOC markup and structure
+- `src/components/TOC.astro` -- TOC markup, read time rendering, data attributes
 - `src/components/Footnote.astro` -- per-footnote HTML pair (sup + sidenote span)
 - `src/components/Footnotes.astro` -- narrow-mode footer container
 - `src/layouts/page/Page.astro` -- three-column grid assembly, `#popup-container`
-- `src/styles/components.css` -- sidenote CSS, TOC styling, popup styling
+- `src/styles/components.css` -- sidenote CSS, TOC styling (entry states, connector lines, read time), popup styling

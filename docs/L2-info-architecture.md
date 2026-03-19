@@ -130,7 +130,19 @@ The context line is the first row of the metadata strip. It packs the most decis
 ### Format
 
 ```
-{maturity} · {read_time} · created {date} [· updated {date}]
+{maturity} · {read_time} · created {date} [· updated {date} [{relative}]] [· {backlinks}] · graph
+```
+
+Example with all segments:
+
+```
+stable · 4 min · created 2025-06-12 · updated 2025-08-15 (7mo ago) · 3 backlinks · graph
+```
+
+Example for a fresh page with no backlinks:
+
+```
+in-progress · 8 min · created 2026-03-01 · graph
 ```
 
 Each segment:
@@ -138,6 +150,19 @@ Each segment:
 - **read_time**: `N min` estimated from word count (~250 wpm). Omitted for pages under 2 minutes.
 - **created**: Always shown. Format: `YYYY-MM-DD` (ISO, matching the monospace/technical aesthetic; not "Mar 15, 2026" which mixes serif-friendly formatting into a monospace context).
 - **updated**: Shown only if `modified` differs from `created` by more than 24 hours. Same format.
+- **freshness indicator**: A relative time shown parenthetically after the updated date when the page is older than 6 months. Rules: < 6 months: no indicator (implicitly fresh). 6 months -- 2 years: `(Nmo ago)` in `--color-text-subtle`. > 2 years: `(N yr ago)` in `--color-status-draft` (amber) -- the strongest staleness signal, justified because a page untouched for over 2 years is a trust concern equivalent to a draft.
+- **backlinks**: `N backlinks` (plural) or `1 backlink` (singular), displayed as a teal link that scrolls to `#backlinks-heading`. Omitted when backlink count is 0. The count is a prominence signal -- a page with many inbound references is a hub in the knowledge graph.
+- **graph**: Always present. A teal text link to `/graph?focus={slug}`. See L2-graph-viz for focus behavior.
+
+### Segment ordering rationale
+
+Left to right, from most decision-relevant to most supplementary:
+1. **Maturity** -- trust signal, sets reader expectations
+2. **Read time** -- commitment signal
+3. **Created** -- factual origin
+4. **Updated + relative** -- freshness signal
+5. **Backlinks** -- prominence signal
+6. **Graph** -- exploration affordance (furthest right because it is a navigation escape, not a reading aid)
 
 ### Why ISO dates?
 
@@ -297,3 +322,8 @@ On narrow viewports:
 | backlinks-anchor-highlight | SHOULD | The original anchor text within the snippet is styled in `--color-accent` to identify the linked phrase |
 | backlinks-context-link | SHOULD | Each snippet includes a "view in context" link with a fragment anchor to the source paragraph |
 | backlinks-accessible | MUST | Backlinks section uses `<section>`, `<ul>`, `<blockquote cite>`, and `aria-expanded` for progressive disclosure |
+| backlink-count-strip | MUST | The context line shows `N backlinks` (linked to `#backlinks-heading`) when backlink count > 0 |
+| backlink-count-hidden | MUST | The backlink count segment is omitted when count is 0 |
+| freshness-relative | SHOULD | Pages not updated in > 6 months show a relative time indicator in the context line |
+| freshness-amber | SHOULD | Pages not updated in > 2 years use `--color-status-draft` (amber) for the relative time text |
+| context-line-order | SHOULD | Context line segments appear in order: maturity, read time, created, updated, backlinks, graph |

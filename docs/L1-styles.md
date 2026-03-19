@@ -1,8 +1,8 @@
 ---
 scope: L1
 summary: "CSS architecture, design tokens, and style invariants"
-modified: 2026-03-19
-reviewed: 2026-03-19
+modified: 2026-03-20
+reviewed: 2026-03-20
 depends:
   - path: docs/L0-ui
   - path: docs/L1-design-vision
@@ -11,7 +11,6 @@ dependents:
   - path: docs/L2-information-density
   - path: docs/L2-embedded-content
   - path: docs/L2-reading-experience
-  - path: docs/L2-toc-design
   - path: docs/L3-link-system
 ---
 
@@ -232,12 +231,14 @@ The earlier approach of "no color coding" produced a monotonous result. The revi
 
 ### Font stacks
 
-Typography is the primary source of patchwork texture: serif for prose, monospace for metadata/code/relations. Both typefaces are chosen for character and long-form readability over familiarity.
+Typography is the primary source of patchwork texture: serif for prose, monospace for metadata/code/relations. Exactly two typefaces — no substitutes, no third font.
 
 | Token | Value | Role |
 | ----- | ----- | ---- |
 | `--font-serif` | `'Literata', 'Georgia', serif` | Prose body, headings, article titles, backlinks |
-| `--font-mono` | `'Commit Mono', 'Consolas', monospace` | Metadata, dates, relation labels, breadcrumbs, code, tags, status bar |
+| `--font-mono` | `'Commit Mono', 'Consolas', monospace` | Metadata, dates, relation labels, breadcrumbs, code, tags, status bar, navigation, TOC |
+
+**Single-mono-font rule.** Every monospace context — code blocks, metadata chrome, navigation, breadcrumbs, TOC labels, relation labels, table headers — uses `--font-mono` (Commit Mono). No secondary monospace font (IBM Plex Mono, JetBrains Mono, etc.) should appear anywhere. The two-font system (Literata + Commit Mono) is the design; mixing in a third typeface fragments the visual identity.
 
 **Serif rationale — Literata.** Designed by TypeTogether for long-form reading (originally commissioned for Google Play Books). Its triangular, wedge-shaped serifs give it a distinctive silhouette that is immediately recognizable but never distracting. It has true optical sizes (text and display cuts), excellent italic forms, and was specifically optimized for sustained reading on screens — exactly the use case here. Compared to Source Serif 4, Literata has more personality in its letter shapes (look at the lowercase `g`, the `a`, the italic `f`) while maintaining equal or better readability at body sizes. It is a variable font on Google Fonts, so weight tuning is precise. Less common on the indie web than Source Serif 4 or Vollkorn.
 
@@ -251,12 +252,17 @@ Sans-serif (`--font-sans`) is no longer a primary typeface. If needed for UI chr
 
 | Token | Value | Usage |
 | ----- | ----- | ----- |
-| `--text-base` | 1rem (16px) | Body text |
+| `--text-base` | 1rem (16px) | Body text, list items, blockquotes |
 | `--text-sm` | 0.875rem (14px) | Pre blocks, callout titles, popups, secondary text |
-| `--text-xs` | 0.8rem (12.8px) | Metadata, TOC, footnotes, sidenotes |
-| `--text-2xs` | 0.75rem (12px) | Panel titles, popup meta, TODO labels |
+| `--text-xs` | 0.8125rem (13px) | Metadata, TOC items, footnotes, sidenotes |
+| `--text-2xs` | 0.75rem (12px) | Panel titles, popup meta, TODO labels, TOC sub-items |
+| `--text-3xs` | 0.6875rem (11px) | Navigation, breadcrumbs, table headers, TOC labels, time markers |
 
 Heading sizes use raw `rem` values in `base.css`: h1 = 1.5rem, h2 = 1.25rem, h3 = 1.1rem, h4 = 1rem. These are exempt from the token invariant (see below).
+
+**Minimum font size: 11px (0.6875rem).** No text on the site may be smaller than `--text-3xs`. This floor exists because text below 11px is unreadable for many users, fails accessibility spirit, and renders inconsistently across displays. Every use of `--text-3xs` should be justified — it is reserved for tertiary chrome (nav links, breadcrumbs, uppercase labels with letter-spacing) where the monospace letterforms and contextual cues aid legibility.
+
+**Whole-pixel sizes.** Font size tokens should resolve to whole pixel values at the default root size (16px) to avoid sub-pixel rendering inconsistencies across browsers and display densities.
 
 ### Line heights
 
