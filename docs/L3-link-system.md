@@ -1,8 +1,8 @@
 ---
 scope: L3
 summary: "Link styling, icons, hover previews, and chain-popup system — reference analysis of Gwern.net's implementation and adaptation plan for Astro + MDX"
-modified: 2026-03-19
-reviewed: 2026-03-19
+modified: 2026-03-20
+reviewed: 2026-03-20
 depends:
   - path: docs/L2-reading-experience
     section: "Link previews"
@@ -79,14 +79,20 @@ We already have link previews described in L2-reading-experience. The three-tier
 
 Two styles (solid and dotted) are sufficient for us. The left-hook is clever but adds implementation complexity for a third category we don't need yet.
 
-**Implementation approach:**
+**Implementation approach — native CSS `text-decoration`:**
 
-1. Use the same `background-image` gradient technique for underlines. Our current CSS in `base.css` uses `text-decoration` — replace it with the Tufte method for better descender handling.
-2. Add a `.link-internal` class to internal links at build time via a rehype plugin.
-3. Apply the dotted variant to `.link-internal` links via CSS.
-4. External links keep the solid underline (default).
+As of 2025, native CSS underline properties have caught up with the Tufte gradient technique. `text-decoration-skip-ink: auto` is Baseline Widely Available in all modern browsers, producing clean descender avoidance without the `text-shadow` hack. `text-decoration-style` (solid/dashed/dotted) and `text-underline-offset` give full control over appearance. The native approach is simpler, more maintainable, and produces equivalent visual results for our four link types.
 
-The rehype plugin classifies links by checking `href` against the site's own domain and the page collection. This replaces Gwern's Haskell/Hakyll compilation step.
+We do NOT use the `background-image` gradient technique. The Gwern analysis above is preserved as reference for the design rationale, but our implementation uses native properties:
+
+```css
+.prose a {
+  text-decoration-line: underline;
+  text-decoration-skip-ink: auto;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+```
 
 ### Link type differentiation via underline style
 
@@ -99,12 +105,32 @@ Beyond the internal/external split, link type is communicated through **underlin
 | Wikipedia | `href` contains `wikipedia.org` | Dotted underline, `1px`, `--color-text-subtle` | Reference lookup; distinct from general external because Wikipedia links are "look this up" rather than "go explore this" |
 | Anchor (same page) | `href` starts with `#` | No underline, teal text only | Same-page jumps do not need the "this goes somewhere" signal |
 
-CSS implementation uses `text-decoration-style` and `text-underline-offset`, keyed off attribute selectors:
+CSS implementation uses native `text-decoration-*` properties keyed off attribute selectors:
 
-- `.prose a[href^="/"]` -- internal (solid, default)
-- `.prose a[href^="http"]` -- external (dashed)
-- `.prose a[href*="wikipedia.org"]` -- Wikipedia (dotted, more specific selector wins)
-- `.prose a[href^="#"]` -- anchor (no underline)
+```css
+/* Internal (default, solid) */
+.prose a[href^="/"] {
+  text-decoration-style: solid;
+  text-decoration-color: var(--color-accent);
+}
+
+/* External (dashed) */
+.prose a[href^="http"] {
+  text-decoration-style: dashed;
+  text-decoration-color: var(--color-text-subtle);
+}
+
+/* Wikipedia (dotted, more specific selector wins) */
+.prose a[href*="wikipedia.org"] {
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-text-subtle);
+}
+
+/* Anchor / same-page (no underline) */
+.prose a[href^="#"] {
+  text-decoration: none;
+}
+```
 
 Pure CSS, no JS. Four attribute selectors in `prose.css`. The link preview system already distinguishes internal from external for hover behavior, so no new detection logic is needed.
 
