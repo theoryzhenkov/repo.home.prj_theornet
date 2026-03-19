@@ -7,6 +7,7 @@ depends:
   - path: docs/L0-content
 dependents:
   - path: docs/L2-graph-viz
+  - path: docs/L2-information-density
 ---
 
 # Relations System

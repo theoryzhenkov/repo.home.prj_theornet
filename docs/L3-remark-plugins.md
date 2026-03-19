@@ -5,6 +5,8 @@ modified: 2026-03-15
 reviewed: 2026-03-15
 depends:
   - path: docs/L1-routing
+dependents:
+  - path: docs/L2-embedded-content
 ---
 
 # Remark Plugin Pipeline

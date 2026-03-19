@@ -6,7 +6,10 @@ reviewed: 2026-03-19
 depends:
   - path: docs/L1-design-vision
 dependents:
+  - path: docs/L2-toc-design
   - path: docs/L3-footnotes-layout
+  - path: docs/L3-link-system
+  - path: docs/L2-information-density
 ---
 
 # Reading Experience

@@ -8,6 +8,8 @@ depends:
   - path: docs/L1-design-vision
 dependents:
   - path: docs/L2-components
+  - path: docs/L2-information-density
+  - path: docs/L2-embedded-content
 ---
 
 # Styles

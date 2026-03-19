@@ -8,6 +8,7 @@ depends:
   - path: docs/L1-relations
 dependents:
   - path: docs/L2-components
+  - path: docs/L2-information-density
 ---
 
 # Information Architecture
