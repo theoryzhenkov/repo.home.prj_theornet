@@ -7,11 +7,12 @@ depends:
   - path: docs/L0-ui
 dependents:
   - path: docs/L1-styles
-  - path: docs/L2-components
   - path: docs/L2-header-nav
+  - path: docs/L2-info-architecture
   - path: docs/L2-reading-experience
   - path: docs/L2-embedded-content
   - path: docs/L2-information-density
+  - path: docs/L2-toc-design
 ---
 
 # Design Vision

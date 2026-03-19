@@ -10,6 +10,9 @@ dependents:
   - path: docs/L2-components
   - path: docs/L2-information-density
   - path: docs/L2-embedded-content
+  - path: docs/L2-reading-experience
+  - path: docs/L2-toc-design
+  - path: docs/L3-link-system
 ---
 
 # Styles

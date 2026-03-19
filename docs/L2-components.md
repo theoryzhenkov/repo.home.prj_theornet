@@ -1,11 +1,13 @@
 ---
 scope: L2
 summary: "Astro component catalog, props, slots, and page assembly data flow"
-modified: 2026-03-15
-reviewed: 2026-03-15
+modified: 2026-03-19
+reviewed: 2026-03-19
 depends:
   - path: docs/L1-routing
   - path: docs/L1-styles
+  - path: docs/L2-header-nav
+  - path: docs/L2-info-architecture
 dependents:
   - path: docs/L3-footnotes-layout
 ---

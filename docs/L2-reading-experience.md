@@ -5,11 +5,13 @@ modified: 2026-03-19
 reviewed: 2026-03-19
 depends:
   - path: docs/L1-design-vision
+  - path: docs/L1-styles
+    section: "Colors"
 dependents:
-  - path: docs/L2-toc-design
   - path: docs/L3-footnotes-layout
   - path: docs/L3-link-system
   - path: docs/L2-information-density
+  - path: docs/L2-toc-design
 ---
 
 # Reading Experience

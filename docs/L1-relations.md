@@ -1,13 +1,14 @@
 ---
 scope: L1
 summary: "Relations system interfaces, inference rules, and graph-building contracts"
-modified: 2026-03-15
-reviewed: 2026-03-15
+modified: 2026-03-19
+reviewed: 2026-03-19
 depends:
   - path: docs/L0-content
 dependents:
   - path: docs/L2-graph-viz
   - path: docs/L2-information-density
+  - path: docs/L2-info-architecture
 ---
 
 # Relations System

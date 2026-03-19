@@ -1,9 +1,10 @@
 ---
 scope: L3
 summary: "Footnotes layout engine: sidenote positioning, mode switching, and lifecycle"
-modified: 2026-03-15
-reviewed: 2026-03-15
+modified: 2026-03-19
+reviewed: 2026-03-19
 depends:
+  - path: docs/L1-scripts
   - path: docs/L2-components
   - path: docs/L2-reading-experience
 ---

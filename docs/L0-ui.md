@@ -12,6 +12,7 @@ dependents:
   - path: docs/L1-styles
   - path: docs/L1-scripts
   - path: docs/L1-routing
+  - path: docs/L2-header-nav
 ---
 
 # UI and Design
