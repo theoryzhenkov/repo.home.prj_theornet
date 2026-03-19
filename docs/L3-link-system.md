@@ -1,6 +1,6 @@
 ---
 scope: L3
-summary: "Link styling, icons, hover previews, and chain-popup system — reference analysis of Gwern.net's implementation and adaptation plan for Astro + MDX"
+summary: "Link styling, icons, hover previews, and chain-popup system — Gwern.net reference analysis and implementation for Astro + MDX"
 modified: 2026-03-20
 reviewed: 2026-03-20
 depends:
@@ -255,35 +255,25 @@ Content preparation involves style injection from the host document, dynamic lay
 
 **Mobile behavior (`popins.js`).** On mobile/narrow viewports, Gwern uses "popins" instead of popups — full-width panels that slide in from the bottom, stacking vertically. The popin system maintains a LIFO stack; the Escape key removes the top popin. Popins don't use hover (touch targets trigger on tap). The same `extracts.js` content resolver feeds both popups and popins.
 
-### How our existing preview system compares
+### Current implementation
 
-L2-reading-experience already specifies a simpler popup system:
-- 300ms delay (vs Gwern's 750ms)
-- Content: page title, relation type badge, 120-char excerpt, maturity indicator
-- Positioning: below link, then flip above, with right-margin awareness
-- No shadow DOM, no title bar controls, no pinning
-- Internal links only
+The popup system was implemented as a full Gwern-style rich content preview system with these capabilities:
 
-### Adaptation plan
+- **Rich HTML content**: fetches actual page HTML via `fetch()`, parses with `DOMParser`, extracts `.prose` content
+- **Three content types**: page (full prose, truncated), section (`#hash` targeting — heading + siblings), footnote (sidenote content)
+- **750ms spawn delay** with 50ms prefetch: hover starts a background fetch immediately, popup spawns at 750ms
+- **Nested popups (depth 2)**: links inside popups spawn one child popup positioned to the side; child popup links navigate normally
+- **Titlebar**: page title as clickable link + close button
+- **Mobile popins**: below 1024px breakpoint, click-triggered bottom sheet modals instead of hover popups
+- **Metadata fallback**: if HTML fetch fails, falls back to `popup-index.json` (title + description)
+- **Footnote suppression**: if a sidenote is visible on screen (wide mode), no footnote popup spawns — the existing highlight behavior handles it
+- **No Shadow DOM**: popup content styled via `.popup-body` class scoping, sharing the site's design tokens
 
-Keep our existing lightweight preview as Phase 1. Add Gwern-inspired enhancements incrementally:
-
-**Phase 1 (current spec, no change):** Simple popup with title, excerpt, relation badge, maturity. Positioned below or in right margin. Dismissed on mouseleave or scroll. Already specified in L2-reading-experience.
-
-**Phase 2 — Richer content and external previews:**
-- Add page tags and date to the preview content.
-- For external links to known sources (Wikipedia, GitHub), fetch and cache preview data at build time. Store as a JSON manifest (`/preview-data.json`) loaded lazily on first hover.
-- Build-time data pipeline: a remark/rehype plugin or Astro integration that, during build, fetches OpenGraph/meta tags from external URLs and writes a static JSON file. Rate-limited, cached between builds.
-
-**Phase 3 — Popup controls and pinning:**
-- Add a minimal title bar: page title as a clickable link, close button, pin button.
-- Pinned popups get `position: fixed` and stay on screen during scroll.
-- No minimize, no zoom positions, no resize — these add significant JS complexity for marginal value on a personal site.
-- Shadow DOM for style isolation if popup content includes transcluded page fragments.
-
-**Phase 4 — aspirational (evaluate after Phase 3):**
-- PDF preview via `<iframe>` with `#page=N` fragment.
-- External page preview via locally cached/archived snapshots.
+**What we skip:**
+- External link popups (deferred to a future build-time metadata pipeline)
+- Pin/minimize/zoom/resize window management
+- Full recursive chains beyond depth 2
+- PDF preview, page archiving
 
 ---
 
@@ -305,127 +295,77 @@ Technical details:
 
 The notification system (`GW.notificationCenter.fireEvent()`) coordinates lifecycle events across the popup tree: `popinDidInject`, `popinWillDespawn`, etc. This decouples the popup framework from the content resolver.
 
-### Adaptation plan
+### Current implementation
 
-Chain previews are the highest-complexity, highest-delight feature. The implementation cost is significant because every popup must contain fully functional link handling.
+Chain previews are implemented with depth capped at 2 (one level of nesting). Implementation details:
 
-**Phase 1 (skip):** No chain previews. Popups contain rendered text but links inside popups navigate normally (no nested popups).
+- Links inside popups spawn nested popups via `document`-level event delegation (popups live outside `<article>`)
+- Nested popups prefer side placement (right, left) over vertical (below, above) to create Gwern's characteristic horizontal reading flow
+- When a new popup spawns, non-ancestor popups are despawned automatically — only one "thread" of popups at a time
+- Depth tracked via `data-popup-depth` attribute; at `maxDepth`, links navigate normally
+- Stack management: `PopupInstance[]` with parent-child tracking, ancestor chain walks, bulk cleanup
 
-**Phase 2 (one level deep):** Links inside a popup can spawn one nested popup, positioned to the side. The nested popup's links navigate normally. This covers the 90% use case (peek at a reference's reference) without recursive complexity.
-
-Implementation: when injecting popup content, run the same link-classification and event-binding logic on the popup's DOM subtree. Track depth with a `data-popup-depth` attribute; stop spawning at depth 2.
-
-**Phase 3 (full recursion, aspirational):** Remove the depth limit. Add ancestor-chain tracking to prevent cycles. Add the despawn-outside-stack behavior. This requires the popup system to be fully modular — the content resolver, event binding, and positioning logic must all work identically regardless of which DOM context they run in. Shadow DOM becomes important here to prevent style conflicts between nested popup levels.
-
-Realistically, Phase 2 (one level of nesting) covers nearly all practical reading flows. Full recursion is a fun technical challenge but low marginal value.
+Full recursion is deferred — depth 2 covers nearly all practical reading flows.
 
 ---
 
-## 5. Technical implementation plan
+## 5. Technical implementation
 
-### Build-time pipeline (rehype plugin)
+### Architecture
 
-A single rehype plugin (`rehype-link-classify.ts`) runs during the Astro build and handles all link classification:
+The popup system is a modular TypeScript package at `src/scripts/popups/`:
 
-```typescript
-// Pseudocode for the rehype plugin
-function rehypeLinkClassify(options: { siteUrl: string, pages: PageCollection }) {
-  return (tree: HastTree) => {
-    visit(tree, 'element', (node) => {
-      if (node.tagName !== 'a') return;
-      const href = node.properties.href;
-
-      if (isInternal(href, options.siteUrl)) {
-        // Add internal link class and resolve page metadata
-        const page = options.pages.find(href);
-        node.properties.className = [...(node.properties.className || []), 'link-internal'];
-        if (page) {
-          node.properties['data-link-maturity'] = page.data.maturity;
-          node.properties['data-page-title'] = page.data.title;
-          node.properties['data-page-description'] = page.data.description?.slice(0, 120);
-        }
-      } else {
-        // External link
-        node.properties.className = [...(node.properties.className || []), 'link-external'];
-        node.properties['data-link-icon'] = classifyExternalIcon(href);
-        // Inject icon hook span
-        node.children.push({ type: 'element', tagName: 'span',
-          properties: { className: ['link-icon-hook'] }, children: [] });
-      }
-    });
-  };
-}
 ```
-
-This replaces what Gwern does in `LinkIcon.hs` — same concept, different language, far fewer rules.
-
-### Client-side popup system
-
-The popup TypeScript (`src/scripts/popups.ts`) needs these capabilities:
-
-1. **Hover detection** with configurable delay (300ms).
-2. **Content assembly** — read data attributes from the link, build popup DOM.
-3. **Positioning** — below-link default, flip above if needed, right-margin if space available.
-4. **Dismissal** — mouseleave with grace period, Escape key, scroll.
-5. **Optional pinning** (Phase 3) — toggle `position: fixed`, add close button.
-6. **Optional nesting** (Phase 2+) — re-bind hover handlers inside popup content.
-
-No framework dependency. Vanilla TypeScript, compiled by Astro's build. ~200-300 lines for Phase 1, growing to ~500 for Phase 3.
+src/scripts/popups/
+  types.ts       — interfaces, config constants
+  cache.ts       — HTML fetch, DOMParser, in-memory cache with dedup
+  extract.ts     — content extraction (page, section, footnote) + target classification
+  position.ts    — viewport-aware positioning engine
+  render.ts      — popup/popin DOM creation and lifecycle
+  stack.ts       — nested popup stack management
+  events.ts      — event delegation, hover timing, mobile detection
+  index.ts       — orchestrator, Astro lifecycle integration
+```
 
 ### Data flow
 
 ```
-Build time:
-  MDX content
-    → remark plugins (callout, todo)
-    → rehype-link-classify (adds data attrs, icon hooks, link classes)
-    → HTML output with enriched links
-
-Optional build step:
-  External URLs → OpenGraph fetch → /preview-data.json
-
 Runtime:
-  Mouse hover on link
-    → read data-* attributes from link element
-    → (if external + preview-data.json loaded) merge external metadata
-    → build popup DOM
-    → position and show
-    → bind events (dismiss, pin, nested hover)
+  Mouse hover on internal link
+    → classifyTarget() determines content type (page/section/footnote)
+    → prefetch() fires at 50ms (background fetch + DOMParser cache)
+    → spawnPopup() fires at 750ms:
+        → fetchAndCache() returns parsed Document
+        → extractContent() pulls .prose, section, or sidenote content
+        → createPopup() builds DOM with titlebar + body
+        → calculatePosition() finds viewport-safe placement
+        → pushPopup() manages stack (despawns non-ancestors)
+    → On mouseleave: 100ms delay → 250ms fade → DOM removal
+
+  Fallback path:
+    → fetch fails → loadPopupIndex() → /popup-index.json → title + description popup
 ```
 
-### CSS additions
+### CSS
 
-New rules needed in `base.css` or `prose.css`:
+Popup styles live in `src/styles/popups.css`, imported via `global.css`. Uses the site's design tokens throughout. Key sections:
 
-1. Replace `text-decoration: underline` on links with Tufte gradient underlines.
-2. Dotted variant for `.link-internal`.
-3. `::after` rules for link icons keyed on `data-link-icon`.
-4. Popup container styles (already partially specified in L2-reading-experience).
+- `.popup` — fixed positioning, border, shadow, opacity transitions
+- `.popup-titlebar` — flex row with link title + close button
+- `.popup-body` — scrollable content with scaled-down prose styling
+- `.popup[data-content-type="footnote"]` — narrower (280px), shorter
+- `.popin-overlay` / `.popin` — mobile bottom sheet with slide-up animation
 
-### What we skip entirely
+### Future work
 
-- Gwern's annotation database with hundreds of hand-written entries and auto-extraction from academic APIs. We have frontmatter metadata and that's enough.
-- The 500-rule link-icon classifier. We need ~15 rules.
-- PDF page rendering in popups. Complex, niche value.
-- Local archiving of external pages. Gwern mirrors pages to prevent linkrot; we accept the risk.
-- The full window-management system (minimize, zoom positions, resize). Our popups are lightweight overlays, not mini-windows.
-- Hyphenation and advanced typography in popups. Not worth the JS weight.
-
----
-
-## Phase summary
-
-| Phase | Features | Effort | Value |
-| ----- | -------- | ------ | ----- |
-| 1 | Tufte underlines, internal/external link classes, external arrow icon, basic hover preview | Medium | High — covers the core reading experience |
-| 2 | Domain-specific icons (5-10 rules), richer preview content, one-level chain preview | Medium | Medium — polish and depth |
-| 3 | Pin/close controls, build-time external metadata fetch, shadow DOM isolation | High | Medium — power-user features |
-| 4 | Full recursive chains, PDF preview, page archiving | Very high | Low — diminishing returns for a personal site |
+- **External link popups**: build-time metadata pipeline (OpenGraph fetch → JSON manifest)
+- **Link icons**: rehype plugin for `data-link-icon` attributes + CSS `::after` rendering
+- **Pin/persist**: toggle popup to `position: fixed`, survive scroll
+- **Full recursion**: remove depth cap, add cycle prevention
 
 ## Key files
 
-- `src/lib/rehype-link-classify.ts` — build-time link classification plugin (to be created)
-- `src/scripts/popups.ts` — client-side popup system (exists per L2-reading-experience, to be extended)
-- `src/styles/base.css` — link underline styles
-- `src/styles/prose.css` — link icon CSS rules
-- `astro.config.ts` — rehype plugin registration
+- `src/scripts/popups/` — modular popup system (8 TypeScript modules)
+- `src/styles/popups.css` — popup and popin styles
+- `src/pages/popup-index.json.ts` — fallback metadata (title, description, maturity)
+- `src/layouts/page/Page.astro` — imports popup orchestrator

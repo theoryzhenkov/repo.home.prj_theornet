@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Header component design: dual-role bar combining ambient reading status with site navigation"
-modified: 2026-03-19
-reviewed: 2026-03-19
+modified: 2026-03-20
+reviewed: 2026-03-20
 depends:
   - path: docs/L1-design-vision
     section: "Header: ambient status bar"
@@ -61,7 +61,7 @@ Contains, in order:
 
 1. **Site mark** -- the text "theor.net" in monospace, acting as a home link. No logo, no icon. The site mark is the only persistent brand element. Clicking it navigates to the index.
 2. **Section separator** -- a thin vertical line or `/` character, monospace, dim.
-3. **Nav links** -- inline text links: `index`, `projects`, `blog`, `about`. Monospace, `--text-2xs` size, separated by a middot or small gap. The link matching the current section gets a subtle underline or slightly brighter text.
+3. **Nav links** -- inline text links: `index`, `projects`, `blog`, `about`. Monospace, `--text-xs` size, separated by a middot or small gap. The link matching the current section gets a subtle underline or slightly brighter text.
 
 The nav links are deliberately small and quiet. They are present and scannable but do not compete with the reading progress bar. They read almost like a breadcrumb path rather than a primary navigation bar.
 
@@ -124,7 +124,7 @@ The center zone collapses. The bar becomes:
 ```
 
 - **Site mark** remains in the left zone as a home link.
-- **Nav trigger** is added to the right zone: a small hamburger icon (three horizontal lines, monospace-weight) or the word `nav` in `--text-2xs`. Tapping it opens a **dropdown panel** below the header containing:
+- **Nav trigger** is added to the right zone: a small hamburger icon (three horizontal lines, monospace-weight) or the word `nav` in `--text-xs`. Tapping it opens a **dropdown panel** below the header containing:
   - The four nav links, stacked vertically, larger touch targets (44px height each).
   - On article pages: no additional metadata is shown in the dropdown. Reading context lives in the metadata strip below the title.
 - **Reading progress bar** still runs along the bottom 2px of the header on article pages.

@@ -254,11 +254,11 @@ Sans-serif (`--font-sans`) is no longer a primary typeface. If needed for UI chr
 | ----- | ----- | ----- |
 | `--text-base` | 1rem (16px) | Body text, list items, blockquotes |
 | `--text-sm` | 0.875rem (14px) | Pre blocks, callout titles, popups, secondary text |
-| `--text-xs` | 0.8125rem (13px) | Metadata, TOC items, footnotes, sidenotes |
+| `--text-xs` | 0.8125rem (13px) | Metadata, TOC items, footnotes, sidenotes, header navigation |
 | `--text-2xs` | 0.75rem (12px) | Panel titles, popup meta, TODO labels, TOC sub-items |
-| `--text-3xs` | 0.6875rem (11px) | Navigation, breadcrumbs, table headers, TOC labels, time markers |
+| `--text-3xs` | 0.6875rem (11px) | Breadcrumbs, table headers, TOC labels, time markers |
 
-Heading sizes use raw `rem` values in `base.css`: h1 = 1.5rem, h2 = 1.25rem, h3 = 1.1rem, h4 = 1rem. These are exempt from the token invariant (see below).
+Heading sizes use raw `rem` values in `base.css`: h1 = 1.875rem (30px), h2 = 1.3125rem (21px), h3 = 1.125rem (18px), h4 = 1rem (16px). These are exempt from the token invariant (see below).
 
 **Minimum font size: 11px (0.6875rem).** No text on the site may be smaller than `--text-3xs`. This floor exists because text below 11px is unreadable for many users, fails accessibility spirit, and renders inconsistently across displays. Every use of `--text-3xs` should be justified — it is reserved for tertiary chrome (nav links, breadcrumbs, uppercase labels with letter-spacing) where the monospace letterforms and contextual cues aid legibility.
 
@@ -271,7 +271,7 @@ Heading sizes use raw `rem` values in `base.css`: h1 = 1.5rem, h2 = 1.25rem, h3 
 | `--leading-none` | 1 | -- |
 | `--leading-tight` | 1.2 | Headings |
 | `--leading-snug` | 1.35 | -- |
-| `--leading-normal` | 1.45 | Body text (`html`) |
+| `--leading-normal` | 1.65 | Body text (`html`) |
 | `--leading-relaxed` | 1.5 | -- |
 
 ### Layout widths

@@ -61,7 +61,7 @@
 
   .header-sep {
     font-family: var(--font-mono);
-    font-size: var(--text-3xs);
+    font-size: var(--text-xs);
     color: var(--color-border);
     user-select: none;
   }
@@ -78,7 +78,7 @@
 
   .header-nav-link {
     font-family: var(--font-mono);
-    font-size: var(--text-3xs);
+    font-size: var(--text-xs);
     color: var(--color-text-subtle);
     text-decoration: none;
 
@@ -123,7 +123,7 @@
   .header-mobile-trigger {
     display: none;
     font-family: var(--font-mono);
-    font-size: var(--text-3xs);
+    font-size: var(--text-xs);
     color: var(--color-text-subtle);
     background: none;
     border: none;
@@ -177,7 +177,7 @@
     line-height: 44px;
     padding: 0 40px;
     font-family: var(--font-mono);
-    font-size: var(--text-3xs);
+    font-size: var(--text-xs);
     color: var(--color-text-subtle);
     text-decoration: none;
     border-bottom: 1px solid var(--color-border-subtle);
@@ -470,7 +470,7 @@
 
   .ct-title-link {
     font-family: var(--font-serif);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--color-accent);
     text-decoration: none;
 
@@ -719,72 +719,6 @@
     text-align: right;
   }
 
-  /* ─── Link Popup ─── */
-  .popup-container {
-    position: fixed;
-    z-index: 150;
-    pointer-events: none;
-  }
-
-  .link-popup {
-    position: absolute;
-    z-index: 1000;
-    display: none;
-    max-width: 320px;
-    padding: 0.75rem;
-    background-color: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    pointer-events: auto;
-    opacity: 0;
-    transition: opacity var(--transition-duration-fast) var(--ease-out);
-
-    &.visible {
-      opacity: 1;
-    }
-  }
-
-  .link-popup-title {
-    font-family: var(--font-serif);
-    font-size: var(--text-sm);
-    font-weight: 700;
-    color: var(--color-text);
-    margin: 0 0 0.25rem;
-  }
-
-  .link-popup-description {
-    font-size: var(--text-xs);
-    color: var(--color-text);
-    opacity: 0.7;
-    margin: 0 0 0.25rem;
-  }
-
-  .link-popup-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .link-popup-status {
-    font-family: var(--font-mono);
-    font-size: var(--text-3xs);
-    color: var(--color-text-subtle);
-
-    &[data-status="finished"] {
-      color: var(--color-status-stable);
-    }
-
-    &[data-status="in-progress"] {
-      color: var(--color-status-draft);
-    }
-  }
-
-  .link-popup-tags {
-    font-family: var(--font-mono);
-    font-size: var(--text-3xs);
-    color: var(--color-text-subtle);
-  }
-
   /* ─── Sidenotes ─── */
   .footnote-ref {
     counter-increment: sidenote-counter;
@@ -979,6 +913,7 @@
     font-family: var(--font-mono);
     font-size: var(--text-3xs);
     font-weight: 400;
+    letter-spacing: 0.5px;
     color: var(--color-text-subtle);
   }
 

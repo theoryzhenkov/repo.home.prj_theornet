@@ -18,11 +18,13 @@
   --color-accent: #2B5F5A;
   --color-accent-hover: color-mix(in oklch, #2B5F5A 80%, black);
 
+  --color-accent-muted: #3D7A74;
+
   --color-link: #2B5F5A;
   --color-link-hover: color-mix(in oklch, #2B5F5A 80%, black);
 
-  --color-highlight: #F5EDCB;
-  --color-highlight-subtle: #F9F4DE;
+  --color-highlight: #D9E4D9;
+  --color-highlight-subtle: #E8EDE5;
 
   --color-success: #4D7A4D;
   --color-warning: #B38A2D;
@@ -34,6 +36,12 @@
   --color-status-evergreen: #2B6B6B;
 
   --color-separator: #C7C1B7;
+
+  /* ─── Content Type Tints ─── */
+  --color-type-article: #E8E4DD;
+  --color-type-project: #E2E6E5;
+  --color-type-note: #E8E5DE;
+  --color-type-interactive: #E3E3E8;
 
   /* ─── Font Stacks ─── */
   --font-serif: 'Literata', Georgia, serif;
@@ -79,3 +87,4 @@
 @import "./base.css";
 @import "./components.css";
 @import "./prose.css";
+@import "./popups.css";

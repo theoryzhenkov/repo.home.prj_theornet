@@ -214,7 +214,7 @@
 
     & th {
       font-family: var(--font-mono);
-      font-size: var(--text-sm);
+      font-size: var(--text-3xs);
       font-weight: 600;
       letter-spacing: 1px;
       text-align: left;
