@@ -5,6 +5,7 @@
 const BREAKPOINT = 1024;
 const SIDENOTE_GAP = 8; // px between stacked sidenotes
 const RESIZE_DEBOUNCE = 100; // ms
+const HIGHLIGHT_DURATION = 1500; // ms
 
 function isWide(): boolean {
   return window.innerWidth > BREAKPOINT;
@@ -50,10 +51,14 @@ function layoutSidenotes() {
 
 function populateFootnotesList() {
   const section = document.getElementById('footnotes');
-  const list = section?.querySelector('.aside-panel-list') as HTMLOListElement | null;
+  const list = section?.querySelector('.aside-panel-list') as
+    | HTMLOListElement
+    | null;
   if (!section || !list) return;
 
-  const sidenotes = document.querySelectorAll<HTMLElement>('.sidenote[data-footnote-id]');
+  const sidenotes = document.querySelectorAll<HTMLElement>(
+    '.sidenote[data-footnote-id]',
+  );
   if (sidenotes.length === 0) {
     section.dataset.empty = 'true';
     return;
@@ -67,7 +72,7 @@ function populateFootnotesList() {
     li.id = `fn-narrow-${id}`;
     li.className = 'footnote-item';
 
-    // Clone all content including the .footnote-number link (matches desktop structure)
+    // Clone all content including the .footnote-number link
     Array.from(note.childNodes).forEach((child) => {
       li.appendChild(child.cloneNode(true));
     });
@@ -80,26 +85,34 @@ function populateFootnotesList() {
 
 // ── Click handler: highlight sidenote on ref click ──
 
+let highlightTimers: ReturnType<typeof setTimeout>[] = [];
+
 function attachClickHandlers() {
-  document.querySelectorAll<HTMLElement>('.footnote-ref .footnote-number').forEach((link) => {
-    link.addEventListener('click', (e) => {
-      if (!isWide()) return; // on narrow, let default anchor behavior work
+  document
+    .querySelectorAll<HTMLElement>('.footnote-ref .footnote-number')
+    .forEach((link) => {
+      link.addEventListener('click', (e) => {
+        if (!isWide()) return; // on narrow, let default anchor behavior work
 
-      e.preventDefault();
-      const href = link.getAttribute('href');
-      if (!href) return;
+        e.preventDefault();
+        const href = link.getAttribute('href');
+        if (!href) return;
 
-      const sidenote = document.querySelector<HTMLElement>(href);
-      if (!sidenote) return;
+        const sidenote = document.querySelector<HTMLElement>(href);
+        if (!sidenote) return;
 
-      // Scroll into view if off-screen
-      sidenote.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // Scroll into view if off-screen
+        sidenote.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-      // Highlight pulse
-      sidenote.classList.add('sidenote-highlight');
-      setTimeout(() => sidenote.classList.remove('sidenote-highlight'), 1500);
+        // Highlight pulse (1.5s background color fade via CSS transition)
+        sidenote.classList.add('sidenote-highlight');
+        const timer = setTimeout(
+          () => sidenote.classList.remove('sidenote-highlight'),
+          HIGHLIGHT_DURATION,
+        );
+        highlightTimers.push(timer);
+      });
     });
-  });
 }
 
 // ── Orchestration ──
@@ -146,20 +159,28 @@ function onResize() {
 
 function init() {
   lastWide = null;
+  highlightTimers = [];
   layout();
   attachClickHandlers();
   window.addEventListener('resize', onResize, { passive: true });
+
+  // Re-register cleanup for this navigation cycle
+  document.addEventListener('astro:before-preparation', cleanup, {
+    once: true,
+  });
 }
 
 function cleanup() {
   window.removeEventListener('resize', onResize);
   if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = null;
+  highlightTimers.forEach(clearTimeout);
+  highlightTimers = [];
 }
 
 // ── Lifecycle ──
 
 document.addEventListener('astro:page-load', init);
-document.addEventListener('astro:before-preparation', cleanup, { once: true });
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
