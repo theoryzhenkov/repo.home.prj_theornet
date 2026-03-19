@@ -65,7 +65,7 @@
 
 :root {
   color-scheme: light only;
-  --height-header: 2.5rem;
+  --height-header: 44px;
   --color-overlay: rgba(0, 0, 0, 0.3);
 }
 

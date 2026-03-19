@@ -1,0 +1,67 @@
+---
+interface BacklinkEntry {
+  title: string;
+  slug: string;
+  type?: string;
+  snippet?: string;
+}
+
+interface Props {
+  backlinks: BacklinkEntry[];
+}
+
+const { backlinks } = Astro.props;
+const INITIAL_VISIBLE = 5;
+const hasMore = backlinks.length > INITIAL_VISIBLE;
+---
+
+{backlinks.length > 0 && (
+  <section class="backlinks" id="backlinks">
+    <div class="backlinks-header">
+      <span class="backlinks-label">BACKLINKS</span>
+      <span class="backlinks-count">({backlinks.length})</span>
+    </div>
+    <div class="backlinks-list">
+      {backlinks.map((link, i) => (
+        <div class:list={['backlinks-entry', { 'backlinks-entry-hidden': i >= INITIAL_VISIBLE }]}>
+          <div class="backlinks-entry-title">
+            <a href={`/${link.slug === 'index' ? '' : `${link.slug}/`}`} class="backlinks-entry-link">
+              {link.title}
+            </a>
+            {link.type && <span class="backlinks-entry-type">{link.type}</span>}
+          </div>
+          {link.snippet && (
+            <blockquote class="backlinks-snippet" set:html={link.snippet} />
+          )}
+        </div>
+      ))}
+    </div>
+    {hasMore && (
+      <button type="button" class="backlinks-toggle" data-backlinks-toggle>
+        Show {backlinks.length - INITIAL_VISIBLE} more
+      </button>
+    )}
+  </section>
+)}
+
+<script>
+  function initBacklinks() {
+    const toggles = document.querySelectorAll('[data-backlinks-toggle]');
+    toggles.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const section = btn.closest('.backlinks');
+        if (!section) return;
+        const hidden = section.querySelectorAll('.backlinks-entry-hidden');
+        hidden.forEach((el) => el.classList.remove('backlinks-entry-hidden'));
+        btn.remove();
+      });
+    });
+  }
+
+  document.addEventListener('astro:page-load', initBacklinks);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBacklinks);
+  } else {
+    initBacklinks();
+  }
+</script>

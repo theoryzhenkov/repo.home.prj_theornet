@@ -2,40 +2,67 @@
 import { marked } from 'marked';
 import Head from '@components/Head.astro';
 import Header from '@components/Header.astro';
-import Metadata from '@components/Metadata.astro';
+import MetadataStrip from '@components/MetadataStrip.astro';
 import TOC from '@components/TOC.astro';
 import Footnotes from '@components/Footnotes.astro';
-import TopRelations from '@components/TopRelations.astro';
-
+import Backlinks from '@components/Backlinks.astro';
 import Search from '@components/Search.astro';
 import Breadcrumb from '@components/Breadcrumb.astro';
 import type { PageInfo, PageRelations, PageInfoMap } from '@/lib/relations';
+
+interface BacklinkEntry {
+  title: string;
+  slug: string;
+  type?: string;
+  snippet?: string;
+}
 
 interface Props {
   title: string;
   description?: string;
   created: Date;
   modified?: Date;
-  headings: { depth: number; slug: string; text: string }[];
+  maturity?: 'draft' | 'in-progress' | 'stable' | 'evergreen';
+  headings: { depth: number; slug: string; text: string; wordCount?: number }[];
   breadcrumbs?: PageInfo[];
   currentSlug?: string;
   relations?: PageRelations;
   pageInfoMap?: PageInfoMap;
   links?: Record<string, string>;
+  readTimeMinutes?: number;
+  backlinks?: BacklinkEntry[];
 }
 
-const { title, description, created, modified, headings, breadcrumbs = [], currentSlug = '', relations, pageInfoMap, links } = Astro.props;
+const {
+  title,
+  description,
+  created,
+  modified,
+  maturity,
+  headings,
+  breadcrumbs = [],
+  currentSlug = '',
+  relations,
+  pageInfoMap,
+  links,
+  readTimeMinutes,
+  backlinks = [],
+} = Astro.props;
+
 const descriptionHtml = description ? marked.parseInline(description) : undefined;
 const descriptionPlain = description?.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+// Count backlinks from refi (pages that reference this one)
+const backlinksCount = backlinks.length || (relations?.refi?.length ?? 0);
 ---
 
 <!DOCTYPE html>
 <html lang="en">
   <Head title={title} description={descriptionPlain} />
-  
+
   <body>
     <Header />
-    
+
     <div class="page-grid">
       <aside class="aside-margin">
         <TOC headings={headings} />
@@ -47,22 +74,33 @@ const descriptionPlain = description?.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
             <Breadcrumb breadcrumbs={breadcrumbs} currentSlug={currentSlug} />
             <h1>{title}</h1>
             {descriptionHtml && <p class="text-text-muted italic mb-2" set:html={descriptionHtml} />}
-            {relations && pageInfoMap && <TopRelations relations={relations} pages={pageInfoMap} links={links} />}
-            <Metadata created={created} modified={modified} />
+            <MetadataStrip
+              created={created}
+              modified={modified}
+              maturity={maturity}
+              readTimeMinutes={readTimeMinutes}
+              backlinksCount={backlinksCount}
+              currentSlug={currentSlug}
+              relations={relations}
+              pageInfoMap={pageInfoMap}
+              links={links}
+            />
           </header>
 
           <div class="prose">
             <slot />
           </div>
 
+          <Backlinks backlinks={backlinks} />
+
           <Footnotes />
         </article>
       </main>
     </div>
-    
+
     <Search />
     <div id="popup-container" class="popup-container"></div>
-    
+
     <script>
       import '@/scripts/popups';
       import '@/scripts/footnotes';
@@ -70,22 +108,22 @@ const descriptionPlain = description?.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
       function initHeadingLinks() {
         const headings = document.querySelectorAll('.prose h1[id], .prose h2[id], .prose h3[id], .prose h4[id], .prose h5[id], .prose h6[id]');
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
-        
+
         headings.forEach((el) => {
           const h = el as HTMLElement;
           if (h.querySelector('.heading-link-icon')) return;
-          
+
           const icon = document.createElement('span');
           icon.className = 'heading-link-icon';
           icon.innerHTML = svg;
           h.appendChild(icon);
-          
+
           h.style.cursor = 'pointer';
           h.addEventListener('click', (e) => {
             if (e.target === icon || icon.contains(e.target as Node)) return;
             window.location.hash = h.id;
           });
-          
+
           icon.addEventListener('click', async (e) => {
             e.stopPropagation();
             try {
@@ -94,7 +132,7 @@ const descriptionPlain = description?.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
           });
         });
       }
-      
+
       document.addEventListener('astro:page-load', initHeadingLinks);
       document.readyState === 'complete' ? initHeadingLinks() : document.addEventListener('DOMContentLoaded', initHeadingLinks);
     </script>

@@ -14,6 +14,7 @@ const pages = defineCollection({
     description: z.string().optional(),
     created: z.coerce.date(),
     modified: z.coerce.date().optional(),
+    maturity: z.enum(['draft', 'in-progress', 'stable', 'evergreen']).optional(),
     // Relations
     up: relationList,
     is: relationList,
