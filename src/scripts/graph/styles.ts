@@ -75,5 +75,5 @@ export function resolveRuntimeColors(): void {
   NODE_COLORS.stroke = cssVar('--color-border', '#999');
   NODE_COLORS.strokeHighlight = cssVar('--color-accent', '#000055');
   NODE_COLORS.labelFill = cssVar('--color-text', '#111');
-  NODE_COLORS.fontFamily = cssVar('--font-sans', 'system-ui, sans-serif');
+  NODE_COLORS.fontFamily = cssVar('--font-mono', 'Consolas, monospace');
 }

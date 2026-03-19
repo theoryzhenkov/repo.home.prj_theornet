@@ -1,60 +1,62 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  /* ─── Colors ─── */
-  --color-bg: #fff;
-  --color-bg-subtle: #f8f8f8;
-  --color-bg-muted: #f0f0f0;
+  /* ─── Colors: Light Theme ─── */
+  --color-bg: #EFECE6;
+  --color-bg-subtle: #E6E2DB;
+  --color-bg-muted: #DCD8D0;
 
-  --color-text: #111;
-  --color-text-muted: #444;
-  --color-text-subtle: #666;
+  --color-text: #22211E;
+  --color-text-muted: #555249;
+  --color-text-subtle: #8A857C;
 
-  --color-link: #005;
-  --color-link-hover: #00a;
-  --color-link-visited: #551a8b;
+  --color-border: #C7C1B7;
+  --color-border-subtle: #D5D0C7;
 
-  --color-border: #ccc;
-  --color-border-subtle: #e0e0e0;
+  --color-accent: #2B5F5A;
+  --color-accent-hover: color-mix(in oklch, #2B5F5A 80%, white);
 
-  --color-accent: #005;
-  --color-accent-hover: #00a;
+  --color-link: #2B5F5A;
+  --color-link-hover: color-mix(in oklch, #2B5F5A 80%, white);
 
-  --color-highlight: #ff9;
-  --color-highlight-subtle: #ffc;
+  --color-highlight: #F5EDCB;
+  --color-highlight-subtle: #F9F4DE;
 
-  --color-success: #060;
-  --color-warning: #850;
-  --color-error: #900;
+  --color-success: #4D7A4D;
+  --color-warning: #B38A2D;
+  --color-evergreen: #2B6B6B;
+  --color-error: #8B3A3A;
+
+  --color-separator: #C7C1B7;
 
   /* ─── Font Stacks ─── */
-  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-serif: 'Georgia', 'Times New Roman', serif;
-  --font-mono: 'Consolas', 'Monaco', 'Liberation Mono', monospace;
+  --font-serif: 'Literata', Georgia, serif;
+  --font-mono: 'Commit Mono', Consolas, monospace;
 
-  /* ─── Line Heights ─── */
-  --leading-none: 1;
-  --leading-tight: 1.2;
-  --leading-snug: 1.35;
-  --leading-normal: 1.45;
-  --leading-relaxed: 1.5;
+  /* ─── Font Sizes (non-heading) ─── */
+  --text-base: 1rem;
+  --text-base--line-height: 1.65;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.5;
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.45;
+  --text-2xs: 0.75rem;
+  --text-2xs--line-height: 1.4;
+  --text-3xs: 0.6875rem;
+  --text-3xs--line-height: 1.35;
 
   /* ─── Layout Dimensions ─── */
   --width-content: 70ch;
   --width-sidebar: 12rem;
   --width-page: 85rem;
 
-  /* ─── Radii (minimal) ─── */
+  /* ─── Radii ─── */
   --radius-sm: 2px;
   --radius-md: 3px;
   --radius-lg: 4px;
   --radius-full: 9999px;
-
-  /* ─── Font Sizes (non-heading) ─── */
-  --text-base: 1rem;        /* 16px — body text */
-  --text-sm: 0.875rem;      /* 14px — secondary text, pre, callout titles */
-  --text-xs: 0.8rem;        /* 12.8px — metadata, breadcrumbs, TOC, footnotes */
-  --text-2xs: 0.75rem;      /* 12px — panel titles, badges, captions */
 
   /* ─── Transitions ─── */
   --ease-out: ease-out;
@@ -65,7 +67,7 @@
 
 :root {
   color-scheme: light only;
-  --height-header: 2.5rem;
+  --height-header: 2.75rem;
   --color-overlay: rgba(0, 0, 0, 0.3);
 }
 
