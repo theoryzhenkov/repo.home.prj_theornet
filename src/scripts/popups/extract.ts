@@ -1,7 +1,6 @@
 /** Content extraction from cached documents — page, section, footnote */
 
 import type { PopupContent, PopupTarget, CachedDocument, PopupContentType } from './types';
-import { POPUP_CONFIG } from './types';
 
 const REMOVE_SELECTORS = '.sidenote, script, style, .todo-marker';
 
@@ -24,49 +23,12 @@ function cleanClone(element: Element): HTMLElement {
   return clone;
 }
 
-/** Walk children, measuring cumulative height, and truncate at the budget */
-function truncateContent(container: HTMLElement, budget: number, measureWidth: number): boolean {
-  // Render off-screen to measure heights
-  const measurer = document.createElement('div');
-  measurer.style.cssText = `position:fixed;top:-9999px;left:-9999px;width:${measureWidth}px;visibility:hidden;`;
-  document.body.appendChild(measurer);
-
-  let totalHeight = 0;
-  let truncated = false;
-  const children = Array.from(container.children);
-
-  for (let i = 0; i < children.length; i++) {
-    measurer.appendChild(children[i].cloneNode(true));
-    totalHeight = measurer.scrollHeight;
-
-    if (totalHeight > budget) {
-      // Remove this child and all subsequent from the original
-      for (let j = i; j < children.length; j++) {
-        children[j].remove();
-      }
-      truncated = true;
-      break;
-    }
-  }
-
-  measurer.remove();
-  return truncated;
-}
 
 function extractPageContent(doc: Document, path: string): PopupContent | null {
   const prose = doc.querySelector('.prose');
   if (!prose) return null;
 
   const cleaned = cleanClone(prose);
-  const truncated = truncateContent(cleaned, POPUP_CONFIG.maxContentHeight, POPUP_CONFIG.maxWidth);
-
-  if (truncated) {
-    const indicator = document.createElement('div');
-    indicator.className = 'popup-truncation-indicator';
-    indicator.textContent = '...';
-    cleaned.appendChild(indicator);
-  }
-
   const title = doc.querySelector('h1')?.textContent?.trim() ?? '';
 
   return {
@@ -100,17 +62,9 @@ function extractSectionContent(doc: Document, hash: string, path: string): Popup
     sibling = sibling.nextElementSibling;
   }
 
-  // Clean, sanitize, and truncate
+  // Clean and sanitize
   container.querySelectorAll(REMOVE_SELECTORS).forEach((el) => el.remove());
   stripEventHandlers(container);
-  const truncated = truncateContent(container, POPUP_CONFIG.maxContentHeight, POPUP_CONFIG.maxWidth);
-
-  if (truncated) {
-    const indicator = document.createElement('div');
-    indicator.className = 'popup-truncation-indicator';
-    indicator.textContent = '...';
-    container.appendChild(indicator);
-  }
 
   const title = heading.textContent?.trim() ?? '';
 

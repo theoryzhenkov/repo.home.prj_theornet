@@ -26,6 +26,11 @@ export function initDrag(popup: HTMLElement, instance: PopupInstance): void {
   const signal = controller.signal;
   controllers.set(popup, controller);
 
+  // Suppress native browser link-drag on the titlebar
+  titlebar.addEventListener('dragstart', (e) => e.preventDefault(), { signal });
+  const titleLink = titlebar.querySelector('.popup-titlebar-link');
+  if (titleLink) titleLink.setAttribute('draggable', 'false');
+
   titlebar.addEventListener('pointerdown', (e: PointerEvent) => {
     // Don't drag from buttons
     if ((e.target as HTMLElement).closest('.popup-btn')) return;
