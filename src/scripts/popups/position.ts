@@ -1,6 +1,6 @@
 /** Viewport-aware positioning engine for popups */
 
-import type { PopupConfig, PopupPosition, TilePosition, TileRect } from './types';
+import type { PopupConfig, PopupPosition, TilePosition, Rect } from './types';
 
 interface Rect {
   top: number;
@@ -100,7 +100,7 @@ export function calculatePosition(
 }
 
 /** Calculate a tile rectangle for the given position, using viewport dimensions */
-export function getTileRect(position: TilePosition, margin: number): TileRect {
+export function getTileRect(position: TilePosition, margin: number): Rect {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const m = margin;

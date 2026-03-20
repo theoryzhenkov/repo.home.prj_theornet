@@ -1,22 +1,11 @@
 /** 8-direction edge/corner resize for popups */
 
-import type { PopupInstance, ResizeEdge } from './types';
+import type { PopupInstance } from './types';
 import { POPUP_CONFIG } from './types';
 import { pinPopup, focusPopup } from './stack';
 
 const MIN_WIDTH = 200;
 const MIN_HEIGHT = 100;
-
-const CURSOR_MAP: Record<ResizeEdge, string> = {
-  n: 'ns-resize',
-  s: 'ns-resize',
-  e: 'ew-resize',
-  w: 'ew-resize',
-  ne: 'nesw-resize',
-  sw: 'nesw-resize',
-  nw: 'nwse-resize',
-  se: 'nwse-resize',
-};
 
 const EDGE_CLASSES = ['popup-resize-n', 'popup-resize-s', 'popup-resize-e', 'popup-resize-w',
   'popup-resize-ne', 'popup-resize-nw', 'popup-resize-se', 'popup-resize-sw'];
@@ -112,6 +101,10 @@ export function initResize(popup: HTMLElement, instance: PopupInstance): void {
     popup.classList.remove('popup-tiled');
     popup.dataset.tilePosition = '';
 
+    // Per-resize-session controller so cleanup is isolated
+    const sessionController = new AbortController();
+    const sessionSignal = sessionController.signal;
+
     const onMove = (me: PointerEvent) => {
       const dx = me.clientX - state.startX;
       const dy = me.clientY - state.startY;
@@ -153,8 +146,7 @@ export function initResize(popup: HTMLElement, instance: PopupInstance): void {
 
     const onUp = (ue: PointerEvent) => {
       popup.releasePointerCapture(ue.pointerId);
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
+      sessionController.abort();
 
       if (state.rafId !== null) {
         cancelAnimationFrame(state.rafId);
@@ -163,8 +155,8 @@ export function initResize(popup: HTMLElement, instance: PopupInstance): void {
       resizeStates.delete(popup);
     };
 
-    document.addEventListener('pointermove', onMove, { signal });
-    document.addEventListener('pointerup', onUp, { signal });
+    document.addEventListener('pointermove', onMove, { signal: sessionSignal });
+    document.addEventListener('pointerup', onUp, { signal: sessionSignal });
   }, { signal });
 }
 

@@ -5,7 +5,7 @@ type PopupState = 'ephemeral' | 'pinned';
 type TilePosition = 'top-left' | 'top' | 'top-right' | 'left' | 'center' | 'right' | 'bottom-left' | 'bottom' | 'bottom-right';
 type ResizeEdge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
-interface TileRect {
+interface Rect {
   top: number;
   left: number;
   width: number;
@@ -33,13 +33,6 @@ interface PopupContent {
   contentType: PopupContentType;
 }
 
-interface SavedRect {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
-
 interface PopupInstance {
   id: string;
   element: HTMLElement;
@@ -52,7 +45,7 @@ interface PopupInstance {
   tilePosition: TilePosition | null;
   zIndex: number;
   isMinimized: boolean;
-  savedRect: SavedRect | null;
+  savedRect: Rect | null;
 }
 
 interface PopupPosition {
@@ -70,7 +63,6 @@ interface PopupConfig {
   maxContentHeight: number;
   maxWidth: number;
   gap: number;
-  maxDepth: number;
   mobileBreakpoint: number;
   viewportMargin: number;
   baseZIndex: number;
@@ -89,7 +81,6 @@ const POPUP_CONFIG: PopupConfig = {
   maxContentHeight: 300,
   maxWidth: 400,
   gap: 8,
-  maxDepth: Infinity,
   mobileBreakpoint: 1024,
   viewportMargin: 12,
   baseZIndex: 200,
@@ -105,8 +96,7 @@ export type {
   PopupState,
   TilePosition,
   ResizeEdge,
-  TileRect,
-  SavedRect,
+  Rect,
   PopupTarget,
   CachedDocument,
   PopupContent,

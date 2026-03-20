@@ -6,6 +6,12 @@ import { startFadeOut } from './render';
 
 const popups: PopupInstance[] = [];
 let focusedId: string | null = null;
+let onRemoveCallback: ((instance: PopupInstance) => void) | null = null;
+
+/** Register a callback invoked for each popup instance before it is removed */
+export function setOnRemove(cb: (instance: PopupInstance) => void): void {
+  onRemoveCallback = cb;
+}
 
 export function pushPopup(instance: PopupInstance): void {
   // Despawn non-ancestor ephemeral popups first
@@ -47,6 +53,7 @@ function removePopupInternal(id: string): void {
       clearTimeout(timer);
     }
     instance.timers.length = 0;
+    onRemoveCallback?.(instance);
     startFadeOut(instance.element, () => {});
   }
 
@@ -89,6 +96,7 @@ export function clearAll(): void {
     for (const timer of p.timers) {
       clearTimeout(timer);
     }
+    onRemoveCallback?.(p);
     p.element.remove();
   }
   popups.length = 0;

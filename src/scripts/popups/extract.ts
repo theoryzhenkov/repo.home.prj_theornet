@@ -5,9 +5,22 @@ import { POPUP_CONFIG } from './types';
 
 const REMOVE_SELECTORS = '.sidenote, script, style, .todo-marker';
 
+/** Strip inline event handler attributes (on*) from all elements */
+function stripEventHandlers(root: HTMLElement): void {
+  const all = root.querySelectorAll('*');
+  for (const el of all) {
+    for (const attr of Array.from(el.attributes)) {
+      if (attr.name.startsWith('on')) {
+        el.removeAttribute(attr.name);
+      }
+    }
+  }
+}
+
 function cleanClone(element: Element): HTMLElement {
   const clone = element.cloneNode(true) as HTMLElement;
   clone.querySelectorAll(REMOVE_SELECTORS).forEach((el) => el.remove());
+  stripEventHandlers(clone);
   return clone;
 }
 
@@ -87,8 +100,9 @@ function extractSectionContent(doc: Document, hash: string, path: string): Popup
     sibling = sibling.nextElementSibling;
   }
 
-  // Clean and truncate
+  // Clean, sanitize, and truncate
   container.querySelectorAll(REMOVE_SELECTORS).forEach((el) => el.remove());
+  stripEventHandlers(container);
   const truncated = truncateContent(container, POPUP_CONFIG.maxContentHeight, POPUP_CONFIG.maxWidth);
 
   if (truncated) {
@@ -113,8 +127,8 @@ function extractFootnoteContent(doc: Document, footnoteId: string): PopupContent
   if (!sidenote) return null;
 
   const clone = sidenote.cloneNode(true) as HTMLElement;
-  // Remove the footnote number from clone
   clone.querySelectorAll('.sidenote-number').forEach((el) => el.remove());
+  stripEventHandlers(clone);
 
   return {
     title: `Footnote ${footnoteId}`,

@@ -7,9 +7,6 @@ import {
 } from './events';
 import { clearCache } from './cache';
 import { destroyTaskbar, handleTaskbarResize } from './taskbar';
-import { getAllPopups } from './stack';
-import { teardownDrag } from './drag';
-import { teardownResize } from './resize';
 
 let boundArticle: HTMLElement | null = null;
 
@@ -63,12 +60,7 @@ function cleanup(): void {
   document.removeEventListener('mousedown', handlePopupFocus as EventListener);
   window.removeEventListener('resize', handleTaskbarResize);
 
-  // Teardown drag/resize on all popups
-  for (const popup of getAllPopups()) {
-    teardownDrag(popup.element);
-    teardownResize(popup.element);
-  }
-
+  // resetState → clearAll triggers onRemove callback which tears down drag/resize per popup
   resetState();
   destroyTaskbar();
   clearCache();

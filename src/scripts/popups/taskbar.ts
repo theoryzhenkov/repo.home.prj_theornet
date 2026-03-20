@@ -1,7 +1,6 @@
 /** Taskbar strip for minimized popups — dynamic vertical/horizontal layout */
 
-import type { PopupInstance, SavedRect } from './types';
-import { POPUP_CONFIG } from './types';
+import type { PopupInstance } from './types';
 import { findPopupById, focusPopup, updateZOrder } from './stack';
 import { showPopup } from './render';
 

@@ -6,14 +6,14 @@ import { fetchAndCache, prefetch, getCurrentPageDoc } from './cache';
 import { classifyTarget, extractContent } from './extract';
 import { calculatePosition, getTileRect } from './position';
 import {
-  createPopup, createLoadingPopup, upgradeLoadingPopup,
+  createLoadingPopup, upgradeLoadingPopup,
   createPopin, showPopup, showPopin, dismissTopPopin, escapeHtml,
   setTiled,
 } from './render';
 import {
   pushPopup, removePopup, findPopupByElement, getDepthOf, getTopPopup,
   clearAll, focusPopup, getFocusedPopup, togglePin, pinPopup, wouldCycle,
-  findPopupById,
+  setOnRemove,
 } from './stack';
 import { initDrag, teardownDrag } from './drag';
 import { initResize, teardownResize } from './resize';
@@ -33,6 +33,14 @@ let currentHoverAnchor: HTMLAnchorElement | null = null;
 let popupIndex: PopupIndex | null = null;
 let popupIndexPromise: Promise<PopupIndex> | null = null;
 let isScrolling = false;
+const spawningHrefs = new Set<string>();
+
+// Wire drag/resize teardown + taskbar cleanup into stack removal
+setOnRemove((instance) => {
+  teardownDrag(instance.element);
+  teardownResize(instance.element);
+  removeFromTaskbar(instance.id);
+});
 
 function isMobile(): boolean {
   return window.innerWidth <= POPUP_CONFIG.mobileBreakpoint;
@@ -88,7 +96,6 @@ function scheduleFade(instance: PopupInstance): void {
 
   const timer = setTimeout(() => {
     if (!instance.element.matches(':hover') && currentHoverAnchor !== instance.anchor) {
-      removeFromTaskbar(instance.id);
       removePopup(instance.id);
     }
   }, POPUP_CONFIG.fadeOutDelay);
@@ -109,7 +116,6 @@ function wirePopupInteractions(popupEl: HTMLElement, instance: PopupInstance): v
       clearAll();
       destroyTaskbar();
     } else {
-      removeFromTaskbar(instance.id);
       removePopup(instance.id);
     }
   }) as EventListener);
@@ -192,79 +198,87 @@ async function spawnPopup(anchor: HTMLAnchorElement, parentPopupEl: HTMLElement 
   // Cycle prevention: check ancestor chain for same href
   if (wouldCycle(href, parentInstance?.id ?? null)) return;
 
-  if (isMobile()) {
+  // Prevent duplicate concurrent spawns for the same href
+  if (spawningHrefs.has(href)) return;
+  spawningHrefs.add(href);
+
+  try {
+    if (isMobile()) {
+      const content = await fetchContent(target);
+      if (!content) return;
+      if (currentHoverAnchor !== anchor) return;
+      const popin = createPopin(content);
+      showPopin(popin);
+      return;
+    }
+
+    // Create loading popup immediately
+    const loadingEl = createLoadingPopup(depth, POPUP_CONFIG);
+    document.body.appendChild(loadingEl);
+
+    // Position the loading popup
+    const loadingRect = loadingEl.getBoundingClientRect();
+    const pos = calculatePosition(
+      anchor,
+      loadingRect.width,
+      loadingRect.height,
+      POPUP_CONFIG,
+      parentInstance?.element ?? null,
+    );
+
+    loadingEl.style.position = 'fixed';
+    loadingEl.style.top = `${pos.top}px`;
+    loadingEl.style.left = `${pos.left}px`;
+    loadingEl.style.maxHeight = `${pos.maxHeight}px`;
+
+    const instance: PopupInstance = {
+      id: loadingEl.dataset.popupId!,
+      element: loadingEl,
+      anchor,
+      parentId: parentInstance?.id ?? null,
+      depth,
+      timers: [],
+      state: 'ephemeral',
+      href,
+      tilePosition: null,
+      zIndex: 0,
+      isMinimized: false,
+      savedRect: null,
+    };
+
+    pushPopup(instance);
+    showPopup(loadingEl);
+    wirePopupInteractions(loadingEl, instance);
+
+    // Fetch actual content
     const content = await fetchContent(target);
-    if (!content) return;
-    if (currentHoverAnchor !== anchor) return;
-    const popin = createPopin(content);
-    showPopin(popin);
-    return;
+
+    // Check if popup was dismissed during fetch
+    if (!document.body.contains(loadingEl)) return;
+
+    if (!content) {
+      removePopup(instance.id);
+      return;
+    }
+
+    // Upgrade loading popup with real content
+    upgradeLoadingPopup(loadingEl, content);
+
+    // Reposition with actual content dimensions
+    const actualRect = loadingEl.getBoundingClientRect();
+    const finalPos = calculatePosition(
+      anchor,
+      actualRect.width,
+      actualRect.height,
+      POPUP_CONFIG,
+      parentInstance?.element ?? null,
+    );
+    loadingEl.style.top = `${finalPos.top}px`;
+    loadingEl.style.left = `${finalPos.left}px`;
+    loadingEl.style.maxHeight = `${finalPos.maxHeight}px`;
+  } finally {
+    spawningHrefs.delete(href);
   }
-
-  // Create loading popup immediately
-  const loadingEl = createLoadingPopup(depth, POPUP_CONFIG);
-  document.body.appendChild(loadingEl);
-
-  // Position the loading popup
-  const loadingRect = loadingEl.getBoundingClientRect();
-  const pos = calculatePosition(
-    anchor,
-    loadingRect.width,
-    loadingRect.height,
-    POPUP_CONFIG,
-    parentInstance?.element ?? null,
-  );
-
-  loadingEl.style.position = 'fixed';
-  loadingEl.style.top = `${pos.top}px`;
-  loadingEl.style.left = `${pos.left}px`;
-  loadingEl.style.maxHeight = `${pos.maxHeight}px`;
-
-  const instance: PopupInstance = {
-    id: loadingEl.dataset.popupId!,
-    element: loadingEl,
-    anchor,
-    parentId: parentInstance?.id ?? null,
-    depth,
-    timers: [],
-    state: 'ephemeral',
-    href,
-    tilePosition: null,
-    zIndex: 0,
-    isMinimized: false,
-    savedRect: null,
-  };
-
-  pushPopup(instance);
-  showPopup(loadingEl);
-  wirePopupInteractions(loadingEl, instance);
-
-  // Fetch actual content
-  const content = await fetchContent(target);
-
-  // Check if popup was dismissed during fetch
-  if (!document.body.contains(loadingEl)) return;
-
-  if (!content) {
-    removePopup(instance.id);
-    return;
-  }
-
-  // Upgrade loading popup with real content
-  upgradeLoadingPopup(loadingEl, content);
-
-  // Reposition with actual content dimensions
-  const actualRect = loadingEl.getBoundingClientRect();
-  const finalPos = calculatePosition(
-    anchor,
-    actualRect.width,
-    actualRect.height,
-    POPUP_CONFIG,
-    parentInstance?.element ?? null,
-  );
-  loadingEl.style.top = `${finalPos.top}px`;
-  loadingEl.style.left = `${finalPos.left}px`;
-  loadingEl.style.maxHeight = `${finalPos.maxHeight}px`;
 }
 
 async function fetchContent(target: ReturnType<typeof classifyTarget>): Promise<PopupContent | null> {
@@ -421,19 +435,20 @@ export function handleKeydown(event: KeyboardEvent): void {
     }
     const topPopup = getTopPopup();
     if (topPopup) {
-      removeFromTaskbar(topPopup.id);
       removePopup(topPopup.id);
       event.preventDefault();
     }
     return;
   }
 
+  // Keyboard tiling requires Alt modifier: Alt+Q/W/E/A/S/D/Z/X/C
+  if (!event.altKey) return;
+
   // Skip if an input element is focused
   const activeTag = document.activeElement?.tagName;
   if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
   if ((document.activeElement as HTMLElement)?.isContentEditable) return;
 
-  // Keyboard tiling: Q/W/E/A/S/D/Z/X/C
   const tilePos = TILE_KEYS[event.key.toLowerCase()];
   if (tilePos) {
     const focused = getFocusedPopup();
@@ -449,10 +464,4 @@ export function resetState(): void {
   currentHoverAnchor = null;
   isScrolling = false;
   clearAll();
-}
-
-/** Teardown drag/resize for a popup element */
-export function teardownPopupInteractions(popup: HTMLElement): void {
-  teardownDrag(popup);
-  teardownResize(popup);
 }
