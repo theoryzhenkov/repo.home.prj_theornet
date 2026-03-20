@@ -11,13 +11,25 @@ import {
   setTiled,
 } from './render';
 import {
-  pushPopup, removePopup, findPopupByElement, getDepthOf, getTopPopup,
+  pushPopup, removePopup, findPopupByElement, findPopupById, getDepthOf, getTopPopup,
   clearAll, focusPopup, getFocusedPopup, togglePin, pinPopup, wouldCycle,
   setOnRemove,
 } from './stack';
 import { initDrag, teardownDrag } from './drag';
 import { initResize, teardownResize } from './resize';
 import { minimize, removeFromTaskbar, destroyTaskbar } from './taskbar';
+
+/** Check if `instance` is a descendant of `ancestorId` in the popup tree */
+function isDescendantOf(instance: PopupInstance, ancestorId: string): boolean {
+  let currentId = instance.parentId;
+  while (currentId) {
+    if (currentId === ancestorId) return true;
+    const parent = findPopupById(currentId);
+    if (!parent) break;
+    currentId = parent.parentId;
+  }
+  return false;
+}
 
 interface PopupIndexEntry {
   title: string;
@@ -144,8 +156,13 @@ function wirePopupInteractions(popupEl: HTMLElement, instance: PopupInstance): v
   // Start fade when mouse leaves popup
   popupEl.addEventListener('mouseleave', (e: MouseEvent) => {
     const related = e.relatedTarget as HTMLElement | null;
-    if (related?.closest?.('.popup')) return;
     if (related === instance.anchor || instance.anchor.contains(related)) return;
+    // Only skip fade if moving to a descendant popup (child, grandchild, etc.)
+    const relatedPopupEl = related?.closest?.('.popup') as HTMLElement | null;
+    if (relatedPopupEl) {
+      const relatedInstance = findPopupByElement(relatedPopupEl);
+      if (relatedInstance && isDescendantOf(relatedInstance, instance.id)) return;
+    }
     scheduleFade(instance);
   });
 
