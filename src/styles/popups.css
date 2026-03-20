@@ -25,10 +25,6 @@
   pointer-events: none;
 }
 
-/* Depth-based z-index */
-.popup[data-popup-depth="1"] { z-index: 200; }
-.popup[data-popup-depth="2"] { z-index: 210; }
-
 /* ─── Titlebar ─── */
 
 .popup-titlebar {
@@ -39,6 +35,8 @@
   background-color: var(--color-bg-subtle);
   border-bottom: 1px solid var(--color-border-subtle);
   min-height: 28px;
+  cursor: grab;
+  user-select: none;
 }
 
 .popup-titlebar-link {
@@ -52,6 +50,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
 
   &:hover {
     text-decoration: underline;
@@ -62,15 +61,23 @@
   }
 }
 
-.popup-close {
+/* ─── Controls ─── */
+
+.popup-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   flex-shrink: 0;
+}
+
+.popup-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 18px;
   height: 18px;
   padding: 0;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1;
   color: var(--color-text-subtle);
   background: none;
@@ -193,6 +200,144 @@
 .popup-no-content {
   color: var(--color-text-subtle);
   font-style: italic;
+}
+
+/* ─── Pinned state ─── */
+
+.popup.popup-pinned {
+  border-color: var(--color-accent);
+
+  & .popup-btn-pin {
+    color: var(--color-accent);
+  }
+}
+
+/* ─── Tiled state ─── */
+
+.popup.popup-tiled {
+  transition: top 200ms ease-out, left 200ms ease-out, width 200ms ease-out, height 200ms ease-out;
+  border-radius: var(--radius-sm);
+
+  & .popup-body {
+    max-height: none;
+  }
+}
+
+/* ─── Focused state ─── */
+
+.popup.popup-focused {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ─── Dragging state ─── */
+
+.popup.popup-dragging {
+  transition: none;
+  cursor: grabbing;
+  user-select: none;
+}
+
+.popup.popup-dragging .popup-titlebar {
+  cursor: grabbing;
+}
+
+/* ─── Resizing state ─── */
+
+.popup.popup-resizing {
+  transition: none;
+  user-select: none;
+}
+
+/* ─── Resize cursors ─── */
+
+.popup.popup-resize-n { cursor: ns-resize; }
+.popup.popup-resize-s { cursor: ns-resize; }
+.popup.popup-resize-e { cursor: ew-resize; }
+.popup.popup-resize-w { cursor: ew-resize; }
+.popup.popup-resize-ne { cursor: nesw-resize; }
+.popup.popup-resize-sw { cursor: nesw-resize; }
+.popup.popup-resize-nw { cursor: nwse-resize; }
+.popup.popup-resize-se { cursor: nwse-resize; }
+
+/* ─── Loading state ─── */
+
+.popup-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.popup-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: popup-spin 600ms linear infinite;
+}
+
+@keyframes popup-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Taskbar ─── */
+
+.popup-taskbar {
+  position: fixed;
+  z-index: 199;
+  display: none;
+  gap: 2px;
+  padding: 4px;
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.popup-taskbar.popup-taskbar-visible {
+  display: flex;
+}
+
+.popup-taskbar-vertical {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  flex-direction: column;
+  border-right: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.popup-taskbar-horizontal {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: row;
+  border-bottom: none;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.popup-taskbar-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--color-text-subtle);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-text);
+    background-color: var(--color-bg-muted);
+    border-color: var(--color-border-subtle);
+  }
 }
 
 /* ─── Mobile Popins ─── */

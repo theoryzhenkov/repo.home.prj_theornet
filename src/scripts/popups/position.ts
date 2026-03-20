@@ -1,6 +1,6 @@
 /** Viewport-aware positioning engine for popups */
 
-import type { PopupConfig, PopupPosition } from './types';
+import type { PopupConfig, PopupPosition, TilePosition, TileRect } from './types';
 
 interface Rect {
   top: number;
@@ -97,4 +97,34 @@ export function calculatePosition(
     placement: 'below',
     maxHeight: Math.min(config.maxContentHeight + 60, vp.height - margin * 2),
   };
+}
+
+/** Calculate a tile rectangle for the given position, using viewport dimensions */
+export function getTileRect(position: TilePosition, margin: number): TileRect {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const m = margin;
+  const halfW = (vw - m * 3) / 2;
+  const halfH = (vh - m * 3) / 2;
+
+  switch (position) {
+    case 'top-left':
+      return { top: m, left: m, width: halfW, height: halfH };
+    case 'top':
+      return { top: m, left: m, width: vw - m * 2, height: halfH };
+    case 'top-right':
+      return { top: m, left: m * 2 + halfW, width: halfW, height: halfH };
+    case 'left':
+      return { top: m, left: m, width: halfW, height: vh - m * 2 };
+    case 'center':
+      return { top: m, left: m, width: vw - m * 2, height: vh - m * 2 };
+    case 'right':
+      return { top: m, left: m * 2 + halfW, width: halfW, height: vh - m * 2 };
+    case 'bottom-left':
+      return { top: m * 2 + halfH, left: m, width: halfW, height: halfH };
+    case 'bottom':
+      return { top: m * 2 + halfH, left: m, width: vw - m * 2, height: halfH };
+    case 'bottom-right':
+      return { top: m * 2 + halfH, left: m * 2 + halfW, width: halfW, height: halfH };
+  }
 }

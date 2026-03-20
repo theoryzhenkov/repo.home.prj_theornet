@@ -1,6 +1,6 @@
 /** Popup and popin DOM creation and lifecycle */
 
-import type { PopupContent, PopupConfig } from './types';
+import type { PopupContent, PopupConfig, TilePosition } from './types';
 import { POPUP_CONFIG } from './types';
 
 export function createPopup(
@@ -21,18 +21,98 @@ export function createPopup(
   popup.innerHTML = `
     <div class="popup-titlebar">
       <a class="popup-titlebar-link" href="${escapeAttr(content.href)}">${escapeHtml(content.title)}</a>
-      <button class="popup-close" aria-label="Close popup">&times;</button>
+      <div class="popup-controls">
+        <button class="popup-btn popup-btn-pin" title="Pin">\u2299</button>
+        <button class="popup-btn popup-btn-minimize" title="Minimize">\u2212</button>
+        <button class="popup-btn popup-btn-zoom" title="Expand">\u26F6</button>
+        <button class="popup-btn popup-btn-close" title="Close (Alt: all)">\u00D7</button>
+      </div>
     </div>
     <div class="popup-body">${content.bodyHtml}</div>
   `;
 
-  // Close button handler
-  popup.querySelector('.popup-close')?.addEventListener('click', (e) => {
+  bindTitlebarButtons(popup);
+  return popup;
+}
+
+export function createLoadingPopup(depth: number, config: PopupConfig): HTMLElement {
+  const popup = document.createElement('div');
+  popup.className = 'popup popup-loading-state';
+  popup.dataset.popupId = crypto.randomUUID();
+  popup.dataset.popupDepth = String(depth);
+
+  popup.style.maxWidth = `${config.maxWidth}px`;
+
+  popup.innerHTML = `
+    <div class="popup-titlebar">
+      <span class="popup-titlebar-link">Loading\u2026</span>
+      <div class="popup-controls">
+        <button class="popup-btn popup-btn-close" title="Close">\u00D7</button>
+      </div>
+    </div>
+    <div class="popup-body">
+      <div class="popup-loading"><div class="popup-spinner"></div></div>
+    </div>
+  `;
+
+  bindTitlebarButtons(popup);
+  return popup;
+}
+
+/** Replace loading popup body with real content, add full titlebar controls */
+export function upgradeLoadingPopup(popup: HTMLElement, content: PopupContent): void {
+  const titleLink = popup.querySelector('.popup-titlebar-link');
+  if (titleLink) {
+    const a = document.createElement('a');
+    a.className = 'popup-titlebar-link';
+    a.href = content.href;
+    a.textContent = content.title;
+    titleLink.replaceWith(a);
+  }
+
+  // Add full controls if only close exists
+  const controls = popup.querySelector('.popup-controls');
+  if (controls && !controls.querySelector('.popup-btn-pin')) {
+    controls.innerHTML = `
+      <button class="popup-btn popup-btn-pin" title="Pin">\u2299</button>
+      <button class="popup-btn popup-btn-minimize" title="Minimize">\u2212</button>
+      <button class="popup-btn popup-btn-zoom" title="Expand">\u26F6</button>
+      <button class="popup-btn popup-btn-close" title="Close (Alt: all)">\u00D7</button>
+    `;
+    bindTitlebarButtons(popup);
+  }
+
+  const body = popup.querySelector('.popup-body');
+  if (body) {
+    body.innerHTML = content.bodyHtml;
+  }
+
+  popup.dataset.contentType = content.contentType;
+  popup.classList.remove('popup-loading-state');
+}
+
+function bindTitlebarButtons(popup: HTMLElement): void {
+  popup.querySelector('.popup-btn-pin')?.addEventListener('click', (e) => {
     e.stopPropagation();
-    popup.dispatchEvent(new CustomEvent('popup:close', { bubbles: true }));
+    popup.dispatchEvent(new CustomEvent('popup:pin', { bubbles: true }));
   });
 
-  return popup;
+  popup.querySelector('.popup-btn-minimize')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    popup.dispatchEvent(new CustomEvent('popup:minimize', { bubbles: true }));
+  });
+
+  popup.querySelector('.popup-btn-zoom')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    popup.dispatchEvent(new CustomEvent('popup:zoom', { bubbles: true }));
+  });
+
+  popup.querySelector('.popup-btn-close')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    popup.dispatchEvent(
+      new CustomEvent('popup:close', { bubbles: true, detail: { altKey: (e as MouseEvent).altKey } }),
+    );
+  });
 }
 
 export function createPopin(content: PopupContent): HTMLElement {
@@ -50,14 +130,10 @@ export function createPopin(content: PopupContent): HTMLElement {
     </div>
   `;
 
-  // Close on overlay click (outside popin)
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      dismissPopin(overlay);
-    }
+    if (e.target === overlay) dismissPopin(overlay);
   });
 
-  // Close button
   overlay.querySelector('.popin-close')?.addEventListener('click', () => {
     dismissPopin(overlay);
   });
@@ -81,7 +157,6 @@ export function startFadeOut(popup: HTMLElement, onDone: () => void): ReturnType
 
 export function showPopin(overlay: HTMLElement): void {
   document.body.appendChild(overlay);
-  // Force reflow for transition
   overlay.offsetHeight;
   overlay.classList.add('popin-visible');
 }
@@ -101,6 +176,25 @@ export function dismissTopPopin(): boolean {
   const top = popins[popins.length - 1];
   dismissPopin(top);
   return true;
+}
+
+export function setPinned(el: HTMLElement, pinned: boolean): void {
+  el.classList.toggle('popup-pinned', pinned);
+}
+
+export function setTiled(el: HTMLElement, pos: TilePosition | null): void {
+  // Remove all tile classes
+  el.classList.remove('popup-tiled');
+  el.dataset.tilePosition = '';
+
+  if (pos) {
+    el.classList.add('popup-tiled');
+    el.dataset.tilePosition = pos;
+  }
+}
+
+export function setFocused(el: HTMLElement, focused: boolean): void {
+  el.classList.toggle('popup-focused', focused);
 }
 
 export function escapeHtml(str: string): string {

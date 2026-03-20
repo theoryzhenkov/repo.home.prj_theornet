@@ -1,7 +1,15 @@
 /** Popup system orchestrator — Astro lifecycle integration */
 
-import { handleMouseOver, handleMouseOut, handleClick, handleKeydown, handlePopupInternalMouseOver, resetState } from './events';
+import {
+  handleMouseOver, handleMouseOut, handleClick, handleKeydown,
+  handlePopupInternalMouseOver, handleScroll, handleMouseMoveGlobal,
+  handlePopupFocus, resetState,
+} from './events';
 import { clearCache } from './cache';
+import { destroyTaskbar, handleTaskbarResize } from './taskbar';
+import { getAllPopups } from './stack';
+import { teardownDrag } from './drag';
+import { teardownResize } from './resize';
 
 let boundArticle: HTMLElement | null = null;
 
@@ -23,8 +31,18 @@ function init(): void {
   // Click events for mobile popins
   boundArticle.addEventListener('click', handleClick as EventListener);
 
-  // Escape key to dismiss
+  // Escape key and keyboard tiling
   document.addEventListener('keydown', handleKeydown);
+
+  // Scroll suppression
+  document.addEventListener('scroll', handleScroll, { passive: true });
+  document.addEventListener('mousemove', handleMouseMoveGlobal, { passive: true });
+
+  // Click-to-front z-order
+  document.addEventListener('mousedown', handlePopupFocus as EventListener);
+
+  // Taskbar layout on resize
+  window.addEventListener('resize', handleTaskbarResize);
 
   // Register cleanup for Astro navigation
   document.addEventListener('astro:before-preparation', cleanup, { once: true });
@@ -40,7 +58,19 @@ function cleanup(): void {
 
   document.removeEventListener('mouseover', handlePopupInternalMouseOver as EventListener);
   document.removeEventListener('keydown', handleKeydown);
+  document.removeEventListener('scroll', handleScroll);
+  document.removeEventListener('mousemove', handleMouseMoveGlobal);
+  document.removeEventListener('mousedown', handlePopupFocus as EventListener);
+  window.removeEventListener('resize', handleTaskbarResize);
+
+  // Teardown drag/resize on all popups
+  for (const popup of getAllPopups()) {
+    teardownDrag(popup.element);
+    teardownResize(popup.element);
+  }
+
   resetState();
+  destroyTaskbar();
   clearCache();
 }
 

@@ -1,36 +1,39 @@
-/** Nested popup stack management */
+/** Nested popup stack management with z-order, pinning, and focus tracking */
 
 import type { PopupInstance } from './types';
+import { POPUP_CONFIG } from './types';
 import { startFadeOut } from './render';
 
 const popups: PopupInstance[] = [];
+let focusedId: string | null = null;
 
 export function pushPopup(instance: PopupInstance): void {
-  // Despawn non-ancestor popups first
+  // Despawn non-ancestor ephemeral popups first
   const ancestors = getAncestorChain(instance.parentId);
   const ancestorIds = new Set(ancestors.map((p) => p.id));
-  // Also keep the parent itself
   if (instance.parentId) ancestorIds.add(instance.parentId);
 
-  // Remove all popups that are not in the ancestor chain
-  const toRemove = popups.filter((p) => !ancestorIds.has(p.id));
+  // Only auto-despawn ephemeral popups that aren't in the ancestor chain
+  const toRemove = popups.filter(
+    (p) => !ancestorIds.has(p.id) && p.state === 'ephemeral',
+  );
   for (const p of toRemove) {
     removePopupInternal(p.id);
   }
 
   popups.push(instance);
+  focusPopup(instance.id);
 }
 
 export function removePopup(id: string): void {
   removePopupInternal(id);
+  updateZOrder();
 }
 
 function removePopupInternal(id: string): void {
-  // Collect target + all descendants by ID, then remove in a single pass
   const toRemoveIds = new Set<string>([id]);
   collectDescendantIds(id, toRemoveIds);
 
-  // Partition: remove matching popups from the array, cleanup each
   const removed: PopupInstance[] = [];
   for (let i = popups.length - 1; i >= 0; i--) {
     if (toRemoveIds.has(popups[i].id)) {
@@ -45,6 +48,10 @@ function removePopupInternal(id: string): void {
     }
     instance.timers.length = 0;
     startFadeOut(instance.element, () => {});
+  }
+
+  if (focusedId && toRemoveIds.has(focusedId)) {
+    focusedId = popups[popups.length - 1]?.id ?? null;
   }
 }
 
@@ -85,10 +92,83 @@ export function clearAll(): void {
     p.element.remove();
   }
   popups.length = 0;
+  focusedId = null;
 }
 
 export function getDepthOf(popupElement: HTMLElement | null): number {
   if (!popupElement) return 0;
-  const instance = popups.find((p) => p.element === popupElement || p.element.contains(popupElement));
+  const instance = popups.find(
+    (p) => p.element === popupElement || p.element.contains(popupElement),
+  );
   return instance ? instance.depth : 0;
+}
+
+/** Reassign z-indices sequentially; focused popup gets the top slot */
+export function updateZOrder(): void {
+  const visible = popups.filter((p) => !p.isMinimized);
+  const base = POPUP_CONFIG.baseZIndex;
+
+  for (let i = 0; i < visible.length; i++) {
+    const z = visible[i].id === focusedId ? base + visible.length : base + i;
+    visible[i].zIndex = z;
+    visible[i].element.style.zIndex = String(z);
+  }
+}
+
+/** Set a popup as focused, update z-order and visual state */
+export function focusPopup(id: string): void {
+  const prev = focusedId ? popups.find((p) => p.id === focusedId) : null;
+  if (prev) {
+    prev.element.classList.remove('popup-focused');
+  }
+
+  focusedId = id;
+  const instance = popups.find((p) => p.id === id);
+  if (instance) {
+    instance.element.classList.add('popup-focused');
+  }
+  updateZOrder();
+}
+
+export function getFocusedPopup(): PopupInstance | undefined {
+  if (!focusedId) return undefined;
+  return popups.find((p) => p.id === focusedId);
+}
+
+export function togglePin(id: string): void {
+  const instance = popups.find((p) => p.id === id);
+  if (!instance) return;
+  instance.state = instance.state === 'pinned' ? 'ephemeral' : 'pinned';
+  instance.element.classList.toggle('popup-pinned', instance.state === 'pinned');
+}
+
+export function pinPopup(id: string): void {
+  const instance = popups.find((p) => p.id === id);
+  if (!instance || instance.state === 'pinned') return;
+  instance.state = 'pinned';
+  instance.element.classList.add('popup-pinned');
+}
+
+export function getMinimizedPopups(): PopupInstance[] {
+  return popups.filter((p) => p.isMinimized);
+}
+
+export function getAllPopups(): readonly PopupInstance[] {
+  return popups;
+}
+
+export function findPopupById(id: string): PopupInstance | undefined {
+  return popups.find((p) => p.id === id);
+}
+
+/** Check if spawning a popup for this href would create a cycle in the ancestor chain */
+export function wouldCycle(href: string, parentId: string | null): boolean {
+  let currentId = parentId;
+  while (currentId) {
+    const popup = popups.find((p) => p.id === currentId);
+    if (!popup) break;
+    if (popup.href === href) return true;
+    currentId = popup.parentId;
+  }
+  return false;
 }

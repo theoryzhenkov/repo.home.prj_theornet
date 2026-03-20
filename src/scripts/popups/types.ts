@@ -1,6 +1,16 @@
 /** Popup system types and configuration constants */
 
 type PopupContentType = 'page' | 'section' | 'footnote';
+type PopupState = 'ephemeral' | 'pinned';
+type TilePosition = 'top-left' | 'top' | 'top-right' | 'left' | 'center' | 'right' | 'bottom-left' | 'bottom' | 'bottom-right';
+type ResizeEdge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+
+interface TileRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
 
 interface PopupTarget {
   anchor: HTMLAnchorElement;
@@ -23,6 +33,13 @@ interface PopupContent {
   contentType: PopupContentType;
 }
 
+interface SavedRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
 interface PopupInstance {
   id: string;
   element: HTMLElement;
@@ -30,6 +47,12 @@ interface PopupInstance {
   parentId: string | null;
   depth: number;
   timers: ReturnType<typeof setTimeout>[];
+  state: PopupState;
+  href: string;
+  tilePosition: TilePosition | null;
+  zIndex: number;
+  isMinimized: boolean;
+  savedRect: SavedRect | null;
 }
 
 interface PopupPosition {
@@ -50,6 +73,12 @@ interface PopupConfig {
   maxDepth: number;
   mobileBreakpoint: number;
   viewportMargin: number;
+  baseZIndex: number;
+  cornerDetectionSize: number;
+  taskbarWidth: number;
+  taskbarItemHeight: number;
+  tileMargin: number;
+  dragThreshold: number;
 }
 
 const POPUP_CONFIG: PopupConfig = {
@@ -60,13 +89,24 @@ const POPUP_CONFIG: PopupConfig = {
   maxContentHeight: 300,
   maxWidth: 400,
   gap: 8,
-  maxDepth: 2,
+  maxDepth: Infinity,
   mobileBreakpoint: 1024,
   viewportMargin: 12,
+  baseZIndex: 200,
+  cornerDetectionSize: 20,
+  taskbarWidth: 36,
+  taskbarItemHeight: 28,
+  tileMargin: 4,
+  dragThreshold: 3,
 } as const;
 
 export type {
   PopupContentType,
+  PopupState,
+  TilePosition,
+  ResizeEdge,
+  TileRect,
+  SavedRect,
   PopupTarget,
   CachedDocument,
   PopupContent,
