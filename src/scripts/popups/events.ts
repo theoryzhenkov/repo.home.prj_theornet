@@ -1,11 +1,11 @@
 /** Event delegation, hover timing, mobile detection, and popup orchestration */
 
-import type { PopupInstance } from './types';
+import type { PopupContent, PopupInstance } from './types';
 import { POPUP_CONFIG } from './types';
 import { fetchAndCache, prefetch, getCurrentPageDoc } from './cache';
 import { classifyTarget, extractContent } from './extract';
 import { calculatePosition } from './position';
-import { createPopup, createPopin, showPopup, showPopin, startFadeOut, dismissTopPopin } from './render';
+import { createPopup, createPopin, showPopup, showPopin, dismissTopPopin, escapeHtml } from './render';
 import { pushPopup, removePopup, findPopupByElement, getDepthOf, getTopPopup, clearAll } from './stack';
 
 interface PopupIndexEntry {
@@ -18,7 +18,6 @@ type PopupIndex = Record<string, PopupIndexEntry>;
 
 let prefetchTimer: ReturnType<typeof setTimeout> | null = null;
 let spawnTimer: ReturnType<typeof setTimeout> | null = null;
-let fadeTimer: ReturnType<typeof setTimeout> | null = null;
 let currentHoverAnchor: HTMLAnchorElement | null = null;
 let popupIndex: PopupIndex | null = null;
 let popupIndexPromise: Promise<PopupIndex> | null = null;
@@ -28,10 +27,9 @@ function isMobile(): boolean {
 }
 
 function isSidenoteVisible(footnoteId: string): boolean {
+  if (window.innerWidth <= POPUP_CONFIG.mobileBreakpoint) return false;
   const sidenote = document.querySelector(`.sidenote[data-footnote-id="${footnoteId}"]`);
   if (!sidenote || sidenote.hasAttribute('data-hidden')) return false;
-  // Check if actually visible on screen (wide mode)
-  if (window.innerWidth <= POPUP_CONFIG.mobileBreakpoint) return false;
   const rect = sidenote.getBoundingClientRect();
   return rect.width > 0 && rect.height > 0;
 }
@@ -54,9 +52,9 @@ async function loadPopupIndex(): Promise<PopupIndex> {
   return popupIndexPromise;
 }
 
-function buildFallbackContent(path: string, entry: PopupIndexEntry): import('./types').PopupContent {
+function buildFallbackContent(path: string, entry: PopupIndexEntry): PopupContent {
   const bodyHtml = entry.description
-    ? `<p>${entry.description}</p>`
+    ? `<p>${escapeHtml(entry.description)}</p>`
     : '<p class="popup-no-content">No preview available</p>';
 
   return {
@@ -67,10 +65,27 @@ function buildFallbackContent(path: string, entry: PopupIndexEntry): import('./t
   };
 }
 
-function clearTimers(): void {
+function clearHoverTimers(): void {
   if (prefetchTimer) { clearTimeout(prefetchTimer); prefetchTimer = null; }
   if (spawnTimer) { clearTimeout(spawnTimer); spawnTimer = null; }
-  if (fadeTimer) { clearTimeout(fadeTimer); fadeTimer = null; }
+}
+
+/** Schedule a fade-out for a popup instance, tracked on the instance itself */
+function scheduleFade(instance: PopupInstance): void {
+  const timer = setTimeout(() => {
+    if (!instance.element.matches(':hover') && currentHoverAnchor !== instance.anchor) {
+      removePopup(instance.id);
+    }
+  }, POPUP_CONFIG.fadeOutDelay);
+  instance.timers.push(timer);
+}
+
+/** Clear any fade timers on an instance (e.g., when mouse re-enters) */
+function cancelFadeTimers(instance: PopupInstance): void {
+  for (const timer of instance.timers) {
+    clearTimeout(timer);
+  }
+  instance.timers.length = 0;
 }
 
 async function spawnPopup(anchor: HTMLAnchorElement, parentPopupEl: HTMLElement | null): Promise<void> {
@@ -88,7 +103,7 @@ async function spawnPopup(anchor: HTMLAnchorElement, parentPopupEl: HTMLElement 
   // Enforce max depth
   if (depth > POPUP_CONFIG.maxDepth) return;
 
-  let content: import('./types').PopupContent | null = null;
+  let content: PopupContent | null = null;
 
   try {
     if (target.contentType === 'footnote') {
@@ -161,7 +176,7 @@ async function spawnPopup(anchor: HTMLAnchorElement, parentPopupEl: HTMLElement 
 
   // Keep popup alive while mouse is over it
   popupEl.addEventListener('mouseenter', () => {
-    if (fadeTimer) { clearTimeout(fadeTimer); fadeTimer = null; }
+    cancelFadeTimers(instance);
   });
 
   // Start fade when mouse leaves popup
@@ -171,11 +186,7 @@ async function spawnPopup(anchor: HTMLAnchorElement, parentPopupEl: HTMLElement 
     if (related?.closest?.('.popup')) return;
     if (related === anchor || anchor.contains(related)) return;
 
-    fadeTimer = setTimeout(() => {
-      if (!popupEl.matches(':hover')) {
-        removePopup(instance.id);
-      }
-    }, POPUP_CONFIG.fadeOutDelay);
+    scheduleFade(instance);
   });
 }
 
@@ -199,7 +210,7 @@ export function handleMouseOver(event: MouseEvent): void {
   if (currentHoverAnchor === anchor) return;
 
   // Cancel any pending operations
-  clearTimers();
+  clearHoverTimers();
   currentHoverAnchor = anchor;
 
   const classified = classifyTarget(anchor);
@@ -208,7 +219,11 @@ export function handleMouseOver(event: MouseEvent): void {
     return;
   }
 
-  if (isMobile()) return; // Mobile uses click, not hover
+  // Mobile uses click, not hover
+  if (isMobile()) {
+    currentHoverAnchor = null;
+    return;
+  }
 
   // Start prefetch after short delay
   if (classified.contentType !== 'footnote') {
@@ -234,41 +249,14 @@ export function handleMouseOut(event: MouseEvent): void {
   const relatedTarget = event.relatedTarget as HTMLElement | null;
   if (relatedTarget?.closest?.('.popup')) return;
 
-  clearTimers();
+  clearHoverTimers();
   currentHoverAnchor = null;
 
-  // Start fade timer for all non-hovered popups
+  // Schedule fade for the top popup if not hovered
   const topPopup = getTopPopup();
   if (topPopup && !topPopup.element.matches(':hover')) {
-    fadeTimer = setTimeout(() => {
-      // Double-check hover state before removing
-      if (!topPopup.element.matches(':hover') && currentHoverAnchor !== topPopup.anchor) {
-        removePopup(topPopup.id);
-      }
-    }, POPUP_CONFIG.fadeOutDelay);
+    scheduleFade(topPopup);
   }
-}
-
-export function handlePopupMouseLeave(event: MouseEvent): void {
-  const popup = (event.currentTarget as HTMLElement).closest('.popup') as HTMLElement | null;
-  if (!popup) return;
-
-  const relatedTarget = event.relatedTarget as HTMLElement | null;
-
-  // Check if moving to a child popup or back to the anchor
-  if (relatedTarget?.closest?.('.popup')) return;
-
-  const instance = findPopupByElement(popup);
-  if (!instance) return;
-
-  // Check if moving back to the anchor
-  if (relatedTarget === instance.anchor || instance.anchor.contains(relatedTarget)) return;
-
-  fadeTimer = setTimeout(() => {
-    if (!popup.matches(':hover')) {
-      removePopup(instance.id);
-    }
-  }, POPUP_CONFIG.fadeOutDelay);
 }
 
 export function handleClick(event: MouseEvent): void {
@@ -294,8 +282,7 @@ export function handlePopupInternalMouseOver(event: MouseEvent): void {
   if (!(target instanceof Element)) return;
 
   // Only handle events inside a popup
-  const popup = target.closest('.popup');
-  if (!popup) return;
+  if (!target.closest('.popup')) return;
 
   handleMouseOver(event);
 }
@@ -318,7 +305,7 @@ export function handleKeydown(event: KeyboardEvent): void {
 }
 
 export function resetState(): void {
-  clearTimers();
+  clearHoverTimers();
   currentHoverAnchor = null;
   clearAll();
 }

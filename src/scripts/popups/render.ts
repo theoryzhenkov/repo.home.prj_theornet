@@ -1,8 +1,7 @@
 /** Popup and popin DOM creation and lifecycle */
 
 import type { PopupContent, PopupConfig } from './types';
-
-let popinCounter = 0;
+import { POPUP_CONFIG } from './types';
 
 export function createPopup(
   content: PopupContent,
@@ -37,11 +36,9 @@ export function createPopup(
 }
 
 export function createPopin(content: PopupContent): HTMLElement {
-  const id = `popin-${++popinCounter}`;
-
   const overlay = document.createElement('div');
   overlay.className = 'popin-overlay';
-  overlay.dataset.popinId = id;
+  overlay.dataset.popinId = crypto.randomUUID();
 
   overlay.innerHTML = `
     <div class="popin" role="dialog" aria-label="${escapeAttr(content.title)}">
@@ -75,10 +72,11 @@ export function showPopup(popup: HTMLElement): void {
 export function startFadeOut(popup: HTMLElement, onDone: () => void): ReturnType<typeof setTimeout> {
   popup.classList.remove('popup-visible');
   popup.classList.add('popup-fading');
+  const totalDelay = POPUP_CONFIG.fadeOutDelay + POPUP_CONFIG.fadeOutDuration;
   return setTimeout(() => {
     popup.remove();
     onDone();
-  }, 350); // fadeOutDelay (100) + fadeOutDuration (250)
+  }, totalDelay);
 }
 
 export function showPopin(overlay: HTMLElement): void {
@@ -90,9 +88,11 @@ export function showPopin(overlay: HTMLElement): void {
 
 function dismissPopin(overlay: HTMLElement): void {
   overlay.classList.remove('popin-visible');
-  overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
-  // Fallback removal if transitionend doesn't fire
-  setTimeout(() => overlay.remove(), 400);
+  const fallback = setTimeout(() => overlay.remove(), 400);
+  overlay.addEventListener('transitionend', () => {
+    clearTimeout(fallback);
+    overlay.remove();
+  }, { once: true });
 }
 
 export function dismissTopPopin(): boolean {
@@ -103,10 +103,8 @@ export function dismissTopPopin(): boolean {
   return true;
 }
 
-function escapeHtml(str: string): string {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+export function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function escapeAttr(str: string): string {

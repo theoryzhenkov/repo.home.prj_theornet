@@ -1,3 +1,4 @@
+@layer components {
 /* ─── Popup Previews ─── */
 
 .popup {
@@ -304,3 +305,4 @@
     border-radius: var(--radius-sm);
   }
 }
+} /* @layer components */

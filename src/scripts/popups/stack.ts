@@ -26,41 +26,35 @@ export function removePopup(id: string): void {
 }
 
 function removePopupInternal(id: string): void {
-  // Find and remove descendants first
-  const descendants = getDescendants(id);
-  for (const d of descendants) {
-    cleanupPopup(d);
+  // Collect target + all descendants by ID, then remove in a single pass
+  const toRemoveIds = new Set<string>([id]);
+  collectDescendantIds(id, toRemoveIds);
+
+  // Partition: remove matching popups from the array, cleanup each
+  const removed: PopupInstance[] = [];
+  for (let i = popups.length - 1; i >= 0; i--) {
+    if (toRemoveIds.has(popups[i].id)) {
+      removed.push(popups[i]);
+      popups.splice(i, 1);
+    }
   }
 
-  const idx = popups.findIndex((p) => p.id === id);
-  if (idx !== -1) {
-    cleanupPopup(popups[idx]);
+  for (const instance of removed) {
+    for (const timer of instance.timers) {
+      clearTimeout(timer);
+    }
+    instance.timers.length = 0;
+    startFadeOut(instance.element, () => {});
   }
 }
 
-function cleanupPopup(instance: PopupInstance): void {
-  // Clear all timers
-  for (const timer of instance.timers) {
-    clearTimeout(timer);
+function collectDescendantIds(id: string, out: Set<string>): void {
+  for (const p of popups) {
+    if (p.parentId === id && !out.has(p.id)) {
+      out.add(p.id);
+      collectDescendantIds(p.id, out);
+    }
   }
-  instance.timers.length = 0;
-
-  // Fade out and remove from DOM
-  startFadeOut(instance.element, () => {});
-
-  // Remove from stack
-  const idx = popups.indexOf(instance);
-  if (idx !== -1) popups.splice(idx, 1);
-}
-
-function getDescendants(id: string): PopupInstance[] {
-  const result: PopupInstance[] = [];
-  const directChildren = popups.filter((p) => p.parentId === id);
-  for (const child of directChildren) {
-    result.push(child);
-    result.push(...getDescendants(child.id));
-  }
-  return result;
 }
 
 export function getAncestorChain(id: string | null): PopupInstance[] {
@@ -77,10 +71,6 @@ export function getAncestorChain(id: string | null): PopupInstance[] {
 
 export function findPopupByElement(element: HTMLElement): PopupInstance | undefined {
   return popups.find((p) => p.element === element || p.element.contains(element));
-}
-
-export function getPopupById(id: string): PopupInstance | undefined {
-  return popups.find((p) => p.id === id);
 }
 
 export function getTopPopup(): PopupInstance | undefined {

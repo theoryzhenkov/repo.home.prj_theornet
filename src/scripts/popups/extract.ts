@@ -12,10 +12,10 @@ function cleanClone(element: Element): HTMLElement {
 }
 
 /** Walk children, measuring cumulative height, and truncate at the budget */
-function truncateContent(container: HTMLElement, budget: number): boolean {
+function truncateContent(container: HTMLElement, budget: number, measureWidth: number): boolean {
   // Render off-screen to measure heights
   const measurer = document.createElement('div');
-  measurer.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:400px;visibility:hidden;';
+  measurer.style.cssText = `position:fixed;top:-9999px;left:-9999px;width:${measureWidth}px;visibility:hidden;`;
   document.body.appendChild(measurer);
 
   let totalHeight = 0;
@@ -45,7 +45,7 @@ function extractPageContent(doc: Document, path: string): PopupContent | null {
   if (!prose) return null;
 
   const cleaned = cleanClone(prose);
-  const truncated = truncateContent(cleaned, POPUP_CONFIG.maxContentHeight);
+  const truncated = truncateContent(cleaned, POPUP_CONFIG.maxContentHeight, POPUP_CONFIG.maxWidth);
 
   if (truncated) {
     const indicator = document.createElement('div');
@@ -89,7 +89,7 @@ function extractSectionContent(doc: Document, hash: string, path: string): Popup
 
   // Clean and truncate
   container.querySelectorAll(REMOVE_SELECTORS).forEach((el) => el.remove());
-  const truncated = truncateContent(container, POPUP_CONFIG.maxContentHeight);
+  const truncated = truncateContent(container, POPUP_CONFIG.maxContentHeight, POPUP_CONFIG.maxWidth);
 
   if (truncated) {
     const indicator = document.createElement('div');
