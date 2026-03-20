@@ -7,7 +7,6 @@ interface ActiveTimer {
 }
 
 const READ_THRESHOLD_MS = 2000;
-const HEADER_REM = 5;
 const VIEWPORT_COVERAGE_THRESHOLD = 0.4;
 const SECTION_VISIBILITY_THRESHOLD = 0.9;
 
@@ -21,9 +20,20 @@ let scrollHandler: (() => void) | null = null;
 let cleanupHandler: (() => void) | null = null;
 
 function getHeaderOffset(): number {
-  const rootFontSize =
-    parseFloat(getComputedStyle(document.documentElement).fontSize) || 18;
-  return HEADER_REM * rootFontSize;
+  const scrollPaddingTop = parseFloat(
+    getComputedStyle(document.documentElement).scrollPaddingTop,
+  );
+
+  if (Number.isFinite(scrollPaddingTop) && scrollPaddingTop > 0) {
+    return scrollPaddingTop;
+  }
+
+  const rootStyles = getComputedStyle(document.documentElement);
+  const headerHeight = parseFloat(rootStyles.getPropertyValue('--height-header'));
+  const headerGap = parseFloat(rootStyles.getPropertyValue('--header-gap'));
+
+  return (Number.isFinite(headerHeight) ? headerHeight : 44) +
+    (Number.isFinite(headerGap) ? headerGap : 16);
 }
 
 function getTocLinkForId(id: string): HTMLElement | null {

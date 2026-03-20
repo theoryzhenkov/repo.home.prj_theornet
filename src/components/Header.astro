@@ -89,6 +89,15 @@ const currentPath = Astro.url.pathname;
 
 <script>
   const SCROLL_DEAD_ZONE = 5;
+  const SCROLL_KEYS = new Set([
+    'ArrowUp',
+    'ArrowDown',
+    'PageUp',
+    'PageDown',
+    'Home',
+    'End',
+    ' ',
+  ]);
   let cleanupHeader: (() => void) | undefined;
 
   function syncHeaderState(root: HTMLElement, scrollY: number, isVisible: boolean) {
@@ -122,8 +131,36 @@ const currentPath = Astro.url.pathname;
     let isVisible = true;
     let ticking = false;
     let frameId = 0;
+    let suppressRevealUntilManualScroll = false;
 
     syncHeaderState(root, lastScrollY, isVisible);
+
+    function markManualScrollIntent(event: Event) {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('.toc-entry[href^="#"]')
+      ) {
+        return;
+      }
+
+      suppressRevealUntilManualScroll = false;
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (!SCROLL_KEYS.has(event.key)) return;
+      markManualScrollIntent(event);
+    }
+
+    function onTocClick(event: Event) {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const tocLink = target.closest('.toc-entry[href^="#"]');
+      if (!tocLink) return;
+
+      suppressRevealUntilManualScroll = true;
+    }
 
     function onScroll() {
       if (ticking) return;
@@ -135,10 +172,14 @@ const currentPath = Astro.url.pathname;
 
         if (currentScrollY <= 0) {
           isVisible = true;
+          suppressRevealUntilManualScroll = false;
         } else if (delta > SCROLL_DEAD_ZONE) {
           // Scrolling down: hide
           isVisible = false;
-        } else if (delta < -SCROLL_DEAD_ZONE) {
+        } else if (
+          delta < -SCROLL_DEAD_ZONE &&
+          !suppressRevealUntilManualScroll
+        ) {
           // Scrolling up: show
           isVisible = true;
         }
@@ -150,9 +191,25 @@ const currentPath = Astro.url.pathname;
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('wheel', markManualScrollIntent, {
+      passive: true,
+    });
+    window.addEventListener('touchmove', markManualScrollIntent, {
+      passive: true,
+    });
+    window.addEventListener('pointerdown', markManualScrollIntent, {
+      passive: true,
+    });
+    window.addEventListener('keydown', onKeyDown);
+    document.addEventListener('click', onTocClick);
 
     const resetHeaderState = () => {
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('wheel', markManualScrollIntent);
+      window.removeEventListener('touchmove', markManualScrollIntent);
+      window.removeEventListener('pointerdown', markManualScrollIntent);
+      window.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('click', onTocClick);
       syncHeaderState(root, 0, true);
     };
 
@@ -163,6 +220,11 @@ const currentPath = Astro.url.pathname;
         cancelAnimationFrame(frameId);
       }
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('wheel', markManualScrollIntent);
+      window.removeEventListener('touchmove', markManualScrollIntent);
+      window.removeEventListener('pointerdown', markManualScrollIntent);
+      window.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('click', onTocClick);
       document.removeEventListener('astro:before-preparation', resetHeaderState);
       if (toggle && handleToggle) {
         toggle.removeEventListener('click', handleToggle);

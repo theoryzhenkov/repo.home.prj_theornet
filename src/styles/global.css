@@ -81,9 +81,10 @@
   color-scheme: light only;
   --height-header: 44px;
   --header-gap: 1rem;
+  --header-scroll-clearance: calc(var(--height-header) + var(--header-gap));
   --header-offset: var(--height-header);
   --toc-top: calc(var(--header-offset) + var(--header-gap));
-  --scroll-padding-top: var(--toc-top);
+  --scroll-padding-top: var(--header-scroll-clearance);
   --color-overlay: rgba(0, 0, 0, 0.3);
 }
 
