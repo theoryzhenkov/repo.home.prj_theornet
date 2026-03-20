@@ -89,46 +89,61 @@ const currentPath = Astro.url.pathname;
 
 <script>
   const SCROLL_DEAD_ZONE = 5;
+  let cleanupHeader: (() => void) | undefined;
+
+  function syncHeaderState(root: HTMLElement, scrollY: number, isVisible: boolean) {
+    root.dataset.headerScrolled = scrollY > 0 ? 'true' : 'false';
+    root.dataset.headerVisible = isVisible ? 'true' : 'false';
+  }
 
   function initHeader() {
-    const header = document.querySelector<HTMLElement>('[data-header]');
-    if (!header) return;
+    cleanupHeader?.();
+
+    const root = document.documentElement;
+    if (!document.querySelector('[data-header]')) return;
 
     // Mobile nav toggle
     const toggle = document.querySelector('[data-nav-toggle]');
     const dropdown = document.querySelector('[data-nav-dropdown]');
+    let handleToggle: (() => void) | undefined;
 
     if (toggle && dropdown) {
-      toggle.addEventListener('click', () => {
+      handleToggle = () => {
         const expanded = toggle.getAttribute('aria-expanded') === 'true';
         toggle.setAttribute('aria-expanded', String(!expanded));
         dropdown.hidden = expanded;
-      });
+      };
+
+      toggle.addEventListener('click', handleToggle);
     }
 
     // Scroll-reveal behavior
     let lastScrollY = window.scrollY;
+    let isVisible = true;
     let ticking = false;
+    let frameId = 0;
+
+    syncHeaderState(root, lastScrollY, isVisible);
 
     function onScroll() {
       if (ticking) return;
       ticking = true;
 
-      requestAnimationFrame(() => {
+      frameId = requestAnimationFrame(() => {
         const currentScrollY = window.scrollY;
         const delta = currentScrollY - lastScrollY;
 
-        // Add shadow when scrolled away from top
-        header.classList.toggle('header--scrolled', currentScrollY > 0);
-
-        if (delta > SCROLL_DEAD_ZONE) {
+        if (currentScrollY <= 0) {
+          isVisible = true;
+        } else if (delta > SCROLL_DEAD_ZONE) {
           // Scrolling down: hide
-          header.classList.add('header--hidden');
+          isVisible = false;
         } else if (delta < -SCROLL_DEAD_ZONE) {
           // Scrolling up: show
-          header.classList.remove('header--hidden');
+          isVisible = true;
         }
 
+        syncHeaderState(root, currentScrollY, isVisible);
         lastScrollY = currentScrollY;
         ticking = false;
       });
@@ -136,10 +151,23 @@ const currentPath = Astro.url.pathname;
 
     window.addEventListener('scroll', onScroll, { passive: true });
 
-    document.addEventListener('astro:before-preparation', () => {
+    const resetHeaderState = () => {
       window.removeEventListener('scroll', onScroll);
-      header.classList.remove('header--hidden', 'header--scrolled');
-    }, { once: true });
+      syncHeaderState(root, 0, true);
+    };
+
+    document.addEventListener('astro:before-preparation', resetHeaderState, { once: true });
+
+    cleanupHeader = () => {
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
+      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('astro:before-preparation', resetHeaderState);
+      if (toggle && handleToggle) {
+        toggle.removeEventListener('click', handleToggle);
+      }
+    };
   }
 
   document.addEventListener('astro:page-load', initHeader);

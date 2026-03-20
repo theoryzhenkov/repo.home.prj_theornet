@@ -5,7 +5,8 @@
     line-height: 1.65;
     color: var(--color-text);
     background-color: var(--color-bg);
-    scroll-padding-top: 1rem;
+    scroll-padding-top: var(--scroll-padding-top);
+    transition: scroll-padding-top var(--transition-duration-medium) var(--ease-out);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

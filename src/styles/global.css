@@ -80,7 +80,15 @@
 :root {
   color-scheme: light only;
   --height-header: 44px;
+  --header-gap: 1rem;
+  --header-offset: var(--height-header);
+  --toc-top: calc(var(--header-offset) + var(--header-gap));
+  --scroll-padding-top: var(--toc-top);
   --color-overlay: rgba(0, 0, 0, 0.3);
+}
+
+:root[data-header-visible='false'] {
+  --header-offset: 0px;
 }
 
 /* Design system layers */

@@ -30,12 +30,12 @@
                 box-shadow var(--transition-duration-medium) var(--ease-out);
   }
 
-  .header--hidden {
-    transform: translateY(-100%);
+  :root[data-header-visible='false'] .header {
+    transform: translateY(calc(-1 * var(--height-header)));
     box-shadow: none;
   }
 
-  .header--scrolled {
+  :root[data-header-scrolled='true'][data-header-visible='true'] .header {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
 
@@ -203,11 +203,13 @@
 
     & > * {
       position: sticky;
-      top: 1rem;
+      top: var(--toc-top);
       width: var(--width-sidebar);
-      max-height: calc(100vh - 2rem);
+      max-height: calc(100vh - var(--toc-top) - var(--header-gap));
       overflow-y: auto;
       margin-left: auto;
+      transition: top var(--transition-duration-medium) var(--ease-out),
+                  max-height var(--transition-duration-medium) var(--ease-out);
     }
 
     @media (width <= 1024px) {
