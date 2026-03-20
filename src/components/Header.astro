@@ -9,7 +9,7 @@ const navItems = [
 const currentPath = Astro.url.pathname;
 ---
 
-<header class="header">
+<header class="header" data-header>
   <div class="header-inner">
     <div class="header-left">
       <a href="/" class="header-mark">theor.net</a>
@@ -84,13 +84,15 @@ const currentPath = Astro.url.pathname;
       </a>
     ))}
   </nav>
-  <div class="header-progress" aria-hidden="true"></div>
 </header>
 
 <script>
-  import '@/scripts/reading-progress';
+  const SCROLL_DEAD_ZONE = 5;
 
   function initHeader() {
+    const header = document.querySelector<HTMLElement>('[data-header]');
+    if (!header) return;
+
     // Mobile nav toggle
     const toggle = document.querySelector('[data-nav-toggle]');
     const dropdown = document.querySelector('[data-nav-dropdown]');
@@ -102,6 +104,47 @@ const currentPath = Astro.url.pathname;
         dropdown.hidden = expanded;
       });
     }
+
+    // Scroll-reveal behavior
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+    const headerHeight = header.offsetHeight;
+
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+
+      requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
+        const delta = currentScrollY - lastScrollY;
+
+        if (currentScrollY <= headerHeight) {
+          // At or near top: header in normal document flow
+          header.classList.remove('header--revealed', 'header--hidden');
+        } else if (delta < -SCROLL_DEAD_ZONE) {
+          // Scrolling up: reveal header as fixed overlay
+          header.classList.add('header--revealed');
+          header.classList.remove('header--hidden');
+        } else if (delta > SCROLL_DEAD_ZONE) {
+          // Scrolling down: hide header
+          if (header.classList.contains('header--revealed')) {
+            header.classList.add('header--hidden');
+            header.classList.remove('header--revealed');
+          }
+        }
+
+        lastScrollY = currentScrollY;
+        ticking = false;
+      });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Cleanup on Astro page transitions
+    document.addEventListener('astro:before-preparation', () => {
+      window.removeEventListener('scroll', onScroll);
+      header.classList.remove('header--revealed', 'header--hidden');
+    }, { once: true });
   }
 
   document.addEventListener('astro:page-load', initHeader);

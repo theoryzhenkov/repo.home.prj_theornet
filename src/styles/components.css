@@ -19,11 +19,28 @@
 
   /* ─── Header ─── */
   .header {
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 100;
-    background-color: var(--color-bg);
+    background-color: var(--color-bg-muted);
     border-bottom: 1px solid var(--color-border);
+    transition: transform var(--transition-duration-medium) var(--ease-out);
+  }
+
+  .header--revealed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  .header--hidden {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    transform: translateY(-100%);
   }
 
   .header-inner {
@@ -139,30 +156,10 @@
     }
   }
 
-  /* Reading progress bar */
-  .header-progress {
-    height: 2px;
-    background-color: var(--color-border-subtle);
-    transform-origin: left;
-    transform: scaleX(0);
-  }
-
-  @supports (animation-timeline: scroll()) {
-    .header-progress {
-      animation: header-progress-fill linear forwards;
-      animation-timeline: scroll();
-    }
-  }
-
-  @keyframes header-progress-fill {
-    from { transform: scaleX(0); }
-    to { transform: scaleX(1); }
-  }
-
   /* Mobile dropdown nav */
   .header-dropdown {
     border-top: 1px solid var(--color-border-subtle);
-    background-color: var(--color-bg);
+    background-color: var(--color-bg-muted);
     transition: max-height 120ms ease-out;
     overflow: hidden;
 
@@ -206,9 +203,9 @@
 
     & > * {
       position: sticky;
-      top: calc(var(--height-header) + 1rem);
+      top: 1rem;
       width: var(--width-sidebar);
-      max-height: calc(100vh - var(--height-header) - 2rem);
+      max-height: calc(100vh - 2rem);
       overflow-y: auto;
       margin-left: auto;
     }
