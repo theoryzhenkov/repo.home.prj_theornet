@@ -98,24 +98,29 @@ Narrow content column (max ~65-70ch) with generous margins. Tufte-style: the mar
 
 Collapses to single column on narrow viewports, with sidenotes inlining into the flow.
 
-## Header: ambient status bar
+## Header: scroll-reveal navigation frame
 
-The header is a key design opportunity. Rather than a standard nav bar with links, it functions as an **ambient status bar** that communicates reading context:
+The header is the site's only piece of persistent chrome. It frames the page on arrival, then gets out of the way during reading.
 
-### Information surfaced
+### Role
 
-- Reading progress (subtle progress indicator)
-- Estimated read time
-- Date published / last modified
-- Content freshness/staleness indicator
-- Entry maturity level (draft / in-progress / stable / evergreen)
+Site identity, quicklinks, search, theme toggle. No article-specific metadata — maturity, read time, dates, and freshness belong in the MetadataStrip below the page title, and reading progress is tracked by the TOC's scroll-spy states. The header does one job: orient you within the site and give you an escape hatch.
 
 ### Behavior
 
-- Compact and unobtrusive during reading
-- Contains site identity and essential navigation
-- The innovative quality comes from showing WHERE you are and WHAT you're reading, not just links to elsewhere
-- Design details TBD — this is the area for creative exploration
+The header is **non-sticky by default**. It sits at the top of the page in normal document flow. As you scroll down into content, it scrolls away — the full viewport belongs to the reading experience.
+
+On **scroll-up** (direction reversal), the header slides back into view as a fixed overlay, then hides again when you resume scrolling down. This applies on all viewports — desktop and mobile share the same interaction model. No special mobile-only behavior, no TOC carrying navigation duties, no second bar.
+
+At **scroll position zero** (top of page), the header is always visible in its normal document-flow position.
+
+### Visual distinction
+
+The header has a **different background** from the page surface — perceptibly darker or more muted — so it reads as a distinct strip, not as the page bleeding upward. When it appears as a fixed overlay on scroll-up, this background also prevents content from showing through.
+
+### No reading progress bar
+
+The TOC already tracks per-section read state and estimated time. A 2px progress bar in the header is redundant. Removed.
 
 ## Content features
 

@@ -1,11 +1,11 @@
 ---
 scope: L2
-summary: "Header component design: dual-role bar combining ambient reading status with site navigation"
+summary: "Header component: non-sticky scroll-reveal bar with site identity, quicklinks, search, and theme toggle"
 modified: 2026-03-20
 reviewed: 2026-03-20
 depends:
   - path: docs/L1-design-vision
-    section: "Header: ambient status bar"
+    section: "Header: scroll-reveal navigation frame"
   - path: docs/L0-ui
     section: "Components"
 dependents:
@@ -14,172 +14,169 @@ dependents:
 
 # Header and Navigation
 
-The header serves two roles: ambient reading progress and site navigation. This spec defines how both coexist in a single 44px bar without either role dominating the other. Reading context metadata (maturity, read time, dates) lives in the metadata strip below the page title, not in the header.
+The header is a non-sticky navigation bar that scrolls with the page, then reveals on scroll-up. It contains site identity, quicklinks, search, and theme toggle. No article metadata, no reading progress bar, no mode-shifting between page types.
 
-## Design decision: the mode-shifting bar
+## Design decisions
 
-The header adapts its content based on page type. It does not change shape, height, or position -- only what fills its three internal zones.
+### Why non-sticky?
 
-**Why not a separate nav?** Adding a second bar or a sidebar nav would break the content-first density principle. A single bar that shifts emphasis keeps the interface lean. Power users get keyboard shortcuts and a command palette; casual readers get visible links. Nobody gets a wall of chrome.
+A sticky header permanently claims 44px of viewport on every page. On a reading-focused site with long-form content, that vertical space belongs to the prose. Gwern and similar dense-reading sites use no persistent chrome at all. The header should be present when you arrive (orientation) and accessible when you reach for it (scroll up), but invisible while reading.
 
-**Why not a hamburger-only approach?** Hiding all navigation behind a menu icon on every page type forces an extra click for the most common navigation task (going to the index or switching sections). On listing pages where there is no reading context to display, the bar has unused space -- wasting it is worse than filling it with useful links.
+### Why scroll-direction reveal?
 
-## Page type classification
+Removing the header entirely (pure Gwern model) makes search and navigation inaccessible without scrolling to the top — painful on long articles, especially on mobile where there's no keyboard shortcut. Scroll-up reveal solves this: reverse your scroll direction and the header slides into view. The gesture maps naturally to the intent ("I want to go somewhere else").
 
-Two modes, determined by the page template:
+This behavior is the same on all viewports. Desktop and mobile share one interaction model. The TOC sidebar (desktop-only) stays focused on its job — table of contents — and does not absorb navigation responsibilities.
 
-| Mode | Applies to | Primary role | Secondary role |
-| ---- | ---------- | ------------ | -------------- |
-| **Article mode** | Any page with a content body (articles, project pages, notes) | Reading progress | Navigation |
-| **Listing mode** | Index, listing pages, graph view, search results | Navigation | Site identity |
+### Why a distinct background?
 
-The mode is set at build time by the page layout, not computed client-side.
+The previous header used the same background as the page (`--color-bg`), making it visually indistinct — a thin border was the only separator. A perceptibly different background (slightly darker or more muted) makes the header read as a frame around the page content, gives it visual weight proportional to its role, and prevents content from showing through when it overlays as a fixed element on scroll-up.
 
-## Bar structure: three zones
+### Why no reading progress bar?
 
-The bar is always a flex row, `height: 44px`, sticky at top, full width. It contains three zones with fixed roles:
+The TOC already tracks per-section read state with scroll-spy (active / read / unread states) and shows estimated time per section. A 2px progress bar in the header duplicates this information in a less useful form. Removed.
+
+### Why no mode-shifting?
+
+The previous spec defined article mode and listing mode, where the header adapted its content by page type. In practice, both modes had the same layout (nav links left, empty center, actions right). The distinction added conceptual complexity without visible benefit. The header is now one thing on every page.
+
+## Layout
+
+A single flex row, 44px tall, full width.
 
 ```
-[  LEFT ZONE  |  CENTER ZONE  |  RIGHT ZONE  ]
+[  LEFT: identity + quicklinks  |  spacer  |  RIGHT: search + theme  ]
 ```
 
-All zones vertically center their content. The left and right zones have fixed minimum widths; the center zone is fluid.
-
-### Zone widths
-
-- **Left zone**: `min-width: 200px`, left-aligned content
-- **Center zone**: `flex: 1`, centered content, overflow hidden with fade mask
-- **Right zone**: `min-width: 160px`, right-aligned content
-
-On viewports narrower than `768px`, the center zone collapses entirely. The left and right zones absorb the full width.
-
-## Article mode layout
-
-### Left zone: identity + nav links
+### Left zone
 
 Contains, in order:
 
-1. **Site mark** -- the text "theor.net" in monospace, acting as a home link. No logo, no icon. The site mark is the only persistent brand element. Clicking it navigates to the index.
-2. **Section separator** -- a thin vertical line or `/` character, monospace, dim.
-3. **Nav links** -- inline text links: `index`, `projects`, `blog`, `about`. Monospace, `--text-xs` size, separated by a middot or small gap. The link matching the current section gets a subtle underline or slightly brighter text.
+1. **Site mark** — `theor.net` in monospace, links to `/`. The site's identity anchor. Slightly bolder weight than the nav links to establish hierarchy.
+2. **Separator** — `/` character in monospace, dim color, not interactive.
+3. **Quicklinks** — inline text links: `index`, `projects`, `blog`, `about`. Monospace, `--text-xs`, separated by a small gap. The link matching the current section gets accent color. These are always visible on desktop; on mobile they move to a dropdown.
 
-The nav links are deliberately small and quiet. They are present and scannable but do not compete with the reading progress bar. They read almost like a breadcrumb path rather than a primary navigation bar.
-
-**Rationale**: Putting nav links in the left zone alongside identity grounds them as structural wayfinding, not a call to action. They occupy space that would otherwise hold only the site name, so there is no added visual cost.
-
-### Center zone: empty
-
-The center zone is empty on article pages, matching the listing mode layout. Reading context metadata (maturity, read time, dates, freshness) lives in the metadata strip below the page title, not in the header. This keeps the header calm and uniform across page types.
-
-A **reading progress bar** runs along the bottom edge of the entire header as a 2px line, filling left-to-right as the user scrolls. It uses a muted accent color. This is the only ambient reading indicator in the header and the only element that spans the full bar width, cutting across all three zones.
-
-### Right zone: actions
+### Right zone
 
 Contains, right-aligned:
 
-1. **Search trigger** -- a small magnifying glass icon or the text `search` in monospace. Opens the Pagefind search overlay on click. Also responds to `Cmd+K` / `Ctrl+K`.
-2. **Theme toggle** -- a sun/moon icon or the text `light`/`dark` in monospace. Toggles between light and dark themes.
+1. **Search trigger** — magnifying glass icon, 16x16. Opens the Pagefind search overlay. Also responds to `Cmd+K` / `Ctrl+K`.
+2. **Theme toggle** — sun/moon icon, 16x16. Toggles light/dark theme.
 
-These are utility actions, not navigation. They sit in the right zone to maintain the left-to-right flow: identity -> context -> actions.
+### Spacer
 
-## Listing mode layout
+The center space is a flex spacer (`flex: 1`). It contains nothing. Its only purpose is to push the left and right zones apart.
 
-On listing/index pages, the left zone is identical to article mode — nav links stay in the same position so the reader's eye always knows where to look. The center zone is empty (no reading context to display).
+## Scroll-reveal behavior
 
-### Left zone: identity + nav links (same as article mode)
+### States
 
-Identical to article mode. Nav links do NOT move or change size between page types. Spatial consistency is more important than filling empty center space.
+The header has three visibility states:
 
-### Center zone: empty
+| State | Condition | Position | Visible |
+| ----- | --------- | -------- | ------- |
+| **Docked** | Page scrolled to top (scrollY near 0) | `position: static` in document flow | Yes |
+| **Hidden** | Scrolling down, past the header's height | Off-screen above viewport | No |
+| **Revealed** | Scrolling up (direction reversal) | `position: fixed; top: 0` | Yes, overlays content |
 
-No content. The empty space is intentional — it signals "this is not an article" and keeps the header calm.
+### Transitions
 
-### Right zone: actions (same)
+- **Docked -> Hidden**: no animation, header scrolls out naturally with the page.
+- **Hidden -> Revealed**: `transform: translateY(-100%) -> translateY(0)` over 150ms ease-out.
+- **Revealed -> Hidden**: `transform: translateY(0) -> translateY(-100%)` over 120ms ease-in.
+- **Revealed -> Docked**: when scroll position returns to top, header transitions from fixed to static. No visual jump — the position change should be seamless.
 
-Identical to article mode -- search trigger and theme toggle.
+### Scroll detection
 
-### Why nav links don't move
+Track `window.scrollY` on scroll events (throttled via `requestAnimationFrame`). Compare current position to previous to determine direction. A small dead zone (~5px) prevents jitter from elastic scrolling or trackpad inertia.
 
-The eye should always know where to look. Moving nav links between zones depending on page type creates cognitive overhead — the user has to re-scan the header on every page transition. A fixed layout is faster to use even if it leaves the center zone empty on listing pages.
+The reveal triggers when the user scrolls up by more than the dead zone threshold. It hides when the user scrolls down by more than the threshold.
+
+### Body offset
+
+When the header is in **docked** state, it occupies space in document flow normally. When it transitions to **revealed** (fixed), the page content does not jump because the header is already scrolled out of view.
+
+CSS `scroll-padding-top` should account for the header height only when the header might be visible (for anchor link scrolling).
 
 ## Navigation destinations
 
 Four links, always in this order:
 
-| Label | Destination | Scope |
+| Label | Destination | Notes |
 | ----- | ----------- | ----- |
-| `index` | `/` | Full page listing, the main table-of-contents for the site |
-| `projects` | `/projects` | Project listing |
-| `blog` | `/blog` | Blog/article listing (if/when separated from index) |
-| `about` | `/me` | About/contact page |
+| `index` | `/` | Main entry listing |
+| `projects` | `/projects/` | Project listing |
+| `blog` | `/blog/` | Blog listing |
+| `about` | `/about/` | About page |
 
-Labels are lowercase, monospace, matching the metadata aesthetic. If a destination does not yet exist (e.g. `/blog` is not yet a separate listing), the link can be omitted or point to a filtered view of the index.
+Labels are lowercase monospace. If a destination doesn't exist yet, omit the link rather than pointing to a placeholder.
 
 ## Mobile behavior (< 768px)
 
-The center zone collapses. The bar becomes:
+On narrow viewports, the quicklinks don't fit inline. They move to a **dropdown panel** below the header bar.
+
+### Bar layout on mobile
 
 ```
-[  LEFT: site mark  |  RIGHT: nav trigger + search + theme  ]
+[  LEFT: site mark  |  spacer  |  RIGHT: nav trigger + search + theme  ]
 ```
 
-- **Site mark** remains in the left zone as a home link.
-- **Nav trigger** is added to the right zone: a small hamburger icon (three horizontal lines, monospace-weight) or the word `nav` in `--text-xs`. Tapping it opens a **dropdown panel** below the header containing:
-  - The four nav links, stacked vertically, larger touch targets (44px height each).
-  - On article pages: no additional metadata is shown in the dropdown. Reading context lives in the metadata strip below the title.
-- **Reading progress bar** still runs along the bottom 2px of the header on article pages.
+The **nav trigger** is a small button (the word `nav` in `--text-xs` monospace, or a minimal hamburger icon). Tapping it toggles the dropdown panel.
 
-The dropdown panel slides down with a fast CSS transition (120ms). It closes on outside tap, escape key, or navigation.
+### Dropdown panel
 
-**No horizontal scrolling of nav links on mobile.** The links are in a dropdown, not crammed into a tiny row.
+Sits directly below the header bar. Contains the four nav links stacked vertically with 44px touch targets. Slides open with a 120ms CSS transition. Closes on: outside tap, Escape key, or navigation.
 
-## Keyboard navigation
+The dropdown is part of the header element — when the header is hidden (scrolled away), the dropdown is hidden too. When the header is revealed on scroll-up, the nav trigger is accessible and can open the dropdown.
 
-- `Tab` moves through interactive elements in the header: site mark, each nav link, search trigger, theme toggle.
-- `Cmd+K` / `Ctrl+K` opens search from anywhere on the page (not just when focused on the header).
-- `Escape` closes any open dropdown or search overlay.
-- Nav links are standard `<a>` elements, fully accessible without JavaScript.
+### Scroll-reveal on mobile
+
+Same behavior as desktop. Scroll up reveals the header; scroll down hides it. No differences in thresholds or animation timing.
 
 ## Visual treatment
 
+### Background
+
+A distinct surface color, perceptibly different from `--color-bg`. Use `--color-bg-muted` or a custom token slightly darker than the page background. The difference should be subtle but unambiguous — the header should be recognizable as a separate zone without needing a border.
+
+A 1px bottom border in `--color-border` reinforces the separation. On scroll-reveal, a subtle box-shadow (1-2px, low opacity) can appear to lift the header above the content it overlays.
+
 ### Typography
 
-All header text is monospace (the metadata/chrome typeface from the design vision). No serif in the header. This reinforces the ambient-status-bar feeling -- the header is system chrome, not content.
+All header text uses monospace (`--font-mono`). The header is system chrome, not content. Site mark at `--text-sm` with `font-weight: 500`. Nav links at `--text-xs` with regular weight.
 
-### Color and contrast
+### Interaction states
 
-- Background: the same surface color as the page, not a distinct band. The header is distinguished from content by its fixed position and the thin border or shadow at its bottom edge, not by a different background color.
-- Text: secondary text color (`--text-2xs`-appropriate muted tone). Nav links brighten on hover.
-- Active nav link: slightly brighter text + thin underline.
-- Progress bar: muted accent color, 2px, no glow or gradient.
+| Element | Default | Hover | Active/Current | Focus |
+| ------- | ------- | ----- | -------------- | ----- |
+| Site mark | `--color-text` | `--color-text` | n/a | Outline ring |
+| Nav link | `--color-text-subtle` | `--color-text` | `--color-accent` | Outline ring |
+| Search icon | `--color-text-subtle` | `--color-text` | n/a | Outline ring |
+| Theme icon | `--color-text-subtle` | `--color-text` | n/a | Outline ring |
 
-### Texture
+All hover/focus transitions: 120ms ease.
 
-A faint 1px bottom border separates the header from content, slightly more visible than the page grid lines. No drop shadow on desktop. On mobile, a subtle shadow (1-2px, very low opacity) can appear when the dropdown is open, to separate the panel from content below.
+## Keyboard navigation
 
-## Interaction states
-
-| Element | Hover | Active/Current | Focus |
-| ------- | ----- | -------------- | ----- |
-| Site mark | Brighten text | n/a | Outline ring |
-| Nav link | Brighten text | Underline + brighter text | Outline ring |
-| Search trigger | Brighten icon/text | n/a | Outline ring |
-| Theme toggle | Brighten icon/text | n/a | Outline ring |
-| Mobile nav trigger | Brighten | Panel open | Outline ring |
-
-All hover transitions: `120ms ease`. No elaborate animations.
+- `Tab` cycles through interactive elements: site mark, each nav link, search trigger, theme toggle.
+- `Cmd+K` / `Ctrl+K` opens search from anywhere on the page.
+- `Escape` closes any open dropdown or search overlay.
+- Nav links are standard `<a>` elements, functional without JavaScript.
 
 ## Assertions
 
 | ID | Sev. | Assertion |
 | -- | ---- | --------- |
-| bar-height | MUST | Header bar is exactly 44px tall in both modes |
-| three-zones | MUST | Header contains left, center, and right zones as flex children |
-| article-center-empty | MUST | Article-mode center zone is empty; reading context lives in the metadata strip below the title |
-| listing-center-empty | MUST | Listing-mode center zone is empty; nav links stay in the left zone on all page types |
-| progress-bar | MUST | Article pages show a 2px reading progress bar at the header bottom edge |
-| nav-always-reachable | MUST | All four nav destinations are reachable within one click/tap on every page |
-| mobile-collapse | MUST | Center zone collapses below 768px; nav moves to dropdown |
+| bar-height | MUST | Header bar is exactly 44px tall |
+| non-sticky | MUST | Header uses `position: static` at scroll top, not `position: sticky` |
+| scroll-reveal | MUST | Header appears as fixed overlay when user scrolls up, hides when scrolling down |
+| reveal-all-viewports | MUST | Scroll-reveal behavior is identical on desktop and mobile viewports |
+| no-progress-bar | MUST | Header contains no reading progress indicator |
+| no-article-metadata | MUST | Header contains no article-specific information (maturity, dates, read time) |
+| uniform-layout | MUST | Header layout is the same on article pages and listing pages |
+| nav-reachable | MUST | All four nav destinations are reachable within two interactions (scroll-up + click) on every page |
+| mobile-dropdown | MUST | Nav links move to a dropdown panel below 768px viewport width |
 | keyboard-accessible | MUST | All header interactive elements are reachable via Tab and operable via Enter |
+| distinct-background | SHOULD | Header background is visually distinct from the page surface color |
 | no-decorative-animation | SHOULD | Header contains no decorative animation; only functional transitions under 150ms |
-| monospace-only | SHOULD | All header text uses the monospace typeface, not serif |
+| monospace-only | SHOULD | All header text uses the monospace typeface |
