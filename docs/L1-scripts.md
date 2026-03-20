@@ -1,8 +1,8 @@
 ---
 scope: L1
 summary: "Client-side script interfaces, lifecycle, and behavior contracts"
-modified: 2026-03-15
-reviewed: 2026-03-15
+modified: 2026-03-20
+reviewed: 2026-03-20
 depends:
   - path: docs/L0-ui
 dependents:
@@ -74,29 +74,46 @@ Scroll events are throttled via `requestAnimationFrame` — only one recalculati
 
 Removes the scroll listener on `astro:before-preparation` (`{ once: true }`).
 
-## popups.ts
+## popups/ (modular popup system)
 
-Link preview popups that show a page's title and description on hover over internal links within `.article`.
+Rich content preview popups with full Gwern-style window management. Implemented as 11 TypeScript modules in `src/scripts/popups/`.
 
-### Data loading
+### Content fetching
 
-`popup-index.json` is fetched lazily on the first hover that targets an internal link. The index is cached in a module-level variable for subsequent lookups.
+Fetches actual page HTML via `fetch()` + `DOMParser`, caches parsed documents in memory with inflight deduplication. Falls back to `popup-index.json` (title + description) on fetch failure. Three content types: page (`.prose` extraction), section (`#hash` heading + siblings), footnote (sidenote content).
 
 ### Event delegation
 
-Uses `mouseover` / `mouseout` on `.article` (these events bubble, unlike `mouseenter`/`mouseleave`). The handler walks up from `event.target` via `closest('a')`.
+Uses `mouseover`/`mouseout` on `<article>` for page links, plus a `document`-level `mouseover` for links inside popups (which live outside `<article>`). Scroll suppression prevents spawning during scroll; re-enabled on next `mousemove`.
 
 ### Hover behavior
 
-- On hover: cancels any pending hide, loads the index (if needed), looks up the link's normalized pathname, and shows a positioned popup below-right of the link.
-- Popup repositions if it would overflow the viewport (shifts left, or flips above the link).
-- Moving the cursor onto the popup keeps it visible (its own `mouseenter` cancels the hide timer).
-- On mouse leave: the popup hides after a **100 ms** delay, allowing the user to move into the popup.
-- Links to the current page are ignored.
+- On hover: prefetch fires at **50ms**, popup spawns at **750ms** with a loading spinner, content swapped in when fetch completes.
+- Popup repositions using a priority cascade: nested popups try right → left → below → above; root popups try below → above → right → left.
+- Moving the cursor onto the popup cancels fade timers and focuses the popup.
+- On mouse leave: **100ms** fade delay, but only if the popup is ephemeral (not pinned) and the cursor isn't moving to a descendant popup.
+- Links to the current page are ignored. Footnote popups are suppressed when the sidenote is already visible.
 
-### Exported API
+### Window management
 
-`initPopups()` — sets up event delegation. Called automatically on `astro:page-load` and initial load.
+Each popup has a 4-button titlebar: pin, minimize, zoom/tile, close. Additional interactions: pointer-capture drag on titlebar, 8-direction edge/corner resize, keyboard tiling (Alt+Q/W/E/A/S/D/Z/X/C for 9 positions). Z-order is managed sequentially with focused popup on top. Minimized popups collapse to a dynamic taskbar strip. Alt+click close dismisses all popups.
+
+### Nesting
+
+Unlimited depth with cycle prevention (ancestor chain check). Ephemeral popups are auto-despawned when a sibling spawns; pinned popups persist. Spawn guard prevents duplicate concurrent spawns for the same href.
+
+### Constants
+
+| Constant | Value | Purpose |
+|---|---|---|
+| `spawnDelay` | 750 ms | Hover-to-popup delay |
+| `prefetchDelay` | 50 ms | Background fetch start |
+| `fadeOutDelay` | 100 ms | Mouse-leave grace period |
+| `fadeOutDuration` | 250 ms | CSS opacity transition |
+| `baseZIndex` | 200 | Z-index floor for popups |
+| `dragThreshold` | 3 px | Click vs drag distinction |
+| `tileMargin` | 4 px | Gap around tiled popups |
+| `mobileBreakpoint` | 1024 px | Switch to mobile popins |
 
 ## Search (Pagefind)
 
@@ -177,7 +194,7 @@ Node colors are resolved from CSS custom properties (`--color-text-muted`, `--co
 |---|---|
 | `src/scripts/footnotes.ts` | Footnote layout engine (wide/narrow modes) |
 | `src/scripts/toc-scrollspy.ts` | TOC scroll spy with multi-select |
-| `src/scripts/popups.ts` | Link preview popups with lazy data loading |
+| `src/scripts/popups/` | Modular popup system (11 modules) with window management |
 | `src/scripts/graph/renderer.ts` | D3 force graph renderer and public API |
 | `src/scripts/graph/styles.ts` | Edge/node visual constants, CSS variable resolution |
 | `src/components/Search.astro` | Search modal with Pagefind integration |

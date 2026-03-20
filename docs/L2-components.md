@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Astro component catalog, props, slots, and page assembly data flow"
-modified: 2026-03-19
-reviewed: 2026-03-19
+modified: 2026-03-20
+reviewed: 2026-03-20
 depends:
   - path: docs/L1-routing
   - path: docs/L1-styles
@@ -109,5 +109,5 @@ The catch-all route `[...slug].astro` drives all page rendering:
 - `src/lib/relations.ts` -- `buildGraphFromPages`, `getBreadcrumbs`, `getPageRelations`, type definitions
 - `src/lib/relations-graph.ts` -- `buildRelationsGraph` (memoized Astro wrapper)
 - `src/lib/graph-data.ts` -- `buildSubgraphData`, `EdgeType`
-- `src/scripts/popups.ts`, `src/scripts/footnotes.ts`, `src/scripts/toc-scrollspy.ts` -- client-side behavior
+- `src/scripts/popups/` (11 modules), `src/scripts/footnotes.ts`, `src/scripts/toc-scrollspy.ts` -- client-side behavior
 - `src/scripts/graph/renderer.ts` -- D3 graph rendering

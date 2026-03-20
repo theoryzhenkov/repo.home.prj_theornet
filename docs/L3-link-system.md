@@ -257,22 +257,44 @@ Content preparation involves style injection from the host document, dynamic lay
 
 ### Current implementation
 
-The popup system was implemented as a full Gwern-style rich content preview system with these capabilities:
+The popup system implements the full Gwern-style feature set: rich content previews with complete window management.
 
+**Content & fetching:**
 - **Rich HTML content**: fetches actual page HTML via `fetch()`, parses with `DOMParser`, extracts `.prose` content
-- **Three content types**: page (full prose, truncated), section (`#hash` targeting — heading + siblings), footnote (sidenote content)
+- **Three content types**: page (full prose, scrollable), section (`#hash` targeting — heading + siblings), footnote (sidenote content)
 - **750ms spawn delay** with 50ms prefetch: hover starts a background fetch immediately, popup spawns at 750ms
-- **Nested popups (depth 2)**: links inside popups spawn one child popup positioned to the side; child popup links navigate normally
-- **Titlebar**: page title as clickable link + close button
-- **Mobile popins**: below 1024px breakpoint, click-triggered bottom sheet modals instead of hover popups
+- **Loading state**: a spinner popup appears immediately at 750ms; body is swapped when content arrives
 - **Metadata fallback**: if HTML fetch fails, falls back to `popup-index.json` (title + description)
-- **Footnote suppression**: if a sidenote is visible on screen (wide mode), no footnote popup spawns — the existing highlight behavior handles it
-- **No Shadow DOM**: popup content styled via `.popup-body` class scoping, sharing the site's design tokens
+- **Footnote suppression**: if a sidenote is visible on screen (wide mode), no footnote popup spawns
+- **Scrollable body**: popup body uses CSS `max-height: 300px` + `overflow-y: auto`; no content truncation at extraction time. Resized/tiled popups remove max-height for full content access
+- **HTML sanitization**: extracted content has `on*` event handler attributes stripped
+
+**Window management (4-button titlebar):**
+- **Pin** (`⊙`): toggle between ephemeral and pinned. Pinned popups survive mouse movement and are not auto-despawned when siblings spawn
+- **Minimize** (`−`): collapse to a taskbar strip. Taskbar switches between vertical (right edge, landscape) and horizontal (bottom, portrait) layouts dynamically on resize
+- **Zoom/tile** (`⛶`): cycle through 5 tile positions (center, left, right, top, bottom). Keyboard tiling via Alt+Q/W/E/A/S/D/Z/X/C maps to all 9 positions
+- **Close** (`×`): remove popup. Alt+click closes all popups and destroys taskbar
+- **Drag**: pointer-capture drag on titlebar with rAF smoothing. 3px threshold distinguishes click from drag. Auto-pins on first real drag
+- **Resize**: 8-direction edge/corner resize. Edge detection uses `min(20px, diagonal/3)`. Auto-pins on resize
+
+**Stack & z-order:**
+- **Unlimited nesting**: no depth cap. Links inside popups spawn nested popups positioned to the side
+- **Cycle prevention**: before spawning, checks if the target href exists in the ancestor chain
+- **Z-order management**: sequential z-index assignment from `baseZIndex` (200); focused popup gets the top slot
+- **Focus tracking**: click-to-front on any popup; mouseenter also focuses
+- **Ephemeral cleanup**: when a new popup spawns, non-ancestor ephemeral popups are despawned; pinned popups survive
+
+**Interaction refinements:**
+- **Scroll suppression**: popup spawning is suppressed while scrolling; re-enabled on next mousemove
+- **Spawn guard**: prevents duplicate concurrent spawns for the same href (race condition prevention)
+- **Descendant-aware fade**: mouseleave only skips fade when moving to a child/descendant popup, not parent or sibling
+
+**Mobile popins**: below 1024px breakpoint, click-triggered bottom sheet modals instead of hover popups (unchanged from Gwern's approach)
+
+**No Shadow DOM**: popup content styled via `.popup-body` class scoping, sharing the site's design tokens
 
 **What we skip:**
 - External link popups (deferred to a future build-time metadata pipeline)
-- Pin/minimize/zoom/resize window management
-- Full recursive chains beyond depth 2
 - PDF preview, page archiving
 
 ---
@@ -297,15 +319,14 @@ The notification system (`GW.notificationCenter.fireEvent()`) coordinates lifecy
 
 ### Current implementation
 
-Chain previews are implemented with depth capped at 2 (one level of nesting). Implementation details:
+Chain previews are fully recursive with no depth cap:
 
 - Links inside popups spawn nested popups via `document`-level event delegation (popups live outside `<article>`)
 - Nested popups prefer side placement (right, left) over vertical (below, above) to create Gwern's characteristic horizontal reading flow
-- When a new popup spawns, non-ancestor popups are despawned automatically — only one "thread" of popups at a time
-- Depth tracked via `data-popup-depth` attribute; at `maxDepth`, links navigate normally
-- Stack management: `PopupInstance[]` with parent-child tracking, ancestor chain walks, bulk cleanup
-
-Full recursion is deferred — depth 2 covers nearly all practical reading flows.
+- When a new popup spawns, non-ancestor **ephemeral** popups are despawned automatically. Pinned popups survive, allowing multiple "threads" to coexist
+- Cycle prevention: before spawning, the system walks the ancestor chain checking for matching hrefs. If the target is already an ancestor, spawning is blocked
+- Stack management: `PopupInstance[]` with parent-child tracking, ancestor chain walks, descendant collection, bulk cleanup
+- Fade is descendant-aware: leaving a popup to its parent correctly fades the child; leaving to a child popup does not
 
 ---
 
@@ -313,37 +334,54 @@ Full recursion is deferred — depth 2 covers nearly all practical reading flows
 
 ### Architecture
 
-The popup system is a modular TypeScript package at `src/scripts/popups/`:
+The popup system is a modular TypeScript package at `src/scripts/popups/` (11 modules):
 
 ```
 src/scripts/popups/
-  types.ts       — interfaces, config constants
+  types.ts       — interfaces (PopupInstance, PopupState, TilePosition, ResizeEdge, Rect), config constants
   cache.ts       — HTML fetch, DOMParser, in-memory cache with dedup
-  extract.ts     — content extraction (page, section, footnote) + target classification
-  position.ts    — viewport-aware positioning engine
-  render.ts      — popup/popin DOM creation and lifecycle
-  stack.ts       — nested popup stack management
-  events.ts      — event delegation, hover timing, mobile detection
-  index.ts       — orchestrator, Astro lifecycle integration
+  extract.ts     — content extraction (page, section, footnote) + target classification + HTML sanitization
+  position.ts    — viewport-aware positioning engine + 9-tile coordinate calculator
+  render.ts      — popup/popin DOM creation, 4-button titlebar, loading popup, CSS class helpers
+  stack.ts       — nested popup stack, z-order management, pin/focus tracking, cycle detection, onRemove callback
+  events.ts      — event delegation, hover timing, scroll suppression, keyboard tiling, spawn guard
+  drag.ts        — pointer-capture drag on titlebar with rAF smoothing
+  resize.ts      — 8-direction edge/corner resize with dynamic edge detection
+  taskbar.ts     — minimize strip with dynamic vertical/horizontal layout
+  index.ts       — orchestrator, Astro lifecycle integration, listener registration
 ```
 
 ### Data flow
 
 ```
 Runtime:
-  Mouse hover on internal link
+  Mouse hover on internal link (suppressed while scrolling)
     → classifyTarget() determines content type (page/section/footnote)
+    → wouldCycle() checks ancestor chain for duplicate hrefs
     → prefetch() fires at 50ms (background fetch + DOMParser cache)
-    → spawnPopup() fires at 750ms:
-        → fetchAndCache() returns parsed Document
-        → extractContent() pulls .prose, section, or sidenote content
-        → createPopup() builds DOM with titlebar + body
-        → calculatePosition() finds viewport-safe placement
-        → pushPopup() manages stack (despawns non-ancestors)
-    → On mouseleave: 100ms delay → 250ms fade → DOM removal
+    → spawnPopup() fires at 750ms (guarded against duplicate spawns):
+        → createLoadingPopup() shows spinner immediately
+        → pushPopup() manages stack (despawns non-ancestor ephemeral popups)
+        → wirePopupInteractions() binds titlebar buttons, drag, resize, fade
+        → fetchAndCache() returns parsed Document (async)
+        → extractContent() pulls .prose, section, or sidenote content (sanitized)
+        → upgradeLoadingPopup() swaps spinner body for real content
+        → calculatePosition() repositions with actual dimensions
+    → On mouseleave: skip if pinned or moving to descendant popup
+        → 100ms delay → 250ms fade → onRemove callback (teardown drag/resize/taskbar) → DOM removal
 
   Fallback path:
     → fetch fails → loadPopupIndex() → /popup-index.json → title + description popup
+
+  Window management:
+    → Pin: toggle ephemeral↔pinned, survive mouse leave and sibling spawns
+    → Zoom: cycle tile positions, apply getTileRect() coordinates
+    → Minimize: save rect → hide → add taskbar item; restore reverses
+    → Drag: pointerdown on titlebar → setPointerCapture → rAF position updates
+    → Resize: edge detection → pointerdown near edge → rAF dimension updates
+    → Focus: click/mouseenter → focusPopup() → updateZOrder()
+    → Alt+close: clearAll() + destroyTaskbar()
+    → Keyboard: Alt+Q/W/E/A/S/D/Z/X/C → tilePopup() on focused popup
 ```
 
 ### CSS
@@ -351,21 +389,29 @@ Runtime:
 Popup styles live in `src/styles/popups.css`, imported via `global.css`. Uses the site's design tokens throughout. Key sections:
 
 - `.popup` — fixed positioning, border, shadow, opacity transitions
-- `.popup-titlebar` — flex row with link title + close button
-- `.popup-body` — scrollable content with scaled-down prose styling
+- `.popup-titlebar` — flex row with link title + 4 control buttons, `cursor: grab`
+- `.popup-controls` / `.popup-btn` — 18×18 icon buttons for pin/minimize/zoom/close
+- `.popup-body` — scrollable content (`max-height: 300px`, `overflow-y: auto`) with scaled-down prose styling
 - `.popup[data-content-type="footnote"]` — narrower (280px), shorter
+- `.popup.popup-pinned` — accent border, highlighted pin button
+- `.popup.popup-tiled` — smooth transition for position/size, removes body max-height
+- `.popup.popup-focused` — elevated shadow
+- `.popup.popup-dragging` — `transition: none`, `cursor: grabbing`, `user-select: none`
+- `.popup.popup-resizing` — `transition: none`, `user-select: none`
+- `.popup.popup-resize-{n,s,e,w,ne,nw,se,sw}` — resize cursor classes
+- `.popup-loading` / `.popup-spinner` — centered spinner with `@keyframes popup-spin`
+- `.popup-taskbar` — fixed strip with vertical (right edge) and horizontal (bottom) variants
+- `.popup-taskbar-item` — 28×28 labeled buttons for minimized popups
 - `.popin-overlay` / `.popin` — mobile bottom sheet with slide-up animation
 
 ### Future work
 
 - **External link popups**: build-time metadata pipeline (OpenGraph fetch → JSON manifest)
 - **Link icons**: rehype plugin for `data-link-icon` attributes + CSS `::after` rendering
-- **Pin/persist**: toggle popup to `position: fixed`, survive scroll
-- **Full recursion**: remove depth cap, add cycle prevention
 
 ## Key files
 
-- `src/scripts/popups/` — modular popup system (8 TypeScript modules)
+- `src/scripts/popups/` — modular popup system (11 TypeScript modules)
 - `src/styles/popups.css` — popup and popin styles
 - `src/pages/popup-index.json.ts` — fallback metadata (title, description, maturity)
 - `src/layouts/page/Page.astro` — imports popup orchestrator

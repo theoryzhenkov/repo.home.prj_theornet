@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Reading experience mechanics: TOC scroll-spy, sidenote alignment, link previews, and their interplay in the three-column layout"
-modified: 2026-03-19
-reviewed: 2026-03-19
+modified: 2026-03-20
+reviewed: 2026-03-20
 depends:
   - path: docs/L1-design-vision
   - path: docs/L1-styles
@@ -270,45 +270,49 @@ In narrow mode, clicking a footnote reference number performs standard anchor na
 
 ## Link previews
 
-Internal links show a hover preview popup revealing the linked page's title, excerpt, and relation type. This supports L1-design-vision's goal of progressive disclosure -- the reader can peek at linked content without navigating away.
+Internal links show rich hover preview popups with the linked page's actual content. This supports L1-design-vision's goal of progressive disclosure -- the reader can peek at linked content without navigating away. The popup system implements full Gwern-style window management. See L3-link-system for the complete implementation spec.
 
 ### Trigger behavior
 
-- **Trigger.** `mouseenter` on any internal link (`a[href^="/"]` within `.prose`). The preview appears after a `300ms` delay. If the cursor leaves the link before the delay elapses, no preview appears. This prevents flicker during casual mouse movement.
-- **Dismissal.** The preview disappears on `mouseleave` from both the link and the preview popup itself, with a `200ms` grace period. The reader can move the cursor from the link into the preview without it closing. Pressing `Escape` also dismisses the preview immediately.
-- **Touch devices.** No hover previews on touch. Internal links behave as standard navigation. Previews are a desktop enhancement, not a required feature.
-- **Keyboard.** `focus` on an internal link triggers the preview after the same `300ms` delay. `blur` dismisses it.
+- **Trigger.** `mouseover` on any internal link within `<article>` (or within an existing popup). The preview appears after a `750ms` delay. A background prefetch starts at `50ms`. If the cursor leaves the link before 750ms, no preview appears.
+- **Scroll suppression.** Popup spawning is suppressed while scrolling; re-enabled on the next `mousemove` event.
+- **Dismissal.** On `mouseleave`, ephemeral popups fade after a `100ms` grace period then `250ms` CSS opacity transition. Pinned popups do not auto-dismiss. Pressing `Escape` dismisses the topmost popup.
+- **Touch devices.** No hover previews on touch. Below `1024px`, internal links show mobile popins (bottom sheet modals) on click instead.
 
 ### Content
 
-The preview popup contains, in order:
+The preview popup fetches and renders the actual page HTML:
 
-1. **Page title.** Serif, semi-bold, at `0.9rem`. Truncated to two lines with `text-overflow: ellipsis` if longer.
-2. **Relation type badge** (if the linked page has a typed relation to the current page). Displayed as a monospace label in small caps at `0.7rem`: e.g., `UP`, `CHILD`, `REF`. This tells the reader the structural relationship, not just the destination. The badge appears inline after the title, separated by a `0.5rem` gap.
-3. **Excerpt.** The first 120 characters of the linked page's description (from frontmatter), rendered as body text at `0.8rem`, `opacity: 0.7`. If no description exists, this line is omitted.
-4. **Maturity indicator.** A small label showing the page's maturity level (Draft, In-progress, Stable, Evergreen) at `0.7rem` in monospace. This helps the reader gauge whether the linked content is polished or rough before clicking.
+1. **Loading state.** A spinner popup appears immediately at 750ms; body is replaced when content arrives.
+2. **Page content.** The target page's `.prose` content, scrollable within a 300px max-height body. Full content is preserved (no truncation) -- users can scroll, or resize/tile the popup for full access.
+3. **Section targeting.** Links with `#hash` extract the specific heading and its siblings until the next heading of equal or higher level.
+4. **Footnotes.** Footnote reference links extract sidenote content; suppressed when the sidenote is already visible on screen.
+5. **Fallback.** If HTML fetch fails, falls back to `popup-index.json` metadata (title + description).
+
+### Window management
+
+Each popup has a 4-button titlebar: pin (persist), minimize (to taskbar), zoom (cycle tile positions), close (Alt: close all). Popups can be freely dragged by their titlebar and resized from any edge or corner. Keyboard tiling via Alt+Q/W/E/A/S/D/Z/X/C maps to 9 viewport positions. See L3-link-system section 3 for full details.
 
 ### Appearance
 
-- **Container.** A rectangular popup with `1px solid var(--color-border)`, `border-radius: 2px`, and a subtle `box-shadow: 0 2px 8px rgba(0,0,0,0.08)` (light theme) or `box-shadow: 0 2px 8px rgba(0,0,0,0.3)` (dark theme). Background is the page surface color (`var(--color-surface)`).
-- **Padding.** `0.75rem 1rem`.
-- **Max width.** `320px`. Content wraps naturally within.
-- **No arrow or caret.** The popup is a clean rectangle. Arrows add visual noise and complicate positioning logic for minimal benefit.
+- **Container.** A rectangular popup with `1px solid var(--color-border)`, `border-radius: var(--radius-md)`, and `box-shadow: 0 4px 16px rgba(0,0,0,0.1)`. Background is `var(--color-bg)`.
+- **Max width.** `400px` (280px for footnotes). Resized/tiled popups remove width constraints.
+- **No arrow or caret.** Clean rectangle. Arrows add visual noise and complicate positioning.
 
 ### Positioning
 
-The preview is placed using the following algorithm:
+Viewport-aware cascade with priority based on context:
 
-1. **Default position.** Below the link, horizontally centered on the link's midpoint.
-2. **Viewport collision.** If the popup would extend below the viewport bottom, flip it above the link. If it would extend past the right viewport edge, shift it left until it fits with `8px` of margin. Same logic for the left edge.
-3. **Right margin awareness.** On wide viewports, if the link is in the main prose column and the right margin has space (no sidenote at the same vertical position), the preview may be placed in the right margin instead, aligned to the link's vertical position. This reuses the margin space naturally and avoids obscuring prose content. The popup checks whether any `.sidenote` element overlaps its intended vertical range before choosing this placement.
-4. **Gap.** `4px` between the link and the popup edge.
+- **Root popups**: below → above → right → left
+- **Nested popups**: right → left → below → above (creates Gwern's horizontal reading flow)
+- **Viewport clamping**: 12px margin from all viewport edges
+- **Tiled popups**: positioned by `getTileRect()` coordinates, overriding normal placement
 
-The popup is appended to `#popup-container` (a fixed-position container at the root of the page layout) to avoid clipping by overflow-hidden ancestors.
+Popups are appended directly to `document.body` with `position: fixed`.
 
-### Animation
+### Nesting
 
-The preview fades in with `opacity: 0 -> 1` and shifts vertically by `4px` over `100ms` (`ease-out`). Dismissal is instant (no fade-out) to avoid stale previews lingering during fast navigation.
+Unlimited depth with cycle prevention. Each popup can spawn child popups from its internal links. Non-ancestor ephemeral popups are auto-despawned; pinned popups coexist. Z-order is managed dynamically (base 200, focused popup on top).
 
 ---
 
@@ -334,17 +338,19 @@ The right margin is primarily for sidenotes. Link previews may use the right mar
 | ------- | ------- |
 | Prose content | auto (0) |
 | Sidenotes | 1 |
-| Link preview popup | 10 |
 | TOC | 1 |
 | Header | 100 |
+| Popup taskbar | 199 |
+| Popups | 200+ (dynamic, sequential assignment; focused popup gets top slot) |
+| Mobile popin overlay | 300 |
 
-Link previews always render above sidenotes. If a preview appears in the right margin at the same position as a sidenote (which the positioning algorithm tries to avoid), the preview wins visually.
+Popup z-indices are managed dynamically by `updateZOrder()` — sequential assignment from base 200, with the focused popup receiving `base + count`. This replaces static depth-based z-index rules.
 
 ### Scroll coordination
 
 - Scrolling the page updates the TOC active state via the intersection observer.
 - Scrolling does NOT reposition sidenotes. Sidenotes are absolutely positioned within `.prose` and scroll with it naturally.
-- Scrolling dismisses any open link preview. The scroll listener calls the dismissal function with no grace period.
+- Scrolling suppresses new popup spawning (sets `isScrolling = true`). Existing popups are not dismissed. The next `mousemove` re-enables spawning. Pinned/tiled popups are never affected by scroll.
 
 ### Performance constraints
 
@@ -382,12 +388,13 @@ Link previews always render above sidenotes. If a preview appears in the right m
 | sidenote-no-overlap | MUST | No two sidenotes overlap vertically |
 | sidenote-drift-line | SHOULD | Sidenotes pushed more than 4rem from their reference show a connecting line |
 | sidenote-narrow-clone | MUST | Below 1024px, sidenote content appears in the footer footnotes list |
-| preview-delay | MUST | Link preview appears only after 300ms hover, not before |
-| preview-grace | MUST | Moving cursor from link to preview within 200ms keeps preview open |
+| preview-delay | MUST | Link preview appears only after 750ms hover, not before |
+| preview-grace | MUST | Moving cursor from link to preview within 100ms keeps preview open |
 | preview-no-clip | MUST | Link preview popup never extends outside the viewport |
-| preview-dismiss-scroll | MUST | Scrolling dismisses any open link preview |
-| preview-no-touch | MUST | Link previews do not trigger on touch devices |
-| preview-relation | SHOULD | Preview shows the relation type when a typed relation exists |
+| preview-suppress-scroll | MUST | Scrolling suppresses new popup spawning; existing popups are not dismissed |
+| preview-no-touch | MUST | Link previews do not trigger on touch devices; mobile uses popins |
+| preview-pin | MUST | Pinned popups survive mouse movement and sibling spawning |
+| preview-cycle-prevent | MUST | Popup spawning is blocked if the href already exists in the ancestor chain |
 | layout-z-order | MUST | Link preview renders above sidenotes when they overlap |
 | layout-no-scroll-jank | SHOULD | Scroll handler performs no layout reads or writes |
 
@@ -395,7 +402,7 @@ Link previews always render above sidenotes. If a preview appears in the right m
 
 - `src/scripts/toc-scrollspy.ts` -- TOC active state via IntersectionObserver, read state timer logic
 - `src/scripts/footnotes.ts` -- sidenote positioning engine, mode switching
-- `src/scripts/popups.ts` -- link preview trigger, positioning, dismissal
+- `src/scripts/popups/` -- modular popup system (11 modules): content fetching, window management, drag, resize, taskbar
 - `src/components/TOC.astro` -- TOC markup, read time rendering, data attributes
 - `src/components/Footnote.astro` -- per-footnote HTML pair (sup + sidenote span)
 - `src/components/Footnotes.astro` -- narrow-mode footer container
