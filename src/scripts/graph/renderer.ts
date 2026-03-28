@@ -1,13 +1,16 @@
 import * as d3 from 'd3';
-import type { GraphData, GraphNode, GraphEdge, EdgeType } from '@/lib/graph-data';
-import { EDGE_STYLES, NODE_COLORS, resolveRuntimeColors } from './styles';
-
-/* ── Types ────────────────────────────────────────────────────────── */
+import type { GraphData, GraphEdge, EdgeType } from '@/lib/graph-data';
+import { EDGE_STYLES, NODE_COLORS } from './styles';
 
 interface SimNode extends d3.SimulationNodeDatum {
   id: string;
   title: string;
   connections: number;
+  componentId: number;
+  componentSize: number;
+  anchorX: number;
+  anchorY: number;
+  didDrag: boolean;
 }
 
 interface SimEdge extends d3.SimulationLinkDatum<SimNode> {
@@ -15,25 +18,21 @@ interface SimEdge extends d3.SimulationLinkDatum<SimNode> {
 }
 
 export interface GraphConfig {
-  /** Relation types to render. Omit to show all. */
   visibleTypes?: Set<EdgeType>;
-  /** Node ID to visually highlight (e.g. current page). */
   highlightNode?: string;
-  /** Enable zoom / pan. Defaults to true. */
   zoomable?: boolean;
-  /** Enable node drag. Defaults to true. */
   draggable?: boolean;
-  /** Called when a node is clicked. Defaults to navigating to the page. */
-  onNodeClick?: (nodeId: string) => void;
+  onFocusChange?: (nodeId: string | null) => void;
 }
 
 export interface GraphInstance {
   destroy(): void;
   resize(): void;
   setVisibleTypes(types: Set<EdgeType>): void;
+  resetView(): void;
+  focusNode(nodeId: string): void;
+  clearFocus(): void;
 }
-
-/* ── Helpers ──────────────────────────────────────────────────────── */
 
 function slugToHref(slug: string): string {
   return slug === 'index' ? '/' : `/${slug}/`;
@@ -43,30 +42,196 @@ function nodeRadius(connections: number): number {
   return Math.max(4, Math.min(16, 4 + Math.sqrt(connections) * 2.5));
 }
 
-/* ── Renderer ─────────────────────────────────────────────────────── */
+function nodeCollisionRadius(node: SimNode): number {
+  return Math.max(
+    nodeRadius(node.connections) + 10,
+    Math.min(72, nodeRadius(node.connections) + 14 + node.title.length * 1.55),
+  );
+}
+
+function edgeKey(edge: SimEdge): string {
+  const source = typeof edge.source === 'object' ? edge.source.id : edge.source;
+  const target = typeof edge.target === 'object' ? edge.target.id : edge.target;
+  return `${source}-${target}-${edge.type}`;
+}
+
+function labelDirection(node: SimNode): 1 | -1 {
+  const basis = node.componentSize === 1 ? 0 : node.anchorX;
+  return (node.x ?? node.anchorX) >= basis ? 1 : -1;
+}
+
+function buildComponents(nodes: string[], edges: GraphEdge[]): string[][] {
+  const adjacency = new Map<string, Set<string>>();
+
+  nodes.forEach((id) => adjacency.set(id, new Set()));
+  edges.forEach((edge) => {
+    adjacency.get(edge.source)?.add(edge.target);
+    adjacency.get(edge.target)?.add(edge.source);
+  });
+
+  const seen = new Set<string>();
+  const components: string[][] = [];
+
+  for (const id of nodes) {
+    if (seen.has(id)) continue;
+
+    const queue = [id];
+    const component: string[] = [];
+    seen.add(id);
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      component.push(current);
+
+      for (const next of adjacency.get(current) ?? []) {
+        if (seen.has(next)) continue;
+        seen.add(next);
+        queue.push(next);
+      }
+    }
+
+    components.push(component.sort());
+  }
+
+  return components.sort((a, b) => b.length - a.length || a[0].localeCompare(b[0]));
+}
+
+function assignComponentAnchors(nodes: SimNode[], edges: GraphEdge[]): void {
+  const components = buildComponents(nodes.map((node) => node.id), edges);
+  const placement = new Map<string, { componentId: number; componentSize: number; anchorX: number; anchorY: number }>();
+
+  components.forEach((component, index) => {
+    const size = component.length;
+    let anchorX = 0;
+    let anchorY = 0;
+
+    if (index > 0) {
+      const ring = Math.floor((index - 1) / 8) + 1;
+      const slot = (index - 1) % 8;
+      const angle = (slot / 8) * Math.PI * 2 - Math.PI / 2;
+      const ringRadius = size === 1 ? 118 + ring * 26 : 112 + ring * 60;
+      anchorX = Math.cos(angle) * ringRadius;
+      anchorY = Math.sin(angle) * ringRadius;
+    }
+
+    component.forEach((id) => {
+      placement.set(id, {
+        componentId: index,
+        componentSize: size,
+        anchorX,
+        anchorY,
+      });
+    });
+  });
+
+  const membersByComponent = new Map<number, SimNode[]>();
+  nodes.forEach((node) => {
+    const placementInfo = placement.get(node.id) ?? {
+      componentId: 0,
+      componentSize: 1,
+      anchorX: 0,
+      anchorY: 0,
+    };
+
+    node.componentId = placementInfo.componentId;
+    node.componentSize = placementInfo.componentSize;
+    node.anchorX = placementInfo.anchorX;
+    node.anchorY = placementInfo.anchorY;
+
+    const members = membersByComponent.get(node.componentId) ?? [];
+    members.push(node);
+    membersByComponent.set(node.componentId, members);
+  });
+
+  for (const members of membersByComponent.values()) {
+    const sorted = members.sort((a, b) => b.connections - a.connections || a.id.localeCompare(b.id));
+    const size = sorted[0]?.componentSize ?? 1;
+    const localRadius = size === 1 ? 0 : Math.min(160, 34 + Math.sqrt(size) * 26);
+
+    sorted.forEach((node, index) => {
+      if (size === 1) {
+        node.x = node.anchorX;
+        node.y = node.anchorY;
+        node.vx = 0;
+        node.vy = 0;
+        return;
+      }
+
+      const angle = (index / size) * Math.PI * 2 - Math.PI / 2;
+      const wobble = index % 2 === 0 ? 0.9 : 1.1;
+
+      node.x = node.anchorX + Math.cos(angle) * localRadius * wobble;
+      node.y = node.anchorY + Math.sin(angle) * localRadius * wobble;
+      node.vx = 0;
+      node.vy = 0;
+    });
+  }
+}
+
+function edgeGeometry(edge: SimEdge): {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  labelX: number;
+  labelY: number;
+  length: number;
+} {
+  const source = edge.source as SimNode;
+  const target = edge.target as SimNode;
+  const dx = (target.x ?? 0) - (source.x ?? 0);
+  const dy = (target.y ?? 0) - (source.y ?? 0);
+  const length = Math.hypot(dx, dy) || 1;
+  const ux = dx / length;
+  const uy = dy / length;
+  const nx = -uy;
+  const ny = ux;
+
+  const sourceOffset = nodeRadius(source.connections) + 2;
+  const targetOffset = nodeRadius(target.connections) + (EDGE_STYLES[edge.type].directed ? 8 : 2);
+  const x1 = (source.x ?? 0) + ux * sourceOffset;
+  const y1 = (source.y ?? 0) + uy * sourceOffset;
+  const x2 = (target.x ?? 0) - ux * targetOffset;
+  const y2 = (target.y ?? 0) - uy * targetOffset;
+  const midX = (x1 + x2) / 2;
+  const midY = (y1 + y2) / 2;
+  const labelOffset = 12;
+
+  return {
+    x1,
+    y1,
+    x2,
+    y2,
+    labelX: midX + nx * labelOffset,
+    labelY: midY + ny * labelOffset,
+    length,
+  };
+}
+
+function defaultTransform(width: number, height: number): d3.ZoomTransform {
+  return d3.zoomIdentity.translate(width / 2, height / 2).scale(1.12);
+}
 
 export function createGraph(
   container: HTMLElement,
   data: GraphData,
   config: GraphConfig = {},
 ): GraphInstance {
-  resolveRuntimeColors();
-
   const {
     highlightNode,
     zoomable = true,
     draggable = true,
-    onNodeClick = (id) => { window.location.href = slugToHref(id); },
+    onFocusChange,
   } = config;
 
   let visibleTypes = config.visibleTypes ?? new Set(Object.keys(EDGE_STYLES) as EdgeType[]);
-
-  /* ── Dimensions ─────────────────────────────────────────────── */
+  let focusedNodeId: string | null = highlightNode ?? null;
+  let suppressAnchorUntil = 0;
 
   let width = container.clientWidth;
   let height = container.clientHeight;
-
-  /* ── SVG setup ──────────────────────────────────────────────── */
+  let initialTransform = defaultTransform(width, height);
+  let currentTransform = initialTransform;
 
   const svg = d3.select(container)
     .append('svg')
@@ -74,227 +239,341 @@ export function createGraph(
     .attr('height', '100%')
     .attr('viewBox', `0 0 ${width} ${height}`);
 
-  // Arrow markers for directed edges
   const defs = svg.append('defs');
-  for (const [type, style] of Object.entries(EDGE_STYLES)) {
+  for (const [type, style] of Object.entries(EDGE_STYLES) as [EdgeType, typeof EDGE_STYLES[EdgeType]][]) {
     if (!style.directed) continue;
     defs.append('marker')
       .attr('id', `arrow-${type}`)
-      .attr('viewBox', '0 -4 8 8')
-      .attr('refX', 12)
+      .attr('viewBox', '0 -3 6 6')
+      .attr('refX', 6.5)
       .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
+      .attr('markerWidth', 4.25)
+      .attr('markerHeight', 4.25)
       .attr('orient', 'auto')
       .append('path')
-      .attr('d', 'M0,-4L8,0L0,4')
-      .attr('fill', style.color);
+      .attr('d', 'M0,-3L6,0L0,3')
+      .style('fill', style.color);
   }
 
   const g = svg.append('g');
 
-  /* ── Zoom ───────────────────────────────────────────────────── */
+  let zoom: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
 
   if (zoomable) {
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
+    zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.15, 5])
+      .on('start', (event) => {
+        if (event.sourceEvent && focusedNodeId) {
+          clearFocusInternal({ notify: true });
+        }
+      })
       .on('zoom', (event) => {
+        currentTransform = event.transform;
         g.attr('transform', event.transform);
       });
     svg.call(zoom);
-
-    // Fit content after simulation settles — set initial transform
-    svg.call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(0.9));
+    svg.property('__zoom', initialTransform);
   }
 
-  /* ── Data ────────────────────────────────────────────────────── */
+  g.attr('transform', initialTransform.toString());
 
-  const simNodes: SimNode[] = data.nodes.map(n => ({ ...n }));
-  const nodeMap = new Map(simNodes.map(n => [n.id, n]));
+  const simNodes: SimNode[] = data.nodes.map((node) => ({
+    ...node,
+    componentId: 0,
+    componentSize: 1,
+    anchorX: 0,
+    anchorY: 0,
+    didDrag: false,
+  }));
+  const nodeMap = new Map(simNodes.map((node) => [node.id, node]));
 
   const simEdges: SimEdge[] = data.edges
-    .filter(e => nodeMap.has(e.source) && nodeMap.has(e.target))
-    .map(e => ({
-      source: nodeMap.get(e.source)!,
-      target: nodeMap.get(e.target)!,
-      type: e.type,
+    .filter((edge) => nodeMap.has(edge.source) && nodeMap.has(edge.target))
+    .map((edge) => ({
+      source: nodeMap.get(edge.source)!,
+      target: nodeMap.get(edge.target)!,
+      type: edge.type,
     }));
 
-  /* ── Simulation ─────────────────────────────────────────────── */
+  assignComponentAnchors(simNodes, data.edges);
 
   const simulation = d3.forceSimulation<SimNode>(simNodes)
     .force('link', d3.forceLink<SimNode, SimEdge>(simEdges)
-      .id(d => d.id)
-      .distance(80))
-    .force('charge', d3.forceManyBody<SimNode>().strength(-200))
+      .id((node) => node.id)
+      .distance((edge) => {
+        if (edge.type === 'up') return 86;
+        if (edge.type === 'is') return 94;
+        if (edge.type === 'next') return 102;
+        return 114;
+      }))
+    .force('charge', d3.forceManyBody<SimNode>().strength((node) => {
+      if (node.componentSize === 1) return -18;
+      return -118 - Math.min(node.connections, 12) * 5;
+    }))
+    .force('x', d3.forceX<SimNode>((node) => node.anchorX).strength((node) => {
+      return node.componentSize === 1 ? 0.14 : 0.065;
+    }))
+    .force('y', d3.forceY<SimNode>((node) => node.anchorY).strength((node) => {
+      return node.componentSize === 1 ? 0.14 : 0.065;
+    }))
     .force('center', d3.forceCenter(0, 0))
-    .force('collide', d3.forceCollide<SimNode>()
-      .radius(d => nodeRadius(d.connections) + 8));
-
-  /* ── Edge elements ──────────────────────────────────────────── */
+    .force('collide', d3.forceCollide<SimNode>().radius((node) => nodeCollisionRadius(node)))
+    .alphaDecay(0.04)
+    .velocityDecay(0.45);
 
   const edgeGroup = g.append('g').attr('class', 'graph-edges');
-
-  let edgeSelection = edgeGroup.selectAll<SVGLineElement, SimEdge>('line')
-    .data(simEdges.filter(e => visibleTypes.has(e.type)))
-    .join('line')
-    .attr('stroke', d => EDGE_STYLES[d.type].color)
-    .attr('stroke-width', d => EDGE_STYLES[d.type].width)
-    .attr('stroke-dasharray', d => EDGE_STYLES[d.type].dasharray)
-    .attr('marker-end', d => EDGE_STYLES[d.type].directed ? `url(#arrow-${d.type})` : null)
-    .attr('opacity', 0.6);
-
-  /* ── Node elements ──────────────────────────────────────────── */
-
+  const edgeLabelGroup = g.append('g').attr('class', 'graph-edge-labels');
   const nodeGroup = g.append('g').attr('class', 'graph-nodes');
+
+  const edgeSelection = edgeGroup.selectAll<SVGLineElement, SimEdge>('line')
+    .data(simEdges, edgeKey)
+    .join('line')
+    .style('stroke', (edge) => EDGE_STYLES[edge.type].color)
+    .attr('stroke-width', (edge) => EDGE_STYLES[edge.type].width)
+    .attr('stroke-dasharray', (edge) => EDGE_STYLES[edge.type].dasharray)
+    .attr('marker-end', (edge) => EDGE_STYLES[edge.type].directed ? `url(#arrow-${edge.type})` : null)
+    .attr('stroke-linecap', 'round')
+    .attr('opacity', 0.82);
+
+  const edgeLabelSelection = edgeLabelGroup.selectAll<SVGTextElement, SimEdge>('text')
+    .data(simEdges, edgeKey)
+    .join('text')
+    .text((edge) => EDGE_STYLES[edge.type].shortLabel)
+    .style('fill', (edge) => EDGE_STYLES[edge.type].color)
+    .style('font-family', NODE_COLORS.fontFamily)
+    .attr('font-size', '9.5px')
+    .attr('letter-spacing', '0.04em')
+    .attr('text-anchor', 'middle')
+    .attr('dominant-baseline', 'middle')
+    .attr('paint-order', 'stroke')
+    .style('stroke', NODE_COLORS.labelStroke)
+    .attr('stroke-width', 4)
+    .attr('stroke-linejoin', 'round')
+    .attr('opacity', 0.72);
 
   const nodeGs = nodeGroup.selectAll<SVGGElement, SimNode>('g')
     .data(simNodes)
     .join('g')
-    .attr('cursor', 'pointer')
-    .on('click', (_event, d) => onNodeClick(d.id));
+    .attr('class', 'graph-node')
+    .attr('cursor', draggable ? 'grab' : 'pointer');
 
-  // Circle
-  nodeGs.append('circle')
-    .attr('r', d => nodeRadius(d.connections))
-    .attr('fill', d => d.id === highlightNode ? NODE_COLORS.fillHighlight : NODE_COLORS.fill)
-    .attr('stroke', d => d.id === highlightNode ? NODE_COLORS.strokeHighlight : NODE_COLORS.stroke)
-    .attr('stroke-width', d => d.id === highlightNode ? 2.5 : 1);
+  const nodeLinks = nodeGs.append('a')
+    .attr('href', (node) => slugToHref(node.id))
+    .attr('class', 'graph-node-link')
+    .attr('data-astro-prefetch', 'hover')
+    .on('click', (event) => {
+      if (performance.now() < suppressAnchorUntil) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    });
 
-  // Label
-  nodeGs.append('text')
-    .text(d => d.title)
-    .attr('x', d => nodeRadius(d.connections) + 4)
-    .attr('y', 4)
-    .attr('font-size', '11px')
-    .attr('font-family', NODE_COLORS.fontFamily)
-    .attr('fill', NODE_COLORS.labelFill)
+  const nodeCircles = nodeLinks.append('circle')
+    .attr('r', (node) => nodeRadius(node.connections))
+    .style('fill', NODE_COLORS.fill)
+    .style('stroke', NODE_COLORS.stroke)
+    .attr('stroke-width', 1.15);
+
+  const nodeLabels = nodeLinks.append('text')
+    .text((node) => node.title)
+    .attr('y', 0)
+    .attr('font-size', '11.5px')
+    .style('font-family', NODE_COLORS.fontFamily)
+    .style('fill', NODE_COLORS.labelFill)
+    .attr('font-weight', NODE_COLORS.labelWeight)
+    .attr('paint-order', 'stroke')
+    .style('stroke', NODE_COLORS.labelStroke)
+    .attr('stroke-width', 3)
+    .attr('stroke-linejoin', 'round')
     .attr('pointer-events', 'none');
 
-  /* ── Drag ───────────────────────────────────────────────────── */
+  function applyTransform(transform: d3.ZoomTransform, animate = false): void {
+    currentTransform = transform;
+    if (zoom) {
+      svg.property('__zoom', transform);
+    }
+
+    if (animate) {
+      g.interrupt()
+        .transition()
+        .duration(180)
+        .attr('transform', transform.toString());
+      return;
+    }
+
+    g.interrupt().attr('transform', transform.toString());
+  }
+
+  function applyNodeStyles(): void {
+    nodeCircles
+      .style('fill', (node) => node.id === focusedNodeId ? NODE_COLORS.fillHighlight : NODE_COLORS.fill)
+      .style('stroke', (node) => node.id === focusedNodeId ? NODE_COLORS.strokeHighlight : NODE_COLORS.stroke)
+      .attr('stroke-width', (node) => node.id === focusedNodeId ? 2 : 1.15);
+
+    nodeLabels
+      .style('fill', (node) => node.id === focusedNodeId ? NODE_COLORS.fillHighlight : NODE_COLORS.labelFill)
+      .attr('font-weight', (node) => node.id === focusedNodeId ? 650 : NODE_COLORS.labelWeight);
+  }
+
+  function syncEdgeVisibility(): void {
+    edgeSelection
+      .attr('display', (edge) => visibleTypes.has(edge.type) ? null : 'none')
+      .attr('pointer-events', 'none')
+      .attr('opacity', (edge) => visibleTypes.has(edge.type) ? 0.82 : 0);
+
+    edgeLabelSelection
+      .attr('opacity', (edge) => visibleTypes.has(edge.type) ? 0.72 : 0)
+      .attr('display', (edge) => {
+        if (!visibleTypes.has(edge.type)) return 'none';
+        return edgeGeometry(edge).length > 74 ? null : 'none';
+      });
+  }
+
+  function focusedTransform(node: SimNode, scale = Math.max(currentTransform.k, 1.05)): d3.ZoomTransform {
+    return d3.zoomIdentity
+      .translate(width / 2 - (node.x ?? 0) * scale, height / 2 - (node.y ?? 0) * scale)
+      .scale(scale);
+  }
+
+  function syncFocusedView(animate = false): void {
+    if (!focusedNodeId) return;
+    const node = simNodes.find((candidate) => candidate.id === focusedNodeId);
+    if (!node || node.x === undefined || node.y === undefined) return;
+    applyTransform(focusedTransform(node), animate);
+  }
+
+  function clearFocusInternal(options: { notify?: boolean } = {}): void {
+    const { notify = false } = options;
+    if (!focusedNodeId) return;
+
+    focusedNodeId = null;
+    applyNodeStyles();
+
+    if (notify) {
+      onFocusChange?.(null);
+    }
+  }
+
+  applyNodeStyles();
+  syncEdgeVisibility();
 
   if (draggable) {
     const drag = d3.drag<SVGGElement, SimNode>()
-      .on('start', (event, d) => {
+      .on('start', (event, node) => {
+        node.didDrag = false;
         if (!event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
+        node.fx = node.x;
+        node.fy = node.y;
       })
-      .on('drag', (event, d) => {
-        d.fx = event.x;
-        d.fy = event.y;
+      .on('drag', (event, node) => {
+        node.didDrag = true;
+        node.fx = event.x;
+        node.fy = event.y;
+        if (focusedNodeId === node.id) {
+          syncFocusedView(false);
+        }
       })
-      .on('end', (event, d) => {
+      .on('end', (event, node) => {
         if (!event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
+        if (node.didDrag) {
+          suppressAnchorUntil = performance.now() + 250;
+        }
+        node.fx = null;
+        node.fy = null;
       });
+
     nodeGs.call(drag);
   }
 
-  /* ── Hover highlight ────────────────────────────────────────── */
-
   nodeGs
-    .on('mouseenter', (_event, d) => {
+    .on('mouseenter', (_event, node) => {
       const connectedIds = new Set<string>();
-      simEdges.forEach(e => {
-        const src = (e.source as SimNode).id;
-        const tgt = (e.target as SimNode).id;
-        if (src === d.id) connectedIds.add(tgt);
-        if (tgt === d.id) connectedIds.add(src);
+      simEdges.forEach((edge) => {
+        if (!visibleTypes.has(edge.type)) return;
+        const source = (edge.source as SimNode).id;
+        const target = (edge.target as SimNode).id;
+        if (source === node.id) connectedIds.add(target);
+        if (target === node.id) connectedIds.add(source);
       });
-      connectedIds.add(d.id);
+      connectedIds.add(node.id);
 
-      nodeGs.attr('opacity', n => connectedIds.has(n.id) ? 1 : 0.15);
-      edgeSelection.attr('opacity', e =>
-        (e.source as SimNode).id === d.id || (e.target as SimNode).id === d.id ? 0.8 : 0.05,
+      nodeGs.attr('opacity', (candidate) => connectedIds.has(candidate.id) ? 1 : 0.15);
+      edgeSelection.attr('opacity', (edge) =>
+        visibleTypes.has(edge.type) &&
+        ((edge.source as SimNode).id === node.id || (edge.target as SimNode).id === node.id) ? 0.96 : 0.06,
+      );
+      edgeLabelSelection.attr('opacity', (edge) =>
+        visibleTypes.has(edge.type) &&
+        ((edge.source as SimNode).id === node.id || (edge.target as SimNode).id === node.id) ? 0.92 : 0.08,
       );
     })
     .on('mouseleave', () => {
       nodeGs.attr('opacity', 1);
-      edgeSelection.attr('opacity', 0.6);
+      syncEdgeVisibility();
     });
-
-  /* ── Tooltip ────────────────────────────────────────────────── */
-
-  const tooltip = d3.select(container)
-    .append('div')
-    .style('position', 'absolute')
-    .style('pointer-events', 'none')
-    .style('background', 'var(--color-bg, #fff)')
-    .style('border', '1px solid var(--color-border, #ccc)')
-    .style('padding', '4px 8px')
-    .style('font-family', 'var(--font-mono)')
-    .style('color', 'var(--color-text, #111)')
-    .style('opacity', '0')
-    .style('transition', 'opacity 50ms ease-out')
-    .style('white-space', 'nowrap')
-    .style('z-index', '10');
-
-  nodeGs
-    .on('mouseenter.tooltip', (event, d) => {
-      tooltip
-        .style('opacity', '1')
-        .text(d.title);
-    })
-    .on('mousemove.tooltip', (event) => {
-      const rect = container.getBoundingClientRect();
-      tooltip
-        .style('left', `${event.clientX - rect.left + 12}px`)
-        .style('top', `${event.clientY - rect.top - 8}px`);
-    })
-    .on('mouseleave.tooltip', () => {
-      tooltip.style('opacity', '0');
-    });
-
-  /* ── Tick ────────────────────────────────────────────────────── */
 
   simulation.on('tick', () => {
     edgeSelection
-      .attr('x1', d => (d.source as SimNode).x!)
-      .attr('y1', d => (d.source as SimNode).y!)
-      .attr('x2', d => (d.target as SimNode).x!)
-      .attr('y2', d => (d.target as SimNode).y!);
+      .attr('x1', (edge) => edgeGeometry(edge).x1)
+      .attr('y1', (edge) => edgeGeometry(edge).y1)
+      .attr('x2', (edge) => edgeGeometry(edge).x2)
+      .attr('y2', (edge) => edgeGeometry(edge).y2);
 
-    nodeGs.attr('transform', d => `translate(${d.x},${d.y})`);
+    edgeLabelSelection
+      .attr('x', (edge) => edgeGeometry(edge).labelX)
+      .attr('y', (edge) => edgeGeometry(edge).labelY)
+      .attr('display', (edge) => {
+        if (!visibleTypes.has(edge.type)) return 'none';
+        return edgeGeometry(edge).length > 74 ? null : 'none';
+      });
+
+    nodeGs.attr('transform', (node) => `translate(${node.x},${node.y})`);
+
+    nodeLabels
+      .attr('x', (node) => labelDirection(node) * (nodeRadius(node.connections) + 8))
+      .attr('text-anchor', (node) => labelDirection(node) > 0 ? 'start' : 'end');
+
+    if (focusedNodeId) {
+      syncFocusedView(false);
+    }
   });
-
-  /* ── Public API ─────────────────────────────────────────────── */
-
-  function rebuildEdges() {
-    edgeSelection = edgeGroup.selectAll<SVGLineElement, SimEdge>('line')
-      .data(simEdges.filter(e => visibleTypes.has(e.type)), (d) => {
-        const src = typeof d.source === 'object' ? (d.source as SimNode).id : d.source;
-        const tgt = typeof d.target === 'object' ? (d.target as SimNode).id : d.target;
-        return `${src}-${tgt}-${d.type}`;
-      })
-      .join('line')
-      .attr('stroke', d => EDGE_STYLES[d.type].color)
-      .attr('stroke-width', d => EDGE_STYLES[d.type].width)
-      .attr('stroke-dasharray', d => EDGE_STYLES[d.type].dasharray)
-      .attr('marker-end', d => EDGE_STYLES[d.type].directed ? `url(#arrow-${d.type})` : null)
-      .attr('opacity', 0.6);
-
-    // Restart to update positions
-    simulation.alpha(0.1).restart();
-  }
 
   return {
     destroy() {
       simulation.stop();
       svg.remove();
-      tooltip.remove();
     },
     resize() {
       width = container.clientWidth;
       height = container.clientHeight;
+      initialTransform = defaultTransform(width, height);
       svg.attr('viewBox', `0 0 ${width} ${height}`);
-      simulation.force('center', d3.forceCenter(width / 2, height / 2));
-      simulation.alpha(0.3).restart();
+      if (focusedNodeId) {
+        syncFocusedView(false);
+      }
+      simulation.force('center', d3.forceCenter(0, 0));
+      simulation.alpha(0.25).restart();
     },
     setVisibleTypes(types: Set<EdgeType>) {
       visibleTypes = types;
-      rebuildEdges();
+      syncEdgeVisibility();
+    },
+    resetView() {
+      clearFocusInternal({ notify: true });
+      initialTransform = defaultTransform(width, height);
+      applyTransform(initialTransform, true);
+    },
+    focusNode(nodeId: string) {
+      const node = simNodes.find((candidate) => candidate.id === nodeId);
+      if (!node) return;
+
+      focusedNodeId = nodeId;
+      applyNodeStyles();
+      syncFocusedView(true);
+      onFocusChange?.(focusedNodeId);
+    },
+    clearFocus() {
+      clearFocusInternal({ notify: true });
     },
   };
 }

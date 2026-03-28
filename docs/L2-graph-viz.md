@@ -1,16 +1,25 @@
 ---
 scope: L2
-summary: "Graph visualization: data pipeline, D3 force renderer, interaction model"
-modified: 2026-03-19
-reviewed: 2026-03-19
+summary: "Graph visualization: data pipeline, D3 force renderer, page-level interaction model"
+modified: 2026-03-24
+reviewed: 2026-03-24
 depends:
   - path: docs/L1-relations
   - path: docs/L1-scripts
+  - path: docs/L1-design-vision
+    section: "Interaction language"
+  - path: docs/L1-styles
+    section: "Interaction primitives"
 ---
 
 # Graph visualization
 
-The site renders interactive force-directed graphs of page relations using D3. Two contexts exist: a full-site graph page (`/graph`) and per-page subgraph components embedded in content.
+The site renders interactive force-directed graphs of page relations using D3. Two contexts exist:
+
+- a full-site graph page at `/graph`
+- per-page subgraph components embedded in content
+
+The full graph is a power feature, not a primary navigation surface. It should feel like the page itself, with minimal chrome and revealable tools, not like a dashboard panel added on top of the site.
 
 ## Data pipeline
 
@@ -42,7 +51,7 @@ D3 force simulation + SVG rendering
 |-------|------|-------------|
 | `id` | `string` | Page slug |
 | `title` | `string` | Display title |
-| `connections` | `number` | Sum of all relation counts (up, down, is, has, next, prev, ref, refi) |
+| `connections` | `number` | Sum of all relation counts |
 
 ### GraphEdge
 
@@ -54,7 +63,7 @@ D3 force simulation + SVG rendering
 
 ### EdgeType
 
-Union: `'up' | 'is' | 'next' | 'ref'`. Maps 1:1 to relation semantics defined in the relations system.
+Union: `'up' | 'is' | 'next' | 'ref'`. Maps directly to relation semantics defined in the relations system.
 
 ## Subgraph extraction
 
@@ -62,14 +71,14 @@ Union: `'up' | 'is' | 'next' | 'ref'`. Maps 1:1 to relation semantics defined in
 
 1. Builds the full graph via `buildGraphData()`.
 2. Filters edges to only the requested `relationTypes`.
-3. Runs BFS from `rootSlug` up to `opts.depth` hops, traversing edges bidirectionally (both source and target neighbors count).
-4. Returns nodes and edges where both endpoints are in the BFS-visited set.
+3. Runs BFS from `rootSlug` up to `opts.depth` hops, traversing edges bidirectionally.
+4. Returns nodes and edges where both endpoints are in the visited set.
 
 Default props in `RelationsGraph.astro`: all four edge types, depth 1.
 
 ## Edge deduplication
 
-`buildGraphData()` stores directional edges (up, is, ref) once per declaration -- the source page declares the relation, producing one edge. For symmetric pairs (next/prev), it deduplicates using a sorted slug-pair key: `[slug, rel.next].sort().join('::') + '::next'`. This prevents the same sequential link from appearing twice when both sides declare the relationship.
+`buildGraphData()` stores directional edges once per declaration. For symmetric pairs (`next` / `prev`), it deduplicates using a sorted slug-pair key, preventing the same sequential link from appearing twice when both sides declare it.
 
 ## D3 force simulation
 
@@ -77,10 +86,12 @@ Default props in `RelationsGraph.astro`: all four edge types, depth 1.
 
 | Force | Parameter | Value |
 |-------|-----------|-------|
-| `link` | distance | 80 |
-| `charge` | strength | -200 (repulsive) |
-| `center` | position | (0, 0) for initial; (width/2, height/2) after resize |
-| `collide` | radius | `nodeRadius(connections) + 8` |
+| `link` | distance | `up` 86, `is` 94, `next` 102, `ref` 114 |
+| `charge` | strength | `-18` for isolated nodes; otherwise `-118 - min(connections, 12) * 5` |
+| `x` / `y` anchor | strength | `0.14` for isolated nodes, `0.065` for connected components |
+| `center` | position | `(0, 0)` |
+| `collide` | radius | `nodeCollisionRadius(node)` based on node size and title length |
+| simulation | `alphaDecay` / `velocityDecay` | `0.04` / `0.45` |
 
 ### Node radius formula
 
@@ -90,93 +101,115 @@ nodeRadius(connections) = clamp(4, 4 + sqrt(connections) * 2.5, 16)
 
 Nodes with more connections appear larger, bounded between 4px and 16px.
 
+### Component anchoring
+
+The graph is not laid out as one undifferentiated force cloud. Before the simulation starts, nodes are partitioned into connected components and each component receives an anchor position:
+
+1. The largest component stays centered.
+2. Smaller components are placed on compact outer rings.
+3. Nodes inside each component start on a local ring around that anchor.
+
+This keeps isolated or disconnected nodes from drifting arbitrarily far away and makes the overall page easier to scan.
+
 ## SVG rendering
 
-The renderer appends an SVG to the container with `width`/`height` at 100% and a `viewBox` matching the container's client dimensions.
+The renderer appends an SVG to the container with `width` and `height` at `100%` and a `viewBox` matching the container's client dimensions.
 
 **Structure:**
-- `<defs>`: arrow markers for directed edge types (viewBox `0 -4 8 8`, refX 12)
+
+- `<defs>`: arrow markers for directed edge types
 - `<g>` root group (receives zoom transform)
   - `<g class="graph-edges">`: `<line>` elements per visible edge
-  - `<g class="graph-nodes">`: `<g>` per node containing a `<circle>` and a `<text>` label
+  - `<g class="graph-edge-labels">`: short text labels (`up`, `is`, `next`, `ref`)
+  - `<g class="graph-nodes">`: `<g>` per node
+    - `<a class="graph-node-link">`
+      - `<circle>`
+      - `<text>`
 
-**Labels** are positioned at `x = nodeRadius + 4`, `y = 4`, 11px, using the site's sans-serif font. Pointer events are disabled on labels so clicks pass through to the node circle.
+Nodes are SVG anchors, not inert shapes. That means the site's normal link behavior still applies on the graph page, including hover-prefetch and page previews.
 
-**Arrow markers** are only created for edge types where `style.directed` is true (currently all four types).
+Labels use the mono font and sit outside the circle, on the side facing away from the component center. This reduces overlap in dense clusters and keeps titles readable.
 
 ## Edge styles
 
-Per the design vision, edge types are distinguished by **dash pattern and width**, not color. All edges share a single base color (`--color-text-subtle`) so the graph reads as a cohesive neutral structure. Type is communicated through line style:
+Per the current design direction, edge types use **color as the categorical encoding** and **stroke width as a secondary weight cue**. Texture is not used.
 
-| Type | Color (CSS var) | Width | Dash pattern | Directed | Legend label |
-|------|-----------------|-------|--------------|----------|-------------|
-| `up` | `--color-text-subtle` | 2 | solid | yes | Up / Down -- hierarchy |
-| `is` | `--color-text-subtle` | 1.5 | `6 3` | yes | Is / Has -- classification |
-| `next` | `--color-text-subtle` | 1 | `2 4` | yes | Next / Prev -- sequential |
-| `ref` | `--color-text-subtle` | 0.75 | `1 3` | yes | Ref -- reference link |
+| Type | Color token | Width | Directed | Label |
+|------|-------------|-------|----------|-------|
+| `up` | `--color-rel-hierarchy` | 1.45 | yes | `up` |
+| `is` | `--color-rel-type` | 1.3 | yes | `is` |
+| `next` | `--color-rel-sequence` | 1.15 | yes | `next` |
+| `ref` | `--color-rel-reference` | 0.95 | yes | `ref` |
 
-This follows the minimal semantic color principle: shape and line style differentiate, not color.
+Long enough edges also receive a short inline label near the midpoint. Very short edges suppress the label to reduce clutter.
 
 ### Runtime color resolution
 
-`EDGE_STYLES` and `NODE_COLORS` are initialized with hex fallbacks. On first render, `resolveRuntimeColors()` reads CSS custom properties via `getComputedStyle(document.documentElement)` and overwrites the color values in-place. The `cssVar(name, fallback)` helper returns the fallback when running server-side (`typeof document === 'undefined'`).
+`EDGE_STYLES` and `NODE_COLORS` are initialized with hex fallbacks. On first render, `resolveRuntimeColors()` reads CSS custom properties via `getComputedStyle(document.documentElement)` and overwrites the color values in-place. The `cssVar(name, fallback)` helper returns the fallback when running server-side.
 
 ## Interaction model
 
 ### Zoom and pan
 
-Enabled by default on the full graph page, disabled on embedded subgraphs. Scale range: 0.15x to 5x. Initial transform centers the content with 0.9x scale. The zoom transform is applied to the root `<g>` element.
+Enabled by default on the full graph page, disabled on embedded subgraphs. Scale range: `0.15x` to `5x`. Initial transform centers the content with `0.9x` scale.
+
+Manual zoom or pan breaks focus mode. Focus is treated as a tracked orientation state; once the user takes control of the camera, the graph exits that state.
 
 ### Drag
 
-Enabled in both contexts. On drag start, the node's position is fixed (`fx`/`fy`) and `alphaTarget` is raised to 0.3 to reheat the simulation. On drag end, the fixed position is released and `alphaTarget` returns to 0, letting the simulation cool.
+Enabled in both contexts. On drag start, the node's position is fixed (`fx` / `fy`) and `alphaTarget` is raised to `0.3` to reheat the simulation. On drag end, the fixed position is released and `alphaTarget` returns to `0`.
+
+If the dragged node is the focused node, the camera follows it while the drag is in progress. Dragging also suppresses link navigation briefly so a reposition action does not accidentally open the target page.
 
 ### Hover highlight
 
-On `mouseenter`, the renderer collects all nodes connected to the hovered node via any edge. Connected nodes stay at full opacity; all others fade to 0.15. Edges involving the hovered node go to 0.8 opacity; others fade to 0.05. On `mouseleave`, everything resets (nodes to 1, edges to 0.6).
+On `mouseenter`, the renderer collects all nodes connected to the hovered node through currently visible edge types. Connected nodes stay at full opacity; all others fade. Related edges and edge labels strengthen in opacity while unrelated ones fade. On `mouseleave`, the graph returns to its baseline state.
 
-### Tooltip
+### Click and preview
 
-A `div` positioned absolutely within the container, styled with site CSS variables. Shows the node title, follows the cursor with a 12px right / 8px up offset. Appears/disappears via opacity with a 50ms ease-out transition.
+Default behavior navigates to the page: slug `'index'` maps to `'/'`, others to `'/{slug}/'`. Because nodes are anchors, the graph participates in the site's normal preview and prefetch system instead of relying on a separate tooltip layer.
 
-### Click
+### Focus
 
-Default behavior navigates to the page: slug `'index'` maps to `'/'`, others to `'/{slug}/'`. The `onNodeClick` callback is configurable via `GraphConfig`.
+The full graph page supports focus by slug via `?focus=...` and via the in-page search reveal.
 
-## setVisibleTypes() filtering
+- `focusNode(nodeId)` records a focused node, centers the camera on it, and keeps it centered as the simulation ticks.
+- The page shows focus state outside the SVG as a compact contextual badge with title and path.
+- `clearFocus()` exits focus mode without forcing a camera reset.
+- `resetView()` exists at the renderer level for future use, but the current page UI does not expose an overview button.
 
-`graph.astro` renders a legend panel with checkboxes for each edge type. On change, it collects the checked types into a `Set<EdgeType>` and calls `instance.setVisibleTypes(types)`. This triggers `rebuildEdges()`, which re-joins the edge data (filtered by `visibleTypes`), re-applies styles, and restarts the simulation at alpha 0.1.
+Focus is an orientation aid, not a hard filter.
 
-The legend panel is collapsible via a toggle button. It is positioned absolutely in the top-left corner of the graph container.
+## Filtering
 
-## Focus affordance
+`graph.astro` renders relation-family toggles inside a revealable flyout. When the user toggles relation visibility, the page calls `instance.setVisibleTypes(types)`.
 
-The metadata strip on every article page includes a "graph" text link pointing to `/graph?focus={slug}`. This connects the reading flow to the graph visualization.
+This does **not** rebuild the simulation or re-layout the graph. The renderer updates edge and edge-label visibility in place, so the physical graph stays stable while relation families are hidden or shown.
 
-### Metadata strip link
+## Full graph page UI
 
-The word `graph` appears in the context line (row 1 of the metadata strip), after the dates:
+The full graph page follows the site's interaction-language rules:
 
-```
-stable · 4 min · created 2025-06-12 · updated 2026-01-15 · graph
-```
+- The graph itself is the page surface.
+- Secondary controls are gathered into a compact tool dock near the top-center working area rather than left in the viewport corners.
+- Reveal controls stay compact, but they must remain discoverable at a glance against the graph field.
+- The dock should avoid double-framing: either the dock surface or the controls provide the main boundary, not both.
+- Control labels and graph labels should favor legibility over atmospheric low-contrast styling.
+- Only one reveal panel in the control cluster should be open at once.
+- Current focus is shown as a small context badge, not as a toolbar title or metrics strip.
+- Tooling stays minimal. The page should not expose counts, legends, or instructional copy unless it meaningfully improves task completion.
 
-It is a teal link (`--color-accent`) in Commit Mono at `--text-xs`, matching the rest of the context line. No icon, no button chrome -- just a text link in the metadata row. The link is always present since every page is a node in the graph.
+Current controls:
 
-### Graph page `?focus=slug` behavior
+- `focus`: search field inside a reveal panel
+- `relations`: reveal panel for relation-family visibility
+- focus badge: current focused node title + path + clear action
 
-The `/graph` page receives `?focus=slug` as a query parameter. On load, the graph should:
+## Metadata strip link
 
-1. Center the viewport on the focused node.
-2. Highlight the focused node with `--color-accent` fill and a slightly larger radius.
-3. Dim non-adjacent nodes to `opacity: 0.3` for 2 seconds, then fade back to full opacity.
-4. The focus effect is temporary orientation, not a permanent filter.
+The metadata strip on each article page includes a `graph` text link pointing to `/graph?focus={slug}`. This connects the reading flow to the graph visualization without putting graph-specific controls into the header.
 
-The graph already supports node highlighting via click -- this reuses that mechanism on page load.
-
-### Why the metadata strip, not the header
-
-The header is persistent scroll chrome. A per-page affordance like "view in graph" belongs in the metadata strip where other per-page context lives. Putting it in the header would mean it competes with site-wide navigation during reading. A floating button would add a z-layer and positioning logic for a feature that does not warrant urgency.
+The link is an accent-colored text affordance in the metadata row. No icon and no button chrome.
 
 ## Key files
 
@@ -186,4 +219,4 @@ The header is persistent scroll chrome. A per-page affordance like "view in grap
 | `src/scripts/graph/renderer.ts` | `createGraph()` D3 renderer, `GraphConfig`, `GraphInstance` |
 | `src/scripts/graph/styles.ts` | `EDGE_STYLES`, `NODE_COLORS`, `cssVar()`, `resolveRuntimeColors()` |
 | `src/components/RelationsGraph.astro` | Embeddable subgraph component |
-| `src/pages/graph.astro` | Full-site graph page with legend/filter panel |
+| `src/pages/graph.astro` | Full-site graph page with revealable tool panels and focus badge |

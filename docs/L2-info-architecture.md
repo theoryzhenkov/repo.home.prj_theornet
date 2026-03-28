@@ -151,8 +151,8 @@ Each segment:
 - **created**: Always shown. Format: `YYYY-MM-DD` (ISO, matching the monospace/technical aesthetic; not "Mar 15, 2026" which mixes serif-friendly formatting into a monospace context).
 - **updated**: Shown only if `modified` differs from `created` by more than 24 hours. Same format.
 - **freshness indicator**: A relative time shown parenthetically after the updated date when the page is older than 6 months. Rules: < 6 months: no indicator (implicitly fresh). 6 months -- 2 years: `(Nmo ago)` in `--color-text-subtle`. > 2 years: `(N yr ago)` in `--color-status-draft` (amber) -- the strongest staleness signal, justified because a page untouched for over 2 years is a trust concern equivalent to a draft.
-- **backlinks**: `N backlinks` (plural) or `1 backlink` (singular), displayed as a teal link that scrolls to `#backlinks-heading`. Omitted when backlink count is 0. The count is a prominence signal -- a page with many inbound references is a hub in the knowledge graph.
-- **graph**: Always present. A teal text link to `/graph?focus={slug}`. See L2-graph-viz for focus behavior.
+- **backlinks**: `N backlinks` (plural) or `1 backlink` (singular), displayed as an accent-colored link that scrolls to `#backlinks-heading`. Omitted when backlink count is 0. The count is a prominence signal -- a page with many inbound references is a hub in the knowledge graph.
+- **graph**: Always present. An accent-colored text link to `/graph?focus={slug}`. See L2-graph-viz for focus behavior.
 
 ### Segment ordering rationale
 
@@ -233,13 +233,13 @@ Each backlink entry is a self-contained card-like block with three elements stac
 > within the snippet text.                    [view in context ->]
 ```
 
-**Title row.** The backlinking page's title, rendered as a teal link in Literata (serif) at `--text-sm` (14px), with the page's type label inline to the right in Commit Mono at `--text-2xs` (12px), muted (`--color-text-subtle`). The title row uses horizontal layout with baseline alignment and an 8px gap between title and type.
+**Title row.** The backlinking page's title, rendered as an accent-colored link in Source Serif 4 (serif) at `--text-sm` (14px), with the page's type label inline to the right in Commit Mono at `--text-2xs` (12px), muted (`--color-text-subtle`). The title row uses horizontal layout with baseline alignment and an 8px gap between title and type.
 
 **Snippet blockquote.** The paragraph (or sentence cluster) from the backlinking page that contains the link to the current page. Styled as a blockquote with:
 
 - Left border: 2px solid `--color-border` (not accent -- accent is reserved for interactive elements, and the border here is structural, not clickable)
 - Padding-left: 12px (from the border to text)
-- Font: Literata at `--text-xs` (12.8px), `--color-text-muted`, `line-height: 1.55`
+- Font: Source Serif 4 at `--text-xs` (12.8px), `--color-text-muted`, `line-height: 1.5–1.55`
 - The linked phrase within the snippet (the anchor text that originally pointed to this page) is rendered in `--color-accent` with no underline, distinguishing it from the surrounding context
 - Max height: 4 lines (~5.2em at the given font size and line-height). Snippets longer than 4 lines are truncated with a CSS `line-clamp` and trailing ellipsis. This prevents a single verbose backlink from dominating the section.
 
@@ -256,7 +256,7 @@ At build time, the backlinks system extracts context for each inbound reference:
 
 ### Section header and count
 
-The section header reads `BACKLINKS` in Commit Mono at `--text-2xs`, `font-weight: 600`, `letter-spacing: 1.5px`, `--color-text-subtle` -- matching the existing label style used for other aside-panel headers. A count badge follows inline: `(3)` in the same typographic treatment. This gives the reader a quick signal of backlink density without requiring them to scan the full list.
+The section header reads `BACKLINKS` in Commit Mono at `--text-2xs`, `font-weight: 600`, restrained tracking (`~0.06em`), `--color-text-subtle` -- matching the existing label style used for other aside-panel headers. A count badge follows inline: `(3)` in the same typographic treatment. This gives the reader a quick signal of backlink density without requiring them to scan the full list.
 
 ### Spacing and separation
 

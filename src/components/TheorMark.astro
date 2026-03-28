@@ -1,0 +1,30 @@
+---
+import { getTheorMarkLayers, getTheorMarkSiteFill, type TheorBrandVariant } from '@/lib/theor-brand';
+
+interface Props {
+  variant?: TheorBrandVariant;
+  class?: string;
+  title?: string;
+}
+
+const { variant = 'core', class: className, title } = Astro.props;
+const layers = getTheorMarkLayers(variant);
+const siteFill = getTheorMarkSiteFill(variant);
+---
+
+<svg
+  class={className}
+  viewBox="0 0 128 128"
+  fill="none"
+  role={title ? 'img' : undefined}
+  aria-hidden={title ? undefined : 'true'}
+>
+  {title && <title>{title}</title>}
+  {layers.map(({ d, fill, transform }) => (
+    <path
+      d={d}
+      transform={transform}
+      fill={fill === 'core' ? 'currentColor' : siteFill}
+    />
+  ))}
+</svg>

@@ -230,7 +230,7 @@ async function spawnPopup(anchor: HTMLAnchorElement, parentPopupEl: HTMLElement 
     }
 
     // Create loading popup immediately
-    const loadingEl = createLoadingPopup(depth, POPUP_CONFIG);
+    const loadingEl = createLoadingPopup(depth, POPUP_CONFIG, target.contentType);
     document.body.appendChild(loadingEl);
 
     // Position the loading popup

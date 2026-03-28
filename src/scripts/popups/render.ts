@@ -1,7 +1,34 @@
 /** Popup and popin DOM creation and lifecycle */
 
-import type { PopupContent, PopupConfig, TilePosition } from './types';
+import type { PopupContent, PopupConfig, PopupContentType, TilePosition } from './types';
 import { POPUP_CONFIG } from './types';
+
+function getPreviewWidth(contentType: PopupContentType, config: PopupConfig): string {
+  if (contentType === 'footnote') {
+    return 'min(280px, calc(100vw - 24px))';
+  }
+
+  return `min(${config.maxWidth}px, calc(100vw - 24px))`;
+}
+
+function renderPreviewDocument(content: PopupContent, surface: 'popup' | 'popin'): string {
+  const surfaceClass = surface === 'popup' ? 'popup-document' : 'popin-document';
+  const proseClasses = [
+    'prose',
+    'preview-prose',
+    content.contentType === 'footnote' ? 'preview-prose-footnote' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return `
+    <article class="preview-document ${surfaceClass}" data-preview-type="${escapeAttr(content.contentType)}">
+      <div class="${proseClasses}">
+        ${content.bodyHtml}
+      </div>
+    </article>
+  `;
+}
 
 export function createPopup(
   content: PopupContent,
@@ -14,9 +41,7 @@ export function createPopup(
   popup.dataset.popupDepth = String(depth);
   popup.dataset.contentType = content.contentType;
 
-  popup.style.maxWidth = content.contentType === 'footnote'
-    ? '280px'
-    : `${config.maxWidth}px`;
+  popup.style.width = getPreviewWidth(content.contentType, config);
 
   popup.innerHTML = `
     <div class="popup-titlebar">
@@ -28,20 +53,25 @@ export function createPopup(
         <button class="popup-btn popup-btn-close" title="Close (Alt: all)">\u00D7</button>
       </div>
     </div>
-    <div class="popup-body">${content.bodyHtml}</div>
+    <div class="popup-body">${renderPreviewDocument(content, 'popup')}</div>
   `;
 
   bindTitlebarButtons(popup);
   return popup;
 }
 
-export function createLoadingPopup(depth: number, config: PopupConfig): HTMLElement {
+export function createLoadingPopup(
+  depth: number,
+  config: PopupConfig,
+  contentType: PopupContentType,
+): HTMLElement {
   const popup = document.createElement('div');
   popup.className = 'popup popup-loading-state';
   popup.dataset.popupId = crypto.randomUUID();
   popup.dataset.popupDepth = String(depth);
+  popup.dataset.contentType = contentType;
 
-  popup.style.maxWidth = `${config.maxWidth}px`;
+  popup.style.width = getPreviewWidth(contentType, config);
 
   popup.innerHTML = `
     <div class="popup-titlebar">
@@ -84,10 +114,11 @@ export function upgradeLoadingPopup(popup: HTMLElement, content: PopupContent): 
 
   const body = popup.querySelector('.popup-body');
   if (body) {
-    body.innerHTML = content.bodyHtml;
+    body.innerHTML = renderPreviewDocument(content, 'popup');
   }
 
   popup.dataset.contentType = content.contentType;
+  popup.style.width = getPreviewWidth(content.contentType, POPUP_CONFIG);
   popup.classList.remove('popup-loading-state');
 }
 
@@ -121,12 +152,12 @@ export function createPopin(content: PopupContent): HTMLElement {
   overlay.dataset.popinId = crypto.randomUUID();
 
   overlay.innerHTML = `
-    <div class="popin" role="dialog" aria-label="${escapeAttr(content.title)}">
+    <div class="popin" role="dialog" aria-label="${escapeAttr(content.title)}" data-content-type="${escapeAttr(content.contentType)}">
       <div class="popin-titlebar">
         <a class="popin-titlebar-link" href="${escapeAttr(content.href)}">${escapeHtml(content.title)}</a>
         <button class="popin-close" aria-label="Close">&times;</button>
       </div>
-      <div class="popin-body">${content.bodyHtml}</div>
+      <div class="popin-body">${renderPreviewDocument(content, 'popin')}</div>
     </div>
   `;
 

@@ -103,7 +103,7 @@ Beyond the internal/external split, link type is communicated through **underlin
 | Internal (same site) | `href` starts with `/` and matches a known page slug | Solid underline, `1px`, `--color-accent` | Default, most trusted -- stays within the knowledge graph |
 | External (general) | `href` starts with `http` and is not Wikipedia | Dashed underline, `1px`, `--color-text-subtle` | Signals departure; the muted color reduces visual pull toward exits |
 | Wikipedia | `href` contains `wikipedia.org` | Dotted underline, `1px`, `--color-text-subtle` | Reference lookup; distinct from general external because Wikipedia links are "look this up" rather than "go explore this" |
-| Anchor (same page) | `href` starts with `#` | No underline, teal text only | Same-page jumps do not need the "this goes somewhere" signal |
+| Anchor (same page) | `href` starts with `#` | No underline, accent text only | Same-page jumps do not need the "this goes somewhere" signal |
 
 CSS implementation uses native `text-decoration-*` properties keyed off attribute selectors:
 

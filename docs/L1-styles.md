@@ -1,8 +1,8 @@
 ---
 scope: L1
 summary: "CSS architecture, design tokens, and style invariants"
-modified: 2026-03-20
-reviewed: 2026-03-20
+modified: 2026-03-24
+reviewed: 2026-03-24
 depends:
   - path: docs/L0-ui
   - path: docs/L1-design-vision
@@ -38,7 +38,7 @@ The layer cascade means component styles always override base styles. Both `comp
 
 ### Colors
 
-Warm-neutral base with intentional color coding. The palette is scholarly and textured — anchored by warm paper tones with a slight grey undertone to prevent blandness, then enriched by a deep ink accent and muted semantic colors. Color signals meaning: content types, relation types, and maturity states each have subtle, consistent color associations.
+Cool-neutral base with intentional color coding. The palette is scholarly and restrained — anchored by neutral grey paper tones rather than warm beige, then enriched by a muted ink-blue accent and semantic colors that stay secondary to typography. Color signals meaning: content types, relation types, and maturity states each have subtle, consistent color associations.
 
 #### Light theme (default)
 
@@ -46,31 +46,31 @@ Warm-neutral base with intentional color coding. The palette is scholarly and te
 
 | Token | Value | Role |
 | ----- | ----- | ---- |
-| `--color-bg` | `#EFECE6` | Page background — warm grey-paper, less yellow than pure beige |
-| `--color-bg-subtle` | `#E6E2DB` | Table headers, callout backgrounds, relations block |
-| `--color-bg-muted` | `#DCD8D0` | Code blocks, inline code |
-| `--color-text` | `#22211E` | Primary text, headings (near-black, warm) |
-| `--color-text-muted` | `#555249` | Secondary text, blockquotes, sidebar content |
-| `--color-text-subtle` | `#8A857C` | Tertiary text, metadata, TOC, footnote markers |
+| `--color-bg` | `#F4F4F2` | Page background — neutral grey paper, no beige cast |
+| `--color-bg-subtle` | `#ECECE8` | Table headers, callout backgrounds, relations block |
+| `--color-bg-muted` | `#E2E2DC` | Code blocks, inline code |
+| `--color-text` | `#1F1F1C` | Primary text, headings (near-black, neutral) |
+| `--color-text-muted` | `#4E4E49` | Secondary text, blockquotes, sidebar content |
+| `--color-text-subtle` | `#787871` | Tertiary text, metadata, TOC, footnote markers |
 
 **Accent and interactive:**
 
 | Token | Value | Role |
 | ----- | ----- | ---- |
-| `--color-accent` | `#2B5F5A` | Primary accent — deep teal-green, scholarly ink tone |
-| `--color-accent-hover` | `#1D4440` | Accent hover/pressed state |
-| `--color-accent-muted` | `#3D7A74` | Lighter accent for less prominent affordances |
-| `--color-link` | `#2B5F5A` | Link text (same as accent — links are the primary interactive element) |
-| `--color-link-hover` | `#1D4440` | Link hover state |
+| `--color-accent` | `#3A4E68` | Primary accent — restrained ink-blue, cooler and drier than teal |
+| `--color-accent-hover` | derived from `#3A4E68` | Accent hover/pressed state |
+| `--color-accent-muted` | `#556B84` | Lighter accent for less prominent affordances |
+| `--color-link` | `#3A4E68` | Link text (same as accent — links are the primary interactive element) |
+| `--color-link-hover` | derived from `#3A4E68` | Link hover state |
 
 **Borders and surfaces:**
 
 | Token | Value | Role |
 | ----- | ----- | ---- |
-| `--color-border` | `#C7C1B7` | Borders, horizontal rules, blockquote accents |
-| `--color-border-subtle` | `#D5D0C7` | Callout title separators, table row dividers |
-| `--color-highlight` | `#D9E4D9` | Text selection (tinted toward accent) |
-| `--color-highlight-subtle` | `#E8EDE5` | Sidenote highlight, TODO background |
+| `--color-border` | `#CFCFC7` | Borders, horizontal rules, blockquote accents |
+| `--color-border-subtle` | `#DDDDD6` | Callout title separators, table row dividers |
+| `--color-highlight` | `#E1E7EF` | Text selection (tinted toward accent) |
+| `--color-highlight-subtle` | `#EAEEF3` | Sidenote highlight, TODO background |
 
 **Status and maturity:**
 
@@ -85,10 +85,10 @@ Warm-neutral base with intentional color coding. The palette is scholarly and te
 
 | Token | Value | Role |
 | ----- | ----- | ---- |
-| `--color-type-article` | `#E8E4DD` | Long-form articles — warm neutral (no hue shift, the default) |
-| `--color-type-project` | `#E2E6E5` | Projects — cool grey-green hint |
-| `--color-type-note` | `#E8E5DE` | Short notes/TIL — slightly warmer, yellowed |
-| `--color-type-interactive` | `#E3E3E8` | Interactive pages — cool blue-grey hint |
+| `--color-type-article` | `#EAEAE7` | Long-form articles — near-neutral paper tint |
+| `--color-type-project` | `#E5E8E6` | Projects — cool grey-green hint |
+| `--color-type-note` | `#EBEBE6` | Short notes/TIL — neutral warm-grey hint without yellowing |
+| `--color-type-interactive` | `#E4E6EB` | Interactive pages — cool blue-grey hint |
 
 **Relation type colors** (used in graph edges and relation labels):
 
@@ -115,7 +115,7 @@ Warm-neutral base with intentional color coding. The palette is scholarly and te
 
 #### Dark theme
 
-Deep charcoal backgrounds (not pure black), warm light text. The accent shifts to a brighter teal for adequate contrast. Content-type tints and relation colors are adjusted for dark backgrounds.
+Deep charcoal backgrounds (not pure black), warm light text. The accent shifts to a brighter ink-blue for adequate contrast. Content-type tints and relation colors are adjusted for dark backgrounds.
 
 **Base surfaces:**
 
@@ -132,11 +132,11 @@ Deep charcoal backgrounds (not pure black), warm light text. The accent shifts t
 
 | Token | Value | Role |
 | ----- | ----- | ---- |
-| `--color-accent` | `#5AADA5` | Primary accent — brighter teal for dark contrast |
+| `--color-accent` | `#6F88A8` | Primary accent — brighter ink-blue for dark contrast |
 | `--color-accent-hover` | `#7AC4BD` | Accent hover state |
-| `--color-accent-muted` | `#4A9A93` | Less prominent affordances |
-| `--color-link` | `#5AADA5` | Link text |
-| `--color-link-hover` | `#7AC4BD` | Link hover state |
+| `--color-accent-muted` | `#5E7694` | Less prominent affordances |
+| `--color-link` | `#6F88A8` | Link text |
+| `--color-link-hover` | `#8FA3BC` | Link hover state |
 
 **Borders and surfaces:**
 
@@ -180,7 +180,7 @@ Deep charcoal backgrounds (not pure black), warm light text. The accent shifts t
 | ----- | ----- | ---- |
 | `--color-header-bg` | `#141312` | Status bar background |
 | `--color-header-text` | `#A8A39A` | Status bar text |
-| `--color-header-accent` | `#5AADA5` | Status bar accent (same bright teal) |
+| `--color-header-accent` | `#6F88A8` | Status bar accent (same bright ink-blue) |
 
 **Overlay:**
 
@@ -196,9 +196,9 @@ The earlier approach of "no color coding" produced a monotonous result. The revi
 
 1. **Color reinforces, never replaces.** Content types are still differentiated by icon and typography treatment. Color tints are a secondary layer that builds pattern recognition over time.
 2. **Tints, not blocks.** Content-type color appears as a subtle background shift (3-5% hue variation from the base), not as colored badges or borders. The reader should feel the difference before consciously noticing it.
-3. **Relations use color in the graph only.** In text (relation labels, breadcrumbs), relations are monochrome. In the SVG graph, edges are colored by relation type to make structure visually parseable at a glance. Dash pattern remains as a redundant encoding for accessibility.
+3. **Relations use color in the graph only.** In text (relation labels, breadcrumbs), relations are monochrome. In the SVG graph, edges are colored by relation type to make structure visually parseable at a glance. Stroke width is the secondary cue for structural weight; line texture is not used.
 4. **Status colors are the loudest.** Maturity indicators (draft/stable/evergreen) use the most saturated colors on the site because they are the highest-value semantic signal — they tell the reader how much to trust what they are reading.
-5. **Accent is functional, not decorative.** The teal accent appears only on interactive elements (links, buttons, focus rings, footnote numbers). It never appears as background fill or decorative stripe.
+5. **Accent is functional, not decorative.** The ink-blue accent appears only on interactive elements (links, buttons, focus rings, footnote numbers). It never appears as background fill or decorative stripe.
 
 **Where color appears:**
 
@@ -223,8 +223,8 @@ The earlier approach of "no color coding" produced a monotonous result. The revi
 
 #### Color principles (summary)
 
-- **Accent is deep teal** (`#2B5F5A` light / `#5AADA5` dark), not generic SaaS blue and not the previous earthy brown — teal reads as scholarly and calm without being bland.
-- **Base is warm grey-paper** (`#EFECE6`), not pure beige — the slight grey undertone prevents the monotonous parchment effect.
+- **Accent is muted ink-blue** (`#3A4E68` in the current light theme), not bright SaaS blue and not green-leaning teal — it keeps interactive elements crisp without pushing the site into product-marketing aesthetics.
+- **Base is neutral grey-paper** (`#F4F4F2`), not beige — removing the yellow cast makes the typography feel drier, sharper, and closer to the intended reading references.
 - **Content-type tints are barely there** — 3-5% hue shift from base, building subliminal pattern recognition.
 - **Relation colors are distinct but muted** — slate, olive, mauve, and neutral form a natural four-way split that is parseable in the graph without being garish.
 - **Dark theme is independently designed**, not an inversion — accent brightens, tints darken, status colors gain saturation.
@@ -235,16 +235,16 @@ Typography is the primary source of patchwork texture: serif for prose, monospac
 
 | Token | Value | Role |
 | ----- | ----- | ---- |
-| `--font-serif` | `'Literata', 'Georgia', serif` | Prose body, headings, article titles, backlinks |
-| `--font-mono` | `'Commit Mono', 'Consolas', monospace` | Metadata, dates, relation labels, breadcrumbs, code, tags, status bar, navigation, TOC |
+| `--font-serif` | `'Source Serif 4', 'Georgia', serif` | Prose body, headings, article titles, backlinks |
+| `--font-mono` | `'Commit Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace` | Metadata, dates, relation labels, breadcrumbs, code, tags, status bar, navigation, TOC |
 
-**Single-mono-font rule.** Every monospace context — code blocks, metadata chrome, navigation, breadcrumbs, TOC labels, relation labels, table headers — uses `--font-mono` (Commit Mono). No secondary monospace font (IBM Plex Mono, JetBrains Mono, etc.) should appear anywhere. The two-font system (Literata + Commit Mono) is the design; mixing in a third typeface fragments the visual identity.
+**Single-mono-font rule.** Every monospace context — code blocks, metadata chrome, navigation, breadcrumbs, TOC labels, relation labels, table headers — uses `--font-mono` (Commit Mono). No secondary monospace font (IBM Plex Mono, JetBrains Mono, etc.) should appear anywhere. The two-font system (Source Serif 4 + Commit Mono) is the design; mixing in a third typeface fragments the visual identity.
 
-**Serif rationale — Literata.** Designed by TypeTogether for long-form reading (originally commissioned for Google Play Books). Its triangular, wedge-shaped serifs give it a distinctive silhouette that is immediately recognizable but never distracting. It has true optical sizes (text and display cuts), excellent italic forms, and was specifically optimized for sustained reading on screens — exactly the use case here. Compared to Source Serif 4, Literata has more personality in its letter shapes (look at the lowercase `g`, the `a`, the italic `f`) while maintaining equal or better readability at body sizes. It is a variable font on Google Fonts, so weight tuning is precise. Less common on the indie web than Source Serif 4 or Vollkorn.
+**Serif rationale — Source Serif 4.** Adobe's Source Serif 4 is a restrained text face that reads dry, clear, and dependable on screen. It is less literary and less mannered than Literata, which fits the site's direction better: closer to a research notebook than a book-jacket aesthetic. It holds up well in dense reading columns, supports italics and weight variation cleanly, and does not make the site feel overly formal. Its familiarity is a strength here; the site already gets distinctiveness from the serif/mono contrast and information architecture.
 
-**Monospace rationale — Commit Mono.** Designed by Eigil Nikolajsen specifically for code and technical content. It is a neutral monospace with a distinctive feature: balanced spacing that gives every glyph equal visual weight, making dense metadata and code blocks feel calm rather than jittery. Compared to IBM Plex Mono, it is less corporate, more handcrafted. Compared to JetBrains Mono, it is less common and more restrained (no ligatures by default, which suits metadata labels where ligatures can confuse). Its slightly rounded terminals pair well with Literata's wedge serifs — the contrast between them is strong enough to create the patchwork texture without clashing.
+**Monospace rationale — Commit Mono.** Designed by Eigil Nikolajsen specifically for code and technical content. It is neutral, controlled, and typographic rather than aggressively "developer branded." Compared to JetBrains Mono, it is quieter and less IDE-coded. Compared to IBM Plex Mono, it feels less corporate. This matters because the site's mono is not just for code; it is also the voice of metadata, relations, TOC chrome, breadcrumbs, and labels. Commit Mono keeps those elements legible without dominating the prose.
 
-**Loading strategy:** Literata is a variable font on Google Fonts — load via Google Fonts API at weights 400 (body) and 700 (headings) with `font-display: swap`, subset to `latin` and `latin-ext`. Commit Mono is not on Google Fonts; self-host it from [commitmono.com](https://commitmono.com/) (SIL Open Font License 1.1). Load at weight 400 only, `font-display: swap`. Self-hosting one font is a reasonable trade-off for a typeface this distinctive — it adds ~20KB for a single weight of a monospace font.
+**Loading strategy:** Self-host both fonts. Source Serif 4 ships as variable webfonts and should be served locally in `woff2` form for normal and italic. Commit Mono should also be served locally. Use `font-display: swap` for both. The site should not depend on Google Fonts or third-party font CDNs for its core typography.
 
 Sans-serif (`--font-sans`) is no longer a primary typeface. If needed for UI chrome, fall back to the serif or mono stack depending on context. The serif-to-mono contrast is a core design element, not incidental.
 
@@ -260,7 +260,9 @@ Sans-serif (`--font-sans`) is no longer a primary typeface. If needed for UI chr
 
 Heading sizes use raw `rem` values in `base.css`: h1 = 1.875rem (30px), h2 = 1.3125rem (21px), h3 = 1.125rem (18px), h4 = 1rem (16px). These are exempt from the token invariant (see below).
 
-**Minimum font size: 11px (0.6875rem).** No text on the site may be smaller than `--text-3xs`. This floor exists because text below 11px is unreadable for many users, fails accessibility spirit, and renders inconsistently across displays. Every use of `--text-3xs` should be justified — it is reserved for tertiary chrome (nav links, breadcrumbs, uppercase labels with letter-spacing) where the monospace letterforms and contextual cues aid legibility.
+**Minimum font size: 11px (0.6875rem).** No text on the site may be smaller than `--text-3xs`. This floor exists because text below 11px is unreadable for many users, fails accessibility spirit, and renders inconsistently across displays. Every use of `--text-3xs` should be justified — it is reserved for tertiary chrome (nav links, breadcrumbs, uppercase labels) where the monospace letterforms and contextual cues aid legibility.
+
+**Uppercase mono tracking.** Small uppercase mono labels should use restrained tracking, typically `0.04em` to `0.06em`. Earlier px-based tracking values made labels shouty once Commit Mono became the sole metadata voice.
 
 **Whole-pixel sizes.** Font size tokens should resolve to whole pixel values at the default root size (16px) to avoid sub-pixel rendering inconsistencies across browsers and display densities.
 
@@ -271,7 +273,7 @@ Heading sizes use raw `rem` values in `base.css`: h1 = 1.875rem (30px), h2 = 1.3
 | `--leading-none` | 1 | -- |
 | `--leading-tight` | 1.2 | Headings |
 | `--leading-snug` | 1.35 | -- |
-| `--leading-normal` | 1.65 | Body text (`html`) |
+| `--leading-normal` | 1.6 | Body text (`html`, `.prose`) |
 | `--leading-relaxed` | 1.5 | -- |
 
 ### Layout widths
@@ -300,6 +302,74 @@ Heading sizes use raw `rem` values in `base.css`: h1 = 1.875rem (30px), h2 = 1.3
 | `--transition-duration-fast` | 50ms |
 | `--transition-duration-normal` | 100ms |
 | `--transition-duration-medium` | 150ms |
+
+## Interaction primitives
+
+Interaction styling must support the editorial reading model defined in `L1-design-vision`. The rule is consistency through restraint: small surfaces, text-first controls, and minimal state chrome.
+
+### Control hierarchy
+
+Use the least assertive treatment that still communicates affordance:
+
+| Primitive | Default treatment | Notes |
+| --------- | ----------------- | ----- |
+| Inline action | text link or text button | Preferred for most actions |
+| Row action | full-width row with subtle background wash on hover | Preferred for nav and option lists |
+| Compact control | small boxed control with `--radius-sm` or `--radius-md` | Use when a discrete control boundary is needed |
+| Floating overlay | framed sheet with thin border and restrained shadow | Flyouts, dropdowns, hover previews |
+
+**Do not default to pills.** `--radius-full` exists, but capsule controls are not the house style. Use it only when a fully rounded shape is semantically required. Most site chrome should use `--radius-sm` or `--radius-md`.
+
+### Hover and active states
+
+| Context | Preferred hover treatment | Avoid |
+| ------- | ------------------------- | ----- |
+| Inline links | accent color + underline | filled button hover |
+| Small controls | text color shift + faint surface tint | thick borders, heavy fills |
+| List rows | subtle background wash + text darkening | pill chips inside the row |
+| Selected state | clearer text, accent, or border emphasis | relying on saturation alone |
+
+The default interaction model should not make the interface look inflated. Hover is an invitation, not a call-to-action campaign.
+
+### Flyouts, dropdowns, and reveal panels
+
+Reveal surfaces should behave like compact editorial slips:
+
+- Use a flat or near-flat background derived from `--color-bg` or `--color-bg-subtle`.
+- Use a 1px neutral border (`--color-border` or `--color-border-subtle`).
+- Prefer `--radius-md` at most.
+- Keep shadows soft and low-contrast. Blur is optional and should be subtle when used.
+- Panels open adjacent to their trigger and usually only one panel in a cluster stays open at once.
+- Panel internals should be aligned fields or stacked rows, not dense chip clouds.
+
+### Tool docks
+
+Canvas-like or power-user pages may need a persistent control locus. In those cases:
+
+- Group controls into a compact dock rather than scattering them around viewport corners.
+- Place the dock near the page's working field, usually top-center or aligned to the main content column.
+- Give the dock enough surface contrast that controls are discoverable at a glance.
+- Inside the dock, controls can be slightly more bounded than ordinary inline actions, but should still avoid pill styling and heavy product chrome.
+- Prefer a single framing layer. If controls are individually boxed, the dock container itself should usually stay unboxed or nearly invisible.
+- Tool-dock labels should use stronger text contrast than passive metadata. Default toward `--color-text` or close to it unless there is a clear hierarchy reason not to.
+
+### Popups and previews
+
+Hover previews and footnote popups are part of the reading system, not a separate application shell:
+
+- Typography should match the site's prose + mono system.
+- Titlebars are allowed but stay light and secondary.
+- Controls inside popups use minimal icon/button styling.
+- Popup content remains the visual priority; chrome only frames it.
+
+### Focus and state badges
+
+When the UI enters a focused or filtered mode, state should be shown as a small contextual label:
+
+- Name the current target explicitly.
+- Include path or type only if it aids orientation.
+- Do not expose counts or debug metrics by default.
+- Clear / exit actions should be adjacent but visually quieter than the state label itself.
 
 ## Font-size token invariant
 

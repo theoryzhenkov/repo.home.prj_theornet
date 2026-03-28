@@ -79,7 +79,7 @@ const POPUP_CONFIG: PopupConfig = {
   fadeOutDelay: 100,
   fadeOutDuration: 250,
   maxContentHeight: 400,
-  maxWidth: 520,
+  maxWidth: 640,
   gap: 8,
   mobileBreakpoint: 1024,
   viewportMargin: 12,

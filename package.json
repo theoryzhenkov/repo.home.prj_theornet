@@ -1,5 +1,5 @@
 {
-  "name": "Theor.net",
+  "name": "home.theor.net",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -7,6 +7,7 @@
     "build": "astro build && pagefind --site dist",
     "preview": "astro preview",
     "astro": "astro",
+    "brand:generate": "bun run scripts/generate-brand-assets.ts",
     "test": "bun test",
     "test:build": "astro build"
   },

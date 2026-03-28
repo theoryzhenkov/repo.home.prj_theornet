@@ -92,71 +92,64 @@ const hasLinks = links && Object.keys(links).length > 0;
 <aside class="metadata-strip">
   <div class="metadata-context">
     {maturity && (
-      <>
-        <span class="metadata-maturity">
+        <span class="metadata-item metadata-maturity">
           <span class="metadata-maturity-dot" data-maturity={maturity}></span>
           <span class="metadata-maturity-label" data-maturity={maturity}>{maturity}</span>
         </span>
-        <span class="metadata-dot">&middot;</span>
-      </>
     )}
     {readTimeMinutes !== undefined && readTimeMinutes >= 2 && (
-      <>
-        <span class="metadata-value">{readTimeMinutes} min</span>
-        <span class="metadata-dot">&middot;</span>
-      </>
+      <span class="metadata-item">
+        <span class="metadata-item-value">{readTimeMinutes} min</span>
+      </span>
     )}
-    <span class="metadata-value">
-      created <time datetime={created.toISOString()}>{formatDate(created)}</time>
+    <span class="metadata-item">
+      <span class="metadata-item-label">created</span>
+      <time class="metadata-item-value" datetime={created.toISOString()}>{formatDate(created)}</time>
     </span>
     {showUpdated && modified && (
-      <>
-        <span class="metadata-dot">&middot;</span>
-        <span class="metadata-value">
-          updated <time datetime={modified.toISOString()}>{formatDate(modified)}</time>
-          {freshness && (
-            <span class:list={['metadata-freshness', { stale: freshness.stale }]}>
-              ({freshness.text})
-            </span>
-          )}
-        </span>
-      </>
+      <span class="metadata-item">
+        <span class="metadata-item-label">updated</span>
+        <time class="metadata-item-value" datetime={modified.toISOString()}>{formatDate(modified)}</time>
+        {freshness && (
+          <span class:list={['metadata-freshness', { stale: freshness.stale }]}>
+            ({freshness.text})
+          </span>
+        )}
+      </span>
     )}
     {backlinksCount > 0 && (
-      <>
-        <span class="metadata-dot">&middot;</span>
-        <a href="#backlinks" class="metadata-link">{backlinksCount} backlinks</a>
-      </>
+      <a href="#backlinks" class="metadata-item metadata-link">{backlinksCount} backlinks</a>
     )}
-    <span class="metadata-dot">&middot;</span>
-    <a href={`/graph/?focus=${currentSlug}`} class="metadata-link">graph</a>
+    <a href={`/graph/?focus=${currentSlug}`} class="metadata-item metadata-link">graph</a>
   </div>
 
   {(hasRelationRows || hasLinks) && (
     <div class="metadata-relations">
       {relationRows.map((row) => (
-        <span class="metadata-relation-row">
+        <div class="metadata-relation-row">
           <span class="metadata-relation-label">{row.label}:</span>
-          {row.targets.map((target, i) => (
-            <>
-              {i > 0 && <span class="metadata-relation-sep">, </span>}
-              <a href={slugToHref(target.slug)} class="metadata-link">
-                {target.label ? `${target.label}: ` : ''}{getTitle(target.slug)}
-              </a>
-            </>
-          ))}
-        </span>
+          <div class="metadata-relation-values">
+            {row.targets.map((target) => (
+              <span class="metadata-relation-item">
+                <a href={slugToHref(target.slug)} class="metadata-link">
+                  {target.label ? `${target.label}: ` : ''}{getTitle(target.slug)}
+                </a>
+              </span>
+            ))}
+          </div>
+        </div>
       ))}
       {hasLinks && (
-        <span class="metadata-relation-row">
+        <div class="metadata-relation-row">
           <span class="metadata-relation-label">links:</span>
-          {Object.entries(links!).map(([type, url], i) => (
-            <>
-              {i > 0 && <span class="metadata-relation-sep">, </span>}
-              <a href={url} class="metadata-link" target="_blank" rel="noopener noreferrer">{type}</a>
-            </>
-          ))}
-        </span>
+          <div class="metadata-relation-values">
+            {Object.entries(links!).map(([type, url]) => (
+              <span class="metadata-relation-item">
+                <a href={url} class="metadata-link" target="_blank" rel="noopener noreferrer">{type}</a>
+              </span>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   )}

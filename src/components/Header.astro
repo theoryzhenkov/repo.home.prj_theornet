@@ -9,43 +9,37 @@ const navItems = [
 const currentPath = Astro.url.pathname;
 ---
 
-<div class="header-spacer"></div>
 <header class="header" data-header>
   <div class="header-inner">
-    <div class="header-left">
-      <a href="/" class="header-mark">theor.net</a>
-      <span class="header-sep">/</span>
-      <nav class="header-nav" aria-label="Main navigation">
-        {navItems.map((item) => (
-          <a
-            href={item.href}
-            class:list={[
-              'header-nav-link',
-              {
-                active:
-                  currentPath === item.href ||
-                  (item.href !== '/' && currentPath.startsWith(item.href)),
-              },
-            ]}
-          >
-            {item.label}
-          </a>
-        ))}
-      </nav>
+    <nav class="header-nav" aria-label="Main navigation">
+      {navItems.map((item) => (
+        <a
+          href={item.href}
+          class:list={[
+            'header-nav-link',
+            {
+              active:
+                currentPath === item.href ||
+                (item.href !== '/' && currentPath.startsWith(item.href)),
+            },
+          ]}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="header-actions">
       <button
         type="button"
-        class="header-mobile-trigger"
+        class="header-mobile-trigger ui-text-trigger"
         aria-label="Toggle navigation"
+        aria-controls="header-nav-dropdown"
         aria-expanded="false"
         data-nav-toggle
       >
-        nav
+        menu
       </button>
-    </div>
-
-    <div class="header-center"></div>
-
-    <div class="header-right">
       <button type="button" class="header-icon-btn" aria-label="Search" data-search-open>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8" />
@@ -68,12 +62,19 @@ const currentPath = Astro.url.pathname;
     </div>
   </div>
 
-  <nav class="header-dropdown" aria-label="Mobile navigation" data-nav-dropdown hidden>
+  <nav
+    id="header-nav-dropdown"
+    class="header-dropdown ui-sheet-soft"
+    aria-label="Mobile navigation"
+    data-nav-dropdown
+    hidden
+  >
     {navItems.map((item) => (
       <a
         href={item.href}
         class:list={[
           'header-dropdown-link',
+          'ui-option-row',
           {
             active:
               currentPath === item.href ||
@@ -88,7 +89,15 @@ const currentPath = Astro.url.pathname;
 </header>
 
 <script>
+  import {
+    subscribeThemeChange,
+    syncThemeToggleLabel,
+    toggleTheme,
+  } from '@/scripts/theme';
+
   const SCROLL_DEAD_ZONE = 5;
+  const HIDE_DISTANCE = 28;
+  const SHOW_DISTANCE = 18;
   const SCROLL_KEYS = new Set([
     'ArrowUp',
     'ArrowDown',
@@ -100,9 +109,15 @@ const currentPath = Astro.url.pathname;
   ]);
   let cleanupHeader: (() => void) | undefined;
 
-  function syncHeaderState(root: HTMLElement, scrollY: number, isVisible: boolean) {
+  function syncHeaderState(
+    root: HTMLElement,
+    scrollY: number,
+    visible: boolean,
+    docked: boolean
+  ) {
     root.dataset.headerScrolled = scrollY > 0 ? 'true' : 'false';
-    root.dataset.headerVisible = isVisible ? 'true' : 'false';
+    root.dataset.headerVisible = visible ? 'true' : 'false';
+    root.dataset.headerDocked = docked ? 'true' : 'false';
   }
 
   function initHeader() {
@@ -112,28 +127,88 @@ const currentPath = Astro.url.pathname;
     if (!document.querySelector('[data-header]')) return;
 
     // Mobile nav toggle
+    const header = document.querySelector('[data-header]');
     const toggle = document.querySelector('[data-nav-toggle]');
     const dropdown = document.querySelector('[data-nav-dropdown]');
+    const themeToggle = document.querySelector('[data-theme-toggle]');
     let handleToggle: (() => void) | undefined;
+    let handleDocumentClick: ((event: Event) => void) | undefined;
+    let handleDropdownClick: ((event: Event) => void) | undefined;
+    let handleThemeToggle: (() => void) | undefined;
+    let stopThemeSync: (() => void) | undefined;
 
-    if (toggle && dropdown) {
+    function closeDropdown() {
+      if (!(toggle instanceof HTMLButtonElement) || !(dropdown instanceof HTMLElement)) {
+        return;
+      }
+
+      toggle.setAttribute('aria-expanded', 'false');
+      dropdown.hidden = true;
+    }
+
+    if (
+      header instanceof HTMLElement &&
+      toggle instanceof HTMLButtonElement &&
+      dropdown instanceof HTMLElement
+    ) {
       handleToggle = () => {
         const expanded = toggle.getAttribute('aria-expanded') === 'true';
         toggle.setAttribute('aria-expanded', String(!expanded));
         dropdown.hidden = expanded;
       };
 
+      handleDocumentClick = (event) => {
+        const target = event.target;
+        if (!(target instanceof Node)) return;
+        if (header.contains(target)) return;
+        closeDropdown();
+      };
+
+      handleDropdownClick = (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        if (!target.closest('a')) return;
+        closeDropdown();
+      };
+
       toggle.addEventListener('click', handleToggle);
+      document.addEventListener('click', handleDocumentClick);
+      dropdown.addEventListener('click', handleDropdownClick);
+    }
+
+    if (themeToggle instanceof HTMLButtonElement) {
+      syncThemeToggleLabel(themeToggle);
+      stopThemeSync = subscribeThemeChange((theme) => {
+        syncThemeToggleLabel(themeToggle, theme);
+      });
+      handleThemeToggle = () => {
+        toggleTheme();
+      };
+      themeToggle.addEventListener('click', handleThemeToggle);
     }
 
     // Scroll-reveal behavior
+    const headerHeightValue = parseFloat(
+      getComputedStyle(root).getPropertyValue('--height-header')
+    );
+    const headerHeight = Number.isFinite(headerHeightValue)
+      ? headerHeightValue
+      : 44;
+    const dockThreshold = headerHeight;
     let lastScrollY = window.scrollY;
-    let isVisible = true;
+    let isVisible = lastScrollY <= dockThreshold;
     let ticking = false;
     let frameId = 0;
     let suppressRevealUntilManualScroll = false;
+    let direction: 'up' | 'down' | null = null;
+    let directionStartY = lastScrollY;
 
-    syncHeaderState(root, lastScrollY, isVisible);
+    syncHeaderState(root, lastScrollY, isVisible, lastScrollY <= dockThreshold);
+
+    function resetDirectionState(scrollY = window.scrollY) {
+      direction = null;
+      directionStartY = Math.max(scrollY, 0);
+    }
 
     function markManualScrollIntent(event: Event) {
       const target = event.target;
@@ -145,9 +220,14 @@ const currentPath = Astro.url.pathname;
       }
 
       suppressRevealUntilManualScroll = false;
+      resetDirectionState();
     }
 
     function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        closeDropdown();
+      }
+
       if (!SCROLL_KEYS.has(event.key)) return;
       markManualScrollIntent(event);
     }
@@ -167,24 +247,45 @@ const currentPath = Astro.url.pathname;
       ticking = true;
 
       frameId = requestAnimationFrame(() => {
-        const currentScrollY = window.scrollY;
+        const currentScrollY = Math.max(window.scrollY, 0);
         const delta = currentScrollY - lastScrollY;
+        const isDocked = currentScrollY <= dockThreshold;
 
-        if (currentScrollY <= 0) {
+        if (isDocked) {
           isVisible = true;
           suppressRevealUntilManualScroll = false;
-        } else if (delta > SCROLL_DEAD_ZONE) {
-          // Scrolling down: hide
-          isVisible = false;
-        } else if (
-          delta < -SCROLL_DEAD_ZONE &&
-          !suppressRevealUntilManualScroll
-        ) {
-          // Scrolling up: show
-          isVisible = true;
+          resetDirectionState(currentScrollY);
+        } else if (Math.abs(delta) > SCROLL_DEAD_ZONE) {
+          const nextDirection = delta > 0 ? 'down' : 'up';
+
+          if (direction !== nextDirection) {
+            direction = nextDirection;
+            directionStartY = lastScrollY;
+          }
+
+          const travel = Math.abs(currentScrollY - directionStartY);
+
+          if (
+            direction === 'down' &&
+            isVisible &&
+            currentScrollY > headerHeight &&
+            travel >= HIDE_DISTANCE
+          ) {
+            isVisible = false;
+            closeDropdown();
+            directionStartY = currentScrollY;
+          } else if (
+            direction === 'up' &&
+            !isVisible &&
+            travel >= SHOW_DISTANCE &&
+            !suppressRevealUntilManualScroll
+          ) {
+            isVisible = true;
+            directionStartY = currentScrollY;
+          }
         }
 
-        syncHeaderState(root, currentScrollY, isVisible);
+        syncHeaderState(root, currentScrollY, isVisible, isDocked);
         lastScrollY = currentScrollY;
         ticking = false;
       });
@@ -210,7 +311,18 @@ const currentPath = Astro.url.pathname;
       window.removeEventListener('pointerdown', markManualScrollIntent);
       window.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('click', onTocClick);
-      syncHeaderState(root, 0, true);
+      if (handleDocumentClick) {
+        document.removeEventListener('click', handleDocumentClick);
+      }
+      if (dropdown instanceof HTMLElement && handleDropdownClick) {
+        dropdown.removeEventListener('click', handleDropdownClick);
+      }
+      if (themeToggle instanceof HTMLButtonElement && handleThemeToggle) {
+        themeToggle.removeEventListener('click', handleThemeToggle);
+      }
+      stopThemeSync?.();
+      closeDropdown();
+      syncHeaderState(root, 0, true, true);
     };
 
     document.addEventListener('astro:before-preparation', resetHeaderState, { once: true });
@@ -226,9 +338,20 @@ const currentPath = Astro.url.pathname;
       window.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('click', onTocClick);
       document.removeEventListener('astro:before-preparation', resetHeaderState);
-      if (toggle && handleToggle) {
+      if (toggle instanceof HTMLButtonElement && handleToggle) {
         toggle.removeEventListener('click', handleToggle);
       }
+      if (handleDocumentClick) {
+        document.removeEventListener('click', handleDocumentClick);
+      }
+      if (dropdown instanceof HTMLElement && handleDropdownClick) {
+        dropdown.removeEventListener('click', handleDropdownClick);
+      }
+      if (themeToggle instanceof HTMLButtonElement && handleThemeToggle) {
+        themeToggle.removeEventListener('click', handleThemeToggle);
+      }
+      stopThemeSync?.();
+      closeDropdown();
     };
   }
 

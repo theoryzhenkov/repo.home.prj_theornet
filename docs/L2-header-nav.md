@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Header component: non-sticky scroll-reveal bar with site identity, quicklinks, search, and theme toggle"
-modified: 2026-03-20
-reviewed: 2026-03-20
+modified: 2026-03-24
+reviewed: 2026-03-24
 depends:
   - path: docs/L1-design-vision
     section: "Header: scroll-reveal navigation frame"
@@ -113,7 +113,7 @@ Labels are lowercase monospace. If a destination doesn't exist yet, omit the lin
 
 ## Mobile behavior (< 768px)
 
-On narrow viewports, the quicklinks don't fit inline. They move to a **dropdown panel** below the header bar.
+On narrow viewports, the quicklinks don't fit inline. They move to a revealed navigation panel below the header bar.
 
 ### Bar layout on mobile
 
@@ -121,13 +121,13 @@ On narrow viewports, the quicklinks don't fit inline. They move to a **dropdown 
 [  LEFT: site mark  |  spacer  |  RIGHT: nav trigger + search + theme  ]
 ```
 
-The **nav trigger** is a small button (the word `nav` in `--text-xs` monospace, or a minimal hamburger icon). Tapping it toggles the dropdown panel.
+The **nav trigger** is a small text-first control (the word `nav` in `--text-xs` monospace, or a minimal icon if needed). It should not read like a pill button. Tapping it toggles the revealed panel.
 
-### Dropdown panel
+### Revealed panel
 
-Sits directly below the header bar. Contains the four nav links stacked vertically with 44px touch targets. Slides open with a 120ms CSS transition. Closes on: outside tap, Escape key, or navigation.
+Sits directly below the header bar as a flat sheet. Contains the four nav links stacked vertically with 44px touch targets. Slides open with a 120ms CSS transition. Closes on: outside tap, Escape key, or navigation.
 
-The dropdown is part of the header element — when the header is hidden (scrolled away), the dropdown is hidden too. When the header is revealed on scroll-up, the nav trigger is accessible and can open the dropdown.
+The panel is part of the header element, so when the header is hidden (scrolled away), the panel is hidden too. When the header is revealed on scroll-up, the nav trigger is accessible and can open the panel.
 
 ### Scroll-reveal on mobile
 
@@ -140,6 +140,8 @@ Same behavior as desktop. Scroll up reveals the header; scroll down hides it. No
 A distinct surface color, perceptibly different from `--color-bg`. Use `--color-bg-muted` or a custom token slightly darker than the page background. The difference should be subtle but unambiguous — the header should be recognizable as a separate zone without needing a border.
 
 A 1px bottom border in `--color-border` reinforces the separation. On scroll-reveal, a subtle box-shadow (1-2px, low opacity) can appear to lift the header above the content it overlays.
+
+The mobile reveal panel follows the same interaction language as other site overlays: thin border, restrained radius, flat background, and stacked row links rather than chip controls.
 
 ### Typography
 
@@ -175,7 +177,7 @@ All hover/focus transitions: 120ms ease.
 | no-article-metadata | MUST | Header contains no article-specific information (maturity, dates, read time) |
 | uniform-layout | MUST | Header layout is the same on article pages and listing pages |
 | nav-reachable | MUST | All four nav destinations are reachable within two interactions (scroll-up + click) on every page |
-| mobile-dropdown | MUST | Nav links move to a dropdown panel below 768px viewport width |
+| mobile-dropdown | MUST | Nav links move to a revealed panel below 768px viewport width |
 | keyboard-accessible | MUST | All header interactive elements are reachable via Tab and operable via Enter |
 | distinct-background | SHOULD | Header background is visually distinct from the page surface color |
 | no-decorative-animation | SHOULD | Header contains no decorative animation; only functional transitions under 150ms |

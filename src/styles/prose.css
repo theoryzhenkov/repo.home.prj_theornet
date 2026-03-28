@@ -1,14 +1,117 @@
 @layer components {
   /* ─── Prose Container ─── */
   .prose {
+    --prose-scale: 1;
+    --prose-space-scale: 1;
+    --prose-font-size: calc(1rem * var(--prose-scale));
+    --prose-line-height: var(--text-base--line-height);
+    --prose-h1-size: calc(1.875rem * var(--prose-scale));
+    --prose-h2-size: calc(1.3125rem * var(--prose-scale));
+    --prose-h3-size: calc(1.125rem * var(--prose-scale));
+    --prose-h4-size: calc(1rem * var(--prose-scale));
+    --prose-h5-size: calc(0.9375rem * var(--prose-scale));
+    --prose-h6-size: calc(0.875rem * var(--prose-scale));
+    --prose-h1-margin-bottom: calc(0.75rem * var(--prose-space-scale));
+    --prose-h2-margin-top: calc(1.5rem * var(--prose-space-scale));
+    --prose-h2-margin-bottom: calc(0.5rem * var(--prose-space-scale));
+    --prose-h3-margin-top: calc(1rem * var(--prose-space-scale));
+    --prose-h3-margin-bottom: calc(0.25rem * var(--prose-space-scale));
+    --prose-h4-margin-top: calc(0.75rem * var(--prose-space-scale));
+    --prose-h4-margin-bottom: calc(0.25rem * var(--prose-space-scale));
+    --prose-block-space-compact: calc(0.75rem * var(--prose-space-scale));
+    --prose-block-space: calc(1.5rem * var(--prose-space-scale));
+    --prose-list-indent: calc(1.25rem * var(--prose-space-scale));
+    --prose-list-item-space: calc(0.25rem * var(--prose-space-scale));
+    --prose-frame-padding: calc(1rem * var(--prose-space-scale));
+    --prose-frame-padding-sm-block: calc(0.5rem * var(--prose-space-scale));
+    --prose-frame-padding-sm-inline: calc(0.75rem * var(--prose-space-scale));
+    --prose-inline-code-size: calc(0.875rem * var(--prose-scale));
+    --prose-code-size: calc(0.875rem * var(--prose-scale));
+    --prose-code-label-size: calc(0.75rem * var(--prose-scale));
+    --prose-quote-cite-size: calc(0.8125rem * var(--prose-scale));
+    --prose-details-summary-size: calc(1rem * var(--prose-scale));
+    --prose-details-marker-size: calc(0.75rem * var(--prose-scale));
+    --prose-details-summary-padding-block: calc(10px * var(--prose-space-scale));
+    --prose-details-summary-padding-inline: calc(12px * var(--prose-space-scale));
+    --prose-details-content-padding-block: calc(0.75rem * var(--prose-space-scale));
+    --prose-details-content-padding-inline: calc(1rem * var(--prose-space-scale));
+    --prose-figure-caption-size: calc(0.8125rem * var(--prose-scale));
+
     position: relative;
     font-family: var(--font-serif);
-    font-size: var(--text-base);
-    line-height: 1.65;
+    font-size: var(--prose-font-size);
+    line-height: var(--prose-line-height);
     color: var(--color-text);
 
+    & h1,
+    & h2,
+    & h3,
+    & h4,
+    & h5,
+    & h6 {
+      font-family: var(--font-serif);
+      font-weight: 650;
+      color: var(--color-text);
+      text-wrap: balance;
+    }
+
+    & h1 {
+      font-size: var(--prose-h1-size);
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+      margin-top: 0;
+      margin-bottom: var(--prose-h1-margin-bottom);
+    }
+
+    & h2 {
+      font-size: var(--prose-h2-size);
+      line-height: 1.25;
+      letter-spacing: -0.008em;
+      margin-top: var(--prose-h2-margin-top);
+      margin-bottom: var(--prose-h2-margin-bottom);
+    }
+
+    & h3 {
+      font-size: var(--prose-h3-size);
+      line-height: 1.3;
+      margin-top: var(--prose-h3-margin-top);
+      margin-bottom: var(--prose-h3-margin-bottom);
+    }
+
+    & h4 {
+      font-size: var(--prose-h4-size);
+      line-height: 1.35;
+      margin-top: var(--prose-h4-margin-top);
+      margin-bottom: var(--prose-h4-margin-bottom);
+    }
+
+    & h5 {
+      font-size: var(--prose-h5-size);
+      line-height: 1.35;
+      margin-top: var(--prose-h4-margin-top);
+      margin-bottom: var(--prose-h4-margin-bottom);
+    }
+
+    & h6 {
+      font-size: var(--prose-h6-size);
+      line-height: 1.4;
+      margin-top: var(--prose-h4-margin-top);
+      margin-bottom: var(--prose-h4-margin-bottom);
+    }
+
     & p {
+      margin-bottom: var(--prose-block-space-compact);
       text-wrap: pretty;
+    }
+
+    & ul,
+    & ol {
+      margin-bottom: var(--prose-block-space-compact);
+      padding-left: var(--prose-list-indent);
+    }
+
+    & li {
+      margin-bottom: var(--prose-list-item-space);
     }
 
     /* ─── Headings ─── */
@@ -96,15 +199,15 @@
       background-color: var(--color-bg-muted);
       border: 1px solid var(--color-border-subtle);
       border-radius: var(--radius-md);
-      padding: 1rem;
+      padding: var(--prose-frame-padding);
       overflow-x: auto;
-      margin-block: 1.5rem;
+      margin-block: var(--prose-block-space);
       tab-size: 4;
     }
 
     & pre code {
       font-family: var(--font-mono);
-      font-size: var(--text-sm);
+      font-size: var(--prose-code-size);
       line-height: 1.5;
       background: none;
       border: none;
@@ -115,7 +218,7 @@
     /* Inline code */
     & :not(pre) > code {
       font-family: var(--font-mono);
-      font-size: var(--text-sm);
+      font-size: var(--prose-inline-code-size);
       background-color: var(--color-bg-muted);
       border: 1px solid var(--color-border-subtle);
       border-radius: var(--radius-sm);
@@ -129,8 +232,9 @@
       top: 0.5rem;
       right: 0.75rem;
       font-family: var(--font-mono);
-      font-size: var(--text-2xs);
+      font-size: var(--prose-code-label-size);
       text-transform: uppercase;
+      letter-spacing: 0.05em;
       color: var(--color-text-subtle);
       pointer-events: none;
     }
@@ -141,12 +245,12 @@
       top: 0.5rem;
       right: 0.75rem;
       font-family: var(--font-mono);
-      font-size: var(--text-2xs);
+      font-size: var(--prose-code-label-size);
       color: var(--color-text-subtle);
       background: none;
       border: none;
       cursor: pointer;
-      padding: 0.25rem;
+      padding: calc(0.25rem * var(--prose-space-scale));
       opacity: 0;
       transition: opacity var(--transition-duration-fast) var(--ease-out);
 
@@ -172,7 +276,7 @@
     & .table-scroll {
       position: relative;
       overflow-x: auto;
-      margin-block: 1.5rem;
+      margin-block: var(--prose-block-space);
 
       /* Right-edge fade hint for overflowing tables */
       &::after {
@@ -200,7 +304,7 @@
     & table {
       width: 100%;
       border-collapse: collapse;
-      margin-block: 1.5rem;
+      margin-block: var(--prose-block-space);
     }
 
     /* Table inside scroll wrapper should not add its own margin */
@@ -214,18 +318,18 @@
 
     & th {
       font-family: var(--font-mono);
-      font-size: var(--text-3xs);
+      font-size: calc(0.6875rem * var(--prose-scale));
       font-weight: 600;
-      letter-spacing: 1px;
+      letter-spacing: 0.05em;
       text-align: left;
-      padding: 0.5rem 0.75rem;
+      padding: var(--prose-frame-padding-sm-block) var(--prose-frame-padding-sm-inline);
       border-bottom: 2px solid var(--color-border);
     }
 
     & td {
       font-family: var(--font-serif);
-      font-size: var(--text-base);
-      padding: 0.5rem 0.75rem;
+      font-size: var(--prose-font-size);
+      padding: var(--prose-frame-padding-sm-block) var(--prose-frame-padding-sm-inline);
       border-bottom: 1px solid var(--color-border-subtle);
     }
 
@@ -237,11 +341,11 @@
     & blockquote {
       border-left: 3px solid var(--color-border);
       background: none;
-      padding: 0 0 0 1rem;
-      margin-block: 1.5rem;
+      padding: 0 0 0 calc(1rem * var(--prose-space-scale));
+      margin-block: var(--prose-block-space);
       margin-inline: 0;
       font-family: var(--font-serif);
-      font-size: var(--text-base);
+      font-size: var(--prose-font-size);
       color: var(--color-text-muted);
       font-style: normal;
       border-radius: 0;
@@ -251,9 +355,9 @@
     & blockquote footer {
       display: block;
       font-family: var(--font-mono);
-      font-size: var(--text-xs);
+      font-size: var(--prose-quote-cite-size);
       color: var(--color-text-subtle);
-      margin-top: 0.5rem;
+      margin-top: calc(0.5rem * var(--prose-space-scale));
     }
 
     /* Nested blockquotes */
@@ -264,7 +368,7 @@
 
     /* ─── Details / Summary ─── */
     & details {
-      margin-block: 1.5rem;
+      margin-block: var(--prose-block-space);
     }
 
     & details summary {
@@ -272,11 +376,11 @@
       align-items: center;
       gap: 0.5rem;
       font-family: var(--font-serif);
-      font-size: var(--text-base);
+      font-size: var(--prose-details-summary-size);
       font-weight: 600;
       color: var(--color-text);
       cursor: pointer;
-      padding: 10px 12px;
+      padding: var(--prose-details-summary-padding-block) var(--prose-details-summary-padding-inline);
       border-bottom: 1px solid var(--color-border-subtle);
       list-style: none;
 
@@ -288,7 +392,7 @@
       &::before {
         content: "\25B6"; /* ▶ */
         font-family: var(--font-mono);
-        font-size: var(--text-2xs);
+        font-size: var(--prose-details-marker-size);
         color: var(--color-text-subtle);
         display: inline-block;
         transition: transform var(--transition-duration-normal) var(--ease-out);
@@ -319,17 +423,17 @@
         border-left: none;
         border-right: none;
         margin-inline: -1px; /* compensate for parent border */
-        padding-inline: calc(12px + 1px);
+        padding-inline: calc(var(--prose-details-summary-padding-inline) + 1px);
       }
 
       & > :not(summary) {
-        padding: 0.75rem 1rem;
+        padding: var(--prose-details-content-padding-block) var(--prose-details-content-padding-inline);
       }
     }
 
     /* ─── Images / Figures ─── */
     & figure {
-      margin-block: 1.5rem;
+      margin-block: var(--prose-block-space);
       margin-inline: auto;
       border: 1px solid var(--color-border-subtle);
       border-radius: var(--radius-md);
@@ -346,10 +450,10 @@
 
     & figcaption {
       font-family: var(--font-mono);
-      font-size: var(--text-xs);
+      font-size: var(--prose-figure-caption-size);
       color: var(--color-text-muted);
       text-align: left;
-      padding: 0.5rem 0.75rem;
+      padding: var(--prose-frame-padding-sm-block) var(--prose-frame-padding-sm-inline);
     }
 
     /* Standalone images (not in figure) */
@@ -357,7 +461,7 @@
       max-width: 100%;
       height: auto;
       display: block;
-      margin-block: 1.5rem;
+      margin-block: var(--prose-block-space);
       margin-inline: auto;
     }
   }

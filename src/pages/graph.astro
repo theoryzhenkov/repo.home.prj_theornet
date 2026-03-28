@@ -10,88 +10,271 @@ const { graph, pages } = await buildRelationsGraph();
 const graphData = buildGraphData(graph, pages);
 
 const edgeTypes = Object.entries(EDGE_STYLES) as [EdgeType, typeof EDGE_STYLES[EdgeType]][];
+const searchOptions = [...graphData.nodes].sort((a, b) => a.title.localeCompare(b.title));
+
+const legendItems = edgeTypes.map(([type, style]) => {
+  const [name] = style.label.split(' — ');
+  return {
+    type,
+    style,
+    name,
+  };
+});
 ---
 
 <!DOCTYPE html>
 <html lang="en">
   <Head title="Graph" description="Interactive relations graph of all pages" />
 
-  <body>
+  <body class="has-site-header">
     <Header />
 
-    <div class="graph-container" id="graph-container">
-      <!-- Legend + filter panel -->
-      <div class="graph-panel" id="graph-panel">
-        <button class="panel-toggle" id="panel-toggle" aria-label="Toggle legend">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-        <div class="panel-body" id="panel-body">
-          <h2 class="panel-title">Relations</h2>
-          <div class="legend-list">
-            {edgeTypes.map(([type, style]) => (
-              <label class="legend-item" data-type={type}>
-                <input type="checkbox" checked data-edge-type={type} />
-                <svg width="24" height="12" class="legend-line">
-                  <line
-                    x1="0" y1="6" x2="24" y2="6"
-                    stroke={style.color}
-                    stroke-width={Math.max(style.width, 1.5)}
-                    stroke-dasharray={style.dasharray || 'none'}
-                  />
-                  {style.directed && (
-                    <polygon points="20,2 24,6 20,10" fill={style.color} />
-                  )}
-                </svg>
-                <span class="legend-label">{style.label}</span>
-              </label>
-            ))}
+    <main class="graph-page">
+      <article class="graph-workbench">
+        <section class="graph-stage-shell">
+          <div class="graph-toolbar-rail">
+            <div class="graph-toolbar ui-tool-dock">
+              <details class="graph-flyout" id="graph-focus-flyout">
+                <summary class="graph-launcher ui-tool-control">focus</summary>
+                <div class="graph-panel graph-panel-focus ui-sheet">
+                  <form class="graph-search" id="graph-search-form" role="search">
+                    <input
+                      class="ui-field"
+                      id="graph-focus-input"
+                      list="graph-focus-options"
+                      type="search"
+                      autocomplete="off"
+                      spellcheck="false"
+                      placeholder="Find page…"
+                      aria-label="Focus graph on a page"
+                    />
+                    <button type="submit" class="graph-panel-action ui-tool-control">go</button>
+                  </form>
+                  <datalist id="graph-focus-options">
+                    {searchOptions.map((node) => (
+                      <option value={node.title} label={`/${node.id}/`} />
+                    ))}
+                  </datalist>
+                </div>
+              </details>
+
+              <details class="graph-flyout" id="graph-relations-flyout">
+                <summary class="graph-launcher ui-tool-control">relations</summary>
+                <div class="graph-panel graph-panel-relations ui-sheet">
+                  <div class="graph-filters ui-option-list" aria-label="Visible relations">
+                    {legendItems.map((item) => (
+                      <button
+                        type="button"
+                        class="legend-chip ui-option-row"
+                        data-edge-toggle
+                        data-edge-type={item.type}
+                        aria-pressed="true"
+                      >
+                        <span class="legend-chip-swatch" aria-hidden="true">
+                        <svg width="20" height="10" class="legend-line" viewBox="0 0 20 10">
+                          <line
+                            x1="1" y1="5" x2="19" y2="5"
+                            style={`stroke: ${item.style.color};`}
+                            stroke-width={Math.max(item.style.width, 1)}
+                            stroke-linecap="round"
+                          />
+                          </svg>
+                        </span>
+                        <span class="legend-chip-name">{item.name}</span>
+                        <span class="legend-chip-state" aria-hidden="true">on</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </details>
+
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
+
+          <div class="graph-stage">
+            <div class="graph-container" id="graph-container"></div>
+          </div>
+        </section>
+      </article>
+    </main>
 
     <script type="application/json" id="graph-data" set:html={JSON.stringify(graphData)} />
 
     <script>
+      import '@/scripts/popups/index';
       import { createGraph } from '@/scripts/graph/renderer';
       import { EDGE_STYLES } from '@/scripts/graph/styles';
       import type { EdgeType } from '@/lib/graph-data';
+
+      function slugToHref(slug) {
+        return slug === 'index' ? '/' : `/${slug}/`;
+      }
 
       function init() {
         const container = document.getElementById('graph-container')!;
         const dataEl = document.getElementById('graph-data')!;
         const data = JSON.parse(dataEl.textContent!);
+        const params = new URLSearchParams(window.location.search);
+        const focusSlug = params.get('focus') || undefined;
+        const allTypes = Object.keys(EDGE_STYLES) as EdgeType[];
+        let activeTypes = new Set(allTypes);
 
-        const allTypes = new Set(Object.keys(EDGE_STYLES) as EdgeType[]);
+        const focusFlyout = document.getElementById('graph-focus-flyout') as HTMLDetailsElement | null;
+        const relationsFlyout = document.getElementById('graph-relations-flyout') as HTMLDetailsElement | null;
+        const toggleButtons = [...document.querySelectorAll<HTMLButtonElement>('[data-edge-toggle]')];
+        const searchForm = document.getElementById('graph-search-form') as HTMLFormElement | null;
+        const focusInput = document.getElementById('graph-focus-input') as HTMLInputElement | null;
+        const flyouts = [focusFlyout, relationsFlyout].filter(Boolean) as HTMLDetailsElement[];
+        const nodes = data.nodes as { id: string; title: string }[];
+        const nodesById = new Map(nodes.map((node) => [node.id, node]));
+        const nodesByTitle = new Map(nodes.map((node) => [node.title.toLowerCase(), node]));
 
         const instance = createGraph(container, data, {
-          visibleTypes: allTypes,
+          visibleTypes: activeTypes,
           zoomable: true,
           draggable: true,
+          highlightNode: focusSlug,
+          onFocusChange(nodeId) {
+            syncFocusUi(nodeId, { updateInput: true, updateUrl: true });
+          },
         });
 
-        // Filter toggles
-        const checkboxes = document.querySelectorAll<HTMLInputElement>('[data-edge-type]');
-        checkboxes.forEach(cb => {
-          cb.addEventListener('change', () => {
-            const active = new Set<EdgeType>();
-            checkboxes.forEach(c => {
-              if (c.checked) active.add(c.dataset.edgeType as EdgeType);
+        function syncFilterUi() {
+          toggleButtons.forEach((button) => {
+            const type = button.dataset.edgeType as EdgeType;
+            const active = activeTypes.has(type);
+            button.setAttribute('aria-pressed', String(active));
+            button.classList.toggle('is-inactive', !active);
+            const state = button.querySelector<HTMLElement>('.legend-chip-state');
+            if (state) {
+              state.textContent = active ? 'on' : 'off';
+            }
+          });
+        }
+
+        function updateFocusUrl(nodeId) {
+          const next = new URL(window.location.href);
+          if (nodeId) {
+            next.searchParams.set('focus', nodeId);
+          } else {
+            next.searchParams.delete('focus');
+          }
+
+          const query = next.searchParams.toString();
+          const href = query ? `${next.pathname}?${query}` : next.pathname;
+          window.history.replaceState({}, '', href);
+        }
+
+        function syncFocusUi(nodeId, options = {}) {
+          const { updateInput = true, updateUrl = false } = options;
+          const focusedNode = nodeId ? nodesById.get(nodeId) : undefined;
+
+          if (focusInput && updateInput) {
+            focusInput.value = '';
+            focusInput.placeholder = focusedNode ? focusedNode.title : 'Find page…';
+          }
+
+          if (updateUrl) {
+            updateFocusUrl(focusedNode?.id ?? null);
+          }
+        }
+
+        function findNode(query) {
+          const normalized = query.trim().toLowerCase();
+          if (!normalized) return null;
+
+          const exactById = nodesById.get(normalized);
+          if (exactById) return exactById;
+
+          const exactByTitle = nodesByTitle.get(normalized);
+          if (exactByTitle) return exactByTitle;
+
+          return nodes.find((node) => {
+            const title = node.title.toLowerCase();
+            return title.startsWith(normalized) || node.id.startsWith(normalized) || title.includes(normalized);
+          }) ?? null;
+        }
+
+        flyouts.forEach((flyout) => {
+          flyout.addEventListener('toggle', () => {
+            if (!flyout.open) return;
+
+            flyouts.forEach((other) => {
+              if (other !== flyout) {
+                other.open = false;
+              }
             });
-            instance.setVisibleTypes(active);
+
+            if (flyout === focusFlyout) {
+              window.setTimeout(() => focusInput?.focus(), 0);
+            }
           });
         });
 
-        // Panel toggle
-        const panel = document.getElementById('graph-panel')!;
-        const toggleBtn = document.getElementById('panel-toggle')!;
-        toggleBtn.addEventListener('click', () => {
-          panel.classList.toggle('collapsed');
+        document.addEventListener('click', (event) => {
+          const target = event.target as Node | null;
+          if (!target) return;
+
+          flyouts.forEach((flyout) => {
+            if (flyout.open && !flyout.contains(target)) {
+              flyout.open = false;
+            }
+          });
         });
 
-        // Resize handling
+        toggleButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            const type = button.dataset.edgeType as EdgeType;
+            if (activeTypes.has(type)) {
+              activeTypes.delete(type);
+            } else {
+              activeTypes.add(type);
+            }
+
+            syncFilterUi();
+            instance.setVisibleTypes(new Set(activeTypes));
+          });
+        });
+
+        searchForm?.addEventListener('submit', (event) => {
+          event.preventDefault();
+          if (!focusInput) return;
+
+          const query = focusInput.value.trim();
+          if (!query) {
+            instance.clearFocus();
+            focusFlyout && (focusFlyout.open = false);
+            return;
+          }
+
+          const match = findNode(query);
+          if (!match) {
+            focusInput.setCustomValidity('Page not found');
+            focusInput.reportValidity();
+            return;
+          }
+
+          focusInput.setCustomValidity('');
+          instance.focusNode(match.id);
+          if (focusFlyout) {
+            focusFlyout.open = false;
+          }
+        });
+
+        focusInput?.addEventListener('input', () => {
+          focusInput.setCustomValidity('');
+        });
+
+        focusInput?.addEventListener('change', () => {
+          searchForm?.requestSubmit();
+        });
+
+        syncFilterUi();
+        if (focusSlug && nodesById.has(focusSlug)) {
+          syncFocusUi(focusSlug, { updateInput: true, updateUrl: false });
+          instance.focusNode(focusSlug);
+        }
+
         window.addEventListener('resize', () => instance.resize());
       }
 
@@ -105,102 +288,200 @@ const edgeTypes = Object.entries(EDGE_STYLES) as [EdgeType, typeof EDGE_STYLES[E
 <style>
   body {
     margin: 0;
+    background-color: var(--color-bg);
+  }
+
+  .graph-page {
+    margin: 0;
+  }
+
+  .graph-workbench {
+    position: relative;
+    margin: 0;
+  }
+
+  .graph-stage-shell {
+    position: relative;
+    min-height: calc(100vh - var(--height-header));
+    background:
+      radial-gradient(circle at top, color-mix(in oklch, var(--color-highlight-subtle) 26%, white) 0%, transparent 46%),
+      linear-gradient(to bottom, color-mix(in oklch, var(--color-bg) 94%, white), color-mix(in oklch, var(--color-bg-subtle) 97%, white));
     overflow: hidden;
+  }
+
+  :root[data-theme='dark'] .graph-stage-shell {
+    background:
+      radial-gradient(circle at top, color-mix(in oklch, var(--color-highlight-subtle) 18%, transparent) 0%, transparent 42%),
+      linear-gradient(to bottom, color-mix(in oklch, var(--color-bg) 96%, black), color-mix(in oklch, var(--color-bg-subtle) 94%, black));
+  }
+
+  .graph-stage {
+    position: relative;
+    min-height: calc(100vh - var(--height-header));
   }
 
   .graph-container {
-    position: relative;
-    width: 100vw;
-    height: calc(100vh - var(--height-header));
-    overflow: hidden;
-  }
-
-  /* ── Legend panel ── */
-  .graph-panel {
     position: absolute;
-    top: theme(spacing.3);
-    left: theme(spacing.3);
-    z-index: 10;
-    display: flex;
-    gap: 0;
-    transition: transform var(--transition-duration-medium) var(--ease-out);
+    inset: 0;
   }
 
-  .graph-panel.collapsed .panel-body {
+  .graph-toolbar-rail {
+    position: absolute;
+    top: 0.9rem;
+    left: 50%;
+    z-index: 5;
+    width: min(34rem, calc(100vw - 1.6rem));
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .graph-toolbar {
+    pointer-events: auto;
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.42rem;
+    width: 100%;
+  }
+
+  .graph-flyout {
+    position: relative;
+  }
+
+  .graph-flyout summary {
+    list-style: none;
+  }
+
+  .graph-flyout summary::-webkit-details-marker {
     display: none;
   }
 
-  .graph-panel.collapsed .panel-toggle svg {
-    transform: rotate(180deg);
+  .graph-launcher,
+  .graph-panel-action {
+    position: relative;
+    z-index: 5;
   }
 
-  .panel-toggle {
-    align-self: flex-start;
+  .graph-flyout[open] > .graph-launcher {
+    color: var(--color-text);
+    background-color: color-mix(in oklch, var(--color-bg) 100%, white);
+    border-color: color-mix(in oklch, var(--color-border) 92%, white);
+  }
+
+  .graph-panel {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    left: 0;
+    min-width: 14rem;
+    padding: 0.4rem;
+  }
+
+  .graph-panel-relations {
+    min-width: 18rem;
+  }
+
+  .graph-search {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 28px;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-left: none;
-    cursor: pointer;
-    color: var(--color-text-muted);
+    gap: 0.45rem;
   }
 
-  .panel-toggle:hover {
-    color: var(--color-text);
+  .graph-search .ui-field {
+    min-width: 12rem;
   }
 
-  .panel-toggle svg {
-    transition: transform var(--transition-duration-medium) var(--ease-out);
+  .graph-filters {
+    min-width: 14rem;
   }
 
-  .panel-body {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    padding: theme(spacing.3);
-    max-height: calc(100vh - var(--height-header) - theme(spacing.8));
-    overflow-y: auto;
-    min-width: 200px;
-  }
-
-  .panel-title {
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    margin: 0 0 theme(spacing.2);
-  }
-
-  .legend-list {
-    display: flex;
-    flex-direction: column;
-    gap: theme(spacing.1);
-  }
-
-  .legend-item {
-    display: flex;
+  .legend-chip {
+    justify-content: space-between;
     align-items: center;
-    gap: theme(spacing.2);
-    color: var(--color-text-muted);
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .legend-item:hover {
+    gap: 0.65rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    line-height: 1.35;
+    min-height: 31px;
+    padding: 0.34rem 0.5rem;
     color: var(--color-text);
+    background-color: transparent;
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-border-subtle) 82%, white);
   }
 
-  .legend-item input[type="checkbox"] {
-    margin: 0;
-    accent-color: var(--color-accent);
+  .legend-chip.is-inactive {
+    color: var(--color-text-muted);
+    background-color: transparent;
+  }
+
+  .legend-chip[aria-pressed='true'] {
+    background-color: color-mix(in oklch, var(--color-bg-subtle) 42%, white);
+    box-shadow:
+      inset 2px 0 0 var(--color-accent),
+      inset 0 0 0 1px color-mix(in oklch, var(--color-border) 82%, white);
+  }
+
+  .legend-chip[aria-pressed='false'] {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-border-subtle) 78%, white);
+  }
+
+  .legend-chip-swatch {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
   }
 
   .legend-line {
     flex-shrink: 0;
   }
 
-  .legend-label {
-    white-space: nowrap;
+  .legend-chip[aria-pressed='false'] .legend-line {
+    opacity: 0.42;
+  }
+
+  .legend-chip-name {
+    flex: 1;
+    color: var(--color-text);
+  }
+
+  .legend-chip-state {
+    flex-shrink: 0;
+    min-width: 2rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-3xs);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-align: right;
+    color: var(--color-text-subtle);
+  }
+
+  .legend-chip[aria-pressed='true'] .legend-chip-state {
+    color: var(--color-accent);
+  }
+
+  .legend-chip[aria-pressed='false'] .legend-chip-state {
+    color: var(--color-text-subtle);
+  }
+
+  @media (width <= 768px) {
+    .graph-toolbar-rail {
+      top: 0.7rem;
+      width: calc(100vw - 1.4rem);
+    }
+
+    .graph-panel-relations {
+      min-width: min(18rem, calc(100vw - 1.8rem));
+    }
+
+    .graph-panel-focus {
+      min-width: min(16rem, calc(100vw - 1.8rem));
+    }
+
+    .graph-toolbar {
+      grid-template-columns: auto auto;
+    }
+
   }
 </style>

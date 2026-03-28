@@ -1,30 +1,80 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 200 900;
+  font-stretch: normal;
+  font-display: swap;
+  src: url('/fonts/source-serif-4/SourceSerif4Variable-Roman.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: italic;
+  font-weight: 200 900;
+  font-stretch: normal;
+  font-display: swap;
+  src: url('/fonts/source-serif-4/SourceSerif4Variable-Italic.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/commit-mono/CommitMono-400.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/commit-mono/CommitMono-500.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/commit-mono/CommitMono-600.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/commit-mono/CommitMono-700.otf') format('opentype');
+}
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 @theme {
   /* ─── Colors: Light Theme ─── */
-  --color-bg: #EFECE6;
-  --color-bg-subtle: #E6E2DB;
-  --color-bg-muted: #DCD8D0;
+  --color-bg: #F4F4F2;
+  --color-bg-subtle: #ECECE8;
+  --color-bg-muted: #E2E2DC;
 
-  --color-text: #22211E;
-  --color-text-muted: #555249;
-  --color-text-subtle: #8A857C;
+  --color-text: #1F1F1C;
+  --color-text-muted: #4E4E49;
+  --color-text-subtle: #787871;
 
-  --color-border: #C7C1B7;
-  --color-border-subtle: #D5D0C7;
+  --color-border: #CFCFC7;
+  --color-border-subtle: #DDDDD6;
 
-  --color-accent: #2B5F5A;
-  --color-accent-hover: color-mix(in oklch, #2B5F5A 80%, black);
+  --color-accent: #3A4E68;
+  --color-accent-hover: color-mix(in oklch, #3A4E68 80%, black);
 
-  --color-accent-muted: #3D7A74;
+  --color-accent-muted: #556B84;
 
-  --color-link: #2B5F5A;
-  --color-link-hover: color-mix(in oklch, #2B5F5A 80%, black);
+  --color-link: #3A4E68;
+  --color-link-hover: color-mix(in oklch, #3A4E68 80%, black);
 
-  --color-highlight: #D9E4D9;
-  --color-highlight-subtle: #E8EDE5;
+  --color-highlight: #E1E7EF;
+  --color-highlight-subtle: #EAEEF3;
 
   --color-success: #4D7A4D;
   --color-warning: #B38A2D;
@@ -35,21 +85,27 @@
   --color-status-stable: #4D7A4D;
   --color-status-evergreen: #2B6B6B;
 
-  --color-separator: #C7C1B7;
+  --color-separator: #CFCFC7;
 
   /* ─── Content Type Tints ─── */
-  --color-type-article: #E8E4DD;
-  --color-type-project: #E2E6E5;
-  --color-type-note: #E8E5DE;
-  --color-type-interactive: #E3E3E8;
+  --color-type-article: #EAEAE7;
+  --color-type-project: #E5E8E6;
+  --color-type-note: #EBEBE6;
+  --color-type-interactive: #E4E6EB;
+
+  /* ─── Graph Relation Colors ─── */
+  --color-rel-hierarchy: #46637D;
+  --color-rel-sequence: #5E7850;
+  --color-rel-type: #7A5567;
+  --color-rel-reference: #8A7458;
 
   /* ─── Font Stacks ─── */
-  --font-serif: 'Literata', Georgia, serif;
-  --font-mono: 'Commit Mono', Consolas, monospace;
+  --font-serif: 'Source Serif 4', Georgia, serif;
+  --font-mono: 'Commit Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 
   /* ─── Font Sizes (non-heading) ─── */
   --text-base: 1rem;
-  --text-base--line-height: 1.65;
+  --text-base--line-height: 1.6;
   --text-sm: 0.875rem;
   --text-sm--line-height: 1.5;
   --text-xs: 0.8125rem;
@@ -78,7 +134,7 @@
 }
 
 :root {
-  color-scheme: light only;
+  color-scheme: light;
   --height-header: 44px;
   --header-gap: 1rem;
   --header-scroll-clearance: calc(var(--height-header) + var(--header-gap));
@@ -86,6 +142,53 @@
   --toc-top: calc(var(--header-offset) + var(--header-gap));
   --scroll-padding-top: var(--header-scroll-clearance);
   --color-overlay: rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #1A1918;
+  --color-bg-subtle: #242220;
+  --color-bg-muted: #2E2B28;
+
+  --color-text: #E0DDD6;
+  --color-text-muted: #A8A39A;
+  --color-text-subtle: #7A756C;
+
+  --color-border: #3D3A36;
+  --color-border-subtle: #33302D;
+
+  --color-accent: #6F88A8;
+  --color-accent-hover: #8FA3BC;
+  --color-accent-muted: #5E7694;
+
+  --color-link: #6F88A8;
+  --color-link-hover: #8FA3BC;
+
+  --color-highlight: #263B38;
+  --color-highlight-subtle: #1F2E2C;
+
+  --color-success: #6B9E6B;
+  --color-warning: #D4A843;
+  --color-evergreen: #4A9E9E;
+  --color-error: #C25A5A;
+
+  --color-status-draft: #D4A843;
+  --color-status-stable: #6B9E6B;
+  --color-status-evergreen: #4A9E9E;
+
+  --color-separator: #3D3A36;
+
+  --color-type-article: #242220;
+  --color-type-project: #202625;
+  --color-type-note: #252320;
+  --color-type-interactive: #202024;
+
+  --color-rel-hierarchy: #7A95A2;
+  --color-rel-sequence: #8FA27A;
+  --color-rel-type: #A27A8F;
+  --color-rel-reference: #7A756C;
+
+  --color-overlay: rgba(0, 0, 0, 0.5);
 }
 
 :root[data-header-visible='false'] {

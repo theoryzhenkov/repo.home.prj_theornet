@@ -63,7 +63,7 @@ Callouts are structurally important interruptions -- they break the prose flow t
 
 | Callout type | Left border color | Rationale |
 | --- | --- | --- |
-| `note`, `info` | `var(--color-accent)` (deep teal) | Informational, neutral-positive. Teal is the site's interactive/informational accent. |
+| `note`, `info` | `var(--color-accent)` (muted ink-blue) | Informational, neutral-positive. The accent color is the site's interactive/informational signal. |
 | `tip`, `hint`, `important` | `var(--color-status-stable)` (muted green) | Helpful, constructive. Green signals positive/actionable without urgency. |
 | `warning`, `caution`, `attention` | `var(--color-status-draft)` (warm amber) | Caution, attention needed. Amber is universally understood as a warning signal. |
 | `danger`, `error`, `bug` | `var(--color-error)` (warm red) | Danger, critical issue. Red is reserved for the highest severity. |
@@ -96,7 +96,7 @@ Code is a specimen pinned to the page -- a different medium than prose, requirin
 ### Language label
 
 - **Position.** Top-right corner of the code block, inside the border, as a floating label.
-- **Typography.** Monospace, `var(--text-2xs)` (0.75rem), `text-transform: uppercase`, `color: var(--color-text-subtle)`.
+- **Typography.** Monospace, `var(--text-2xs)` (0.75rem), `text-transform: uppercase`, restrained tracking (`~0.05em`), `color: var(--color-text-subtle)`.
 - **Background.** Same as code block background. No distinct badge background -- the label floats directly on the code surface.
 - **Visibility.** Only shown when Shiki provides a language identifier. If the language is not specified, no label appears.
 

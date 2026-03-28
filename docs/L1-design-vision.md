@@ -1,8 +1,8 @@
 ---
 scope: L1
 summary: "Aesthetic direction, visual language, and design rules for the site redesign"
-modified: 2026-03-20
-reviewed: 2026-03-20
+modified: 2026-03-24
+reviewed: 2026-03-24
 depends:
   - path: docs/L0-ui
 dependents:
@@ -36,13 +36,13 @@ Target aesthetic for home.theor.net — a content-first personal knowledge site 
 
 ### Palette philosophy
 
-Warm grey-paper base with intentional color coding as a quiet secondary layer. Deep teal accent for interactive elements. Content-type background tints and relation-type graph colors provide subliminal wayfinding. Maturity indicators are the loudest chromatic element. See `docs/L1-styles.md` for full token catalog and color coding strategy.
+Neutral grey-paper base with intentional color coding as a quiet secondary layer. A restrained ink-blue accent is reserved for interactive elements. Content-type background tints and relation-type graph colors provide subliminal wayfinding. Maturity indicators are the loudest chromatic element. See `docs/L1-styles.md` for full token catalog and color coding strategy.
 
 ### Dual theme
 
 Both light and dark themes, toggled manually. Each theme is carefully designed — dark is not an inversion of light. Textures and accents adapt per theme.
 
-- **Light theme**: off-white/warm grey backgrounds, dark text, subtle paper-like grain
+- **Light theme**: off-white/cool grey backgrounds, dark ink text, subtle paper-like grain
 - **Dark theme**: deep charcoal (not pure black), warm light text, adapted grain/texture
 
 ### Semantic color (quiet signal)
@@ -51,7 +51,7 @@ Color reinforces shape/icon/typography as a secondary layer — never the sole d
 - **Content-type tints**: barely-there background hue shifts (3-5%) for article, project, note, interactive pages. Felt before consciously noticed.
 - **Relation-type colors**: muted hues (slate, olive, mauve, neutral) in the graph SVG only. In text, relations remain monochrome.
 - **Maturity indicators**: the loudest color on the site — these carry the highest semantic value (trustworthiness signal).
-- **Accent (teal)**: reserved for interactive affordances only — links, focus rings, footnote numbers. Never decorative.
+- **Accent (ink-blue)**: reserved for interactive affordances only — links, focus rings, footnote numbers. Never decorative.
 
 See `docs/L1-styles.md` "Color coding strategy" for the full policy.
 
@@ -78,11 +78,12 @@ Gwern-inspired: moderate mathematical scale (~1.25x ratio), dense but legible. B
 
 Rules that protect readability and visual coherence across the site:
 
-1. **Two fonts only.** Literata (serif) and Commit Mono (monospace). No third typeface. Every text element uses one of these two — the serif/mono contrast is the design's core texture. Using a second monospace (e.g. IBM Plex Mono) or adding a sans-serif fragments the identity.
+1. **Two fonts only.** Source Serif 4 (serif) and Commit Mono (monospace). No third typeface. Every text element uses one of these two — the serif/mono contrast is the design's core texture. Using a second monospace (e.g. IBM Plex Mono, JetBrains Mono) or adding a sans-serif fragments the identity.
 2. **11px absolute floor.** No text smaller than 0.6875rem (11px). Text below this is unreadable for many users and renders inconsistently. The 11px size is reserved for tertiary monospace chrome (nav, breadcrumbs, uppercase labels).
-3. **Body-adjacent text matches body.** List items, blockquote prose, and other content that reads as part of the prose flow must use the same size and line-height as body text (16px / 1.45–1.65). Subtle size drops (e.g. 15px for lists) create invisible inconsistency.
+3. **Body-adjacent text matches body.** List items, blockquote prose, and other content that reads as part of the prose flow must use the same size and line-height as body text (16px / ~1.6). Subtle size drops (e.g. 15px for lists) create invisible inconsistency.
 4. **Whole-pixel token values.** Font size tokens resolve to whole pixels at the default 16px root to avoid sub-pixel rendering variance.
 5. **Token-only sizing.** All non-heading font sizes use `--text-*` tokens from `L1-styles`. No raw values outside headings. See the font-size token invariant in `L1-styles`.
+6. **Small mono chrome stays quiet.** Uppercase monospace labels at `--text-3xs` use restrained tracking (`~0.04em–0.06em`), not exaggerated all-caps spacing. Commit Mono already has presence; over-tracking makes metadata louder than prose.
 
 ## Layout
 
@@ -188,6 +189,38 @@ Typed relations specified in page frontmatter:
 - **Prominent header block**: each entry shows date, type, status, tags, and typed relations clearly at the top
 - **Supplementary graph**: visible per-page relation graph, but not the primary navigation method
 - **Backlinks section**: at the bottom or in margin, showing all incoming references
+
+## Interaction language
+
+The site should feel editorial even when it exposes power features. Interaction chrome is real, but it should read like marginal apparatus, slips, and annotations around the text rather than product UI layered on top of it.
+
+### Hover and focus
+
+- **Hover is a reveal, not a button effect.** The default hover treatment is text-level: color shift, underline, or a subtle background wash. Avoid hover states that make ordinary links and controls look inflated or embossed.
+- **Focus state must name context.** When the interface enters a focused mode, show what is focused in plain language (title, path, relation, filter state). Do not rely on a glow or a selected pill alone to explain state.
+- **Counts are optional, not ambient.** Page counts, edge counts, and other instrumentation stay hidden unless they help complete the task at hand. The interface should surface meaning first, telemetry second.
+
+### Reveals, dropdowns, and flyouts
+
+- **Progressive disclosure stays lightweight.** Secondary controls should hide until requested, then appear as compact sheets or slips near their trigger.
+- **Use small framed surfaces, not floating gadgets.** Flyouts, dropdowns, and search reveals should feel like thin paper overlays: flat background, thin border, restrained radius, minimal shadow.
+- **Avoid pill clusters as the default control language.** Capsule toggles and SaaS-style chips fight the site's editorial tone. Prefer text launchers, list rows, underlined actions, or compact boxed controls.
+- **One revealed panel at a time.** When multiple tool panels exist in the same region, opening one should normally close the others.
+
+### Controls and lists
+
+- **Text-first controls.** If an action can be expressed as a text link or terse text button, start there. Reserve icon-only or button-heavy treatments for actions that need immediate recognition or repeated use.
+- **Selection controls should read structurally.** Filters and relation toggles should behave like a small list or control strip, not like tag pills. State should be legible through label, order, and subtle emphasis.
+- **Dropdown content is a sheet of options, not a menu toy.** Mobile nav, graph controls, and similar reveals should use stacked rows or aligned fields with clear hierarchy, generous hit targets, and minimal ornament.
+- **Power-feature controls need a visible locus.** Minimal chrome does not mean hidden chrome. When a page is a tool or canvas, its controls should gather into a clearly findable dock near the primary working area rather than dissolving into page margins.
+- **Wide screens still privilege the center.** If the main activity happens in the middle of the page, controls should stay visually associated with that center field. Do not strand critical controls at the far edges of a large viewport.
+- **Use one framing layer at a time.** A dock full of boxed controls does not also need its own heavy box. Avoid nested framing unless there is a real grouping problem to solve.
+- **Tool typography should read clearly first.** On canvases and power-feature pages, control labels should lean darker and clearer than ambient metadata. Low-contrast gray text is too easy to lose against the field.
+
+### Popups and previews
+
+- **Previews are reading aids.** Hover previews, footnote popups, and related overlays exist to preserve reading flow. They should inherit the site's typography and behave like compact excerpts, not mini apps.
+- **Overlay chrome stays subordinate to content.** Borders, shadows, and titlebars establish containment, but the body content remains the visual priority.
 
 ## Motion and interaction
 

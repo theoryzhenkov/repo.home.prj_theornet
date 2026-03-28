@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" aria-label="TheoR.net">
+  <path class="theor-mark__core" d="M 30.464844 0 L 46.464844 0 L 46.464844 -75.519531 L 71.679688 -75.519531 L 71.679688 -89.601562 L 5.121094 -89.601562 L 5.121094 -75.519531 L 30.464844 -75.519531 Z M 30.464844 0" transform="translate(24 104) scale(0.84)" />
+  <style>
+    .theor-mark__core { fill: #111111; }
+    @media (prefers-color-scheme: dark) {
+      .theor-mark__core { fill: #FFFFFF; }
+    }
+  </style>
+</svg>
