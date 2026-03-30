@@ -2,15 +2,6 @@
 
 import type { PopupConfig, PopupPosition, TilePosition, Rect } from './types';
 
-interface Rect {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-  width: number;
-  height: number;
-}
-
 type Placement = PopupPosition['placement'];
 
 function getViewport() {
@@ -21,12 +12,12 @@ function getViewport() {
 }
 
 function tryPlacement(
-  anchorRect: Rect,
+  anchorRect: DOMRect,
   popupWidth: number,
   popupHeight: number,
   placement: Placement,
   config: PopupConfig,
-  parentRect: Rect | null,
+  parentRect: DOMRect | null,
 ): PopupPosition | null {
   const vp = getViewport();
   const margin = config.viewportMargin;

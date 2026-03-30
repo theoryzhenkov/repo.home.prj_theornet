@@ -1,5 +1,6 @@
 // TOC scroll spy with read-state tracking
 // Manages data-state attribute on .toc-entry elements: "unread" | "active" | "read"
+export {};
 
 interface ActiveTimer {
   startTime: number;

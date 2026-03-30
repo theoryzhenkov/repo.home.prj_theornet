@@ -1,6 +1,6 @@
 /** 8-direction edge/corner resize for popups */
 
-import type { PopupInstance } from './types';
+import type { PopupInstance, ResizeEdge } from './types';
 import { POPUP_CONFIG } from './types';
 import { pinPopup, focusPopup } from './stack';
 

@@ -1,6 +1,7 @@
 // Footnote layout engine
 // Wide (>1024px): absolute-position .sidenote elements in the right margin of .prose
 // Narrow (<=1024px): clone sidenote content into the #footnotes footer list
+export {};
 
 const BREAKPOINT = 1024;
 const SIDENOTE_GAP = 8; // px between stacked sidenotes

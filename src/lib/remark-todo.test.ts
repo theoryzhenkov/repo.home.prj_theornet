@@ -18,8 +18,8 @@ function getChildren(tree: Root) {
 
 function run(text: string): Root {
   const tree = makeTree(text);
-  const plugin = remarkTodo();
-  plugin(tree, {} as never, () => {});
+  const transform = (remarkTodo as unknown as () => (tree: Root) => void)();
+  transform(tree);
   return tree;
 }
 
