@@ -11,7 +11,8 @@ import {
   setTiled,
 } from './render';
 import {
-  pushPopup, removePopup, findPopupByElement, findPopupById, getDepthOf, getTopPopup,
+  pushPopup, removePopup, findPopupByElement, findPopupById, findPopupByAnchor,
+  getDepthOf, getTopPopup,
   clearAll, focusPopup, getFocusedPopup, togglePin, pinPopup, wouldCycle,
   setOnRemove,
 } from './stack';
@@ -211,6 +212,13 @@ async function spawnPopup(anchor: HTMLAnchorElement, parentPopupEl: HTMLElement 
 
   const parentInstance = parentPopupEl ? findPopupByElement(parentPopupEl) : undefined;
   const href = target.hash ? `${target.path}${target.hash}` : target.path;
+
+  // Duplicate prevention: if a popup already exists for this anchor, focus it
+  const existing = findPopupByAnchor(anchor);
+  if (existing) {
+    focusPopup(existing.id);
+    return;
+  }
 
   // Cycle prevention: check ancestor chain for same href
   if (wouldCycle(href, parentInstance?.id ?? null)) return;

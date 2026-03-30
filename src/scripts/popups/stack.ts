@@ -169,6 +169,11 @@ export function findPopupById(id: string): PopupInstance | undefined {
   return popups.find((p) => p.id === id);
 }
 
+/** Find an existing popup spawned from a given anchor element */
+export function findPopupByAnchor(anchor: HTMLAnchorElement): PopupInstance | undefined {
+  return popups.find((p) => p.anchor === anchor);
+}
+
 /** Check if spawning a popup for this href would create a cycle in the ancestor chain */
 export function wouldCycle(href: string, parentId: string | null): boolean {
   let currentId = parentId;
