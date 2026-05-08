@@ -1,7 +1,7 @@
 ---
 scope: root
 summary: "Entry point for the home.theor.net project"
-modified: 2026-03-19
+modified: 2026-05-08
 reviewed: 2026-03-19
 dependents:
   - path: docs/L0-content
@@ -14,6 +14,30 @@ dependents:
 Theo Ryzhenkov's personal website. Static site built with Astro 5, served from Hetzner via Docker + nginx.
 
 Pages are MDX files interconnected through a relation system (`up/down`, `is/has`, `next/prev` for explicit relations; `ref/refi` for auto-extracted links). The site uses Pagefind for search and D3 for a graph visualization of page relations.
+
+## Setup
+
+Requires `nix` and `direnv`.
+
+```sh
+# Template post-generation creates .env and .envrc and runs direnv allow.
+# Re-enter the directory so direnv activates the flake devShell, then:
+just setup
+```
+
+`just setup` initializes local base-template tooling (age key + colocated jj repo when needed) and installs JavaScript dependencies with Bun.
+
+Common commands:
+
+```sh
+just dev        # local dev server on :4321
+just build      # build to dist/ and generate Pagefind index
+just preview    # preview dist/
+just test       # run Bun tests
+just docker-run # build & serve via Docker on :8080
+```
+
+Stack: Astro 5, MDX, Tailwind 4, D3, Pagefind, Bun, Nix, direnv, jj.
 
 ## Navigation
 
@@ -38,12 +62,8 @@ Pages are MDX files interconnected through a relation system (`up/down`, `is/has
 | [docs/L3-link-system](docs/L3-link-system.md) | L3 | Link styling, icons, hover previews, chain popups |
 | [docs/L3-remark-plugins](docs/L3-remark-plugins.md) | L3 | remarkTodo, remarkCallout pipeline |
 
-## Quick reference
+## Updating from upstream templates
 
 ```sh
-just dev        # local dev server on :4321
-just build      # build to dist/
-just docker-run # build & serve via Docker on :8080
+just template update
 ```
-
-Stack: Astro 5, MDX, Tailwind 4, D3, Pagefind, Bun.
