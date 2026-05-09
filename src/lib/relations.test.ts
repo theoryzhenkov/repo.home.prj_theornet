@@ -128,6 +128,54 @@ describe('buildGraphFromPages', () => {
     expect(graph.get('category')!.has.map(t => t.slug)).toContain('item');
   });
 
+  it('infers has_part from part_of', () => {
+    const { graph } = buildGraphFromPages([
+      makePage('chapter', { data: { title: 'Chapter', part_of: [{ page: 'book' }] } }),
+      makePage('book'),
+    ]);
+    expect(graph.get('book')!.has_part.map(t => t.slug)).toContain('chapter');
+  });
+
+  it('infers part_of from has_part', () => {
+    const { graph } = buildGraphFromPages([
+      makePage('book', { data: { title: 'Book', has_part: [{ page: 'chapter' }] } }),
+      makePage('chapter'),
+    ]);
+    expect(graph.get('chapter')!.part_of.map(t => t.slug)).toContain('book');
+  });
+
+  it('infers superclass_of from subclass_of', () => {
+    const { graph } = buildGraphFromPages([
+      makePage('child-class', { data: { title: 'Child Class', subclass_of: [{ page: 'parent-class' }] } }),
+      makePage('parent-class'),
+    ]);
+    expect(graph.get('parent-class')!.superclass_of.map(t => t.slug)).toContain('child-class');
+  });
+
+  it('infers subject_of from subject', () => {
+    const { graph } = buildGraphFromPages([
+      makePage('essay', { data: { title: 'Essay', subject: [{ page: 'topic' }] } }),
+      makePage('topic'),
+    ]);
+    expect(graph.get('topic')!.subject_of.map(t => t.slug)).toContain('essay');
+  });
+
+  it('infers creator_of from creator', () => {
+    const { graph } = buildGraphFromPages([
+      makePage('essay', { data: { title: 'Essay', creator: [{ page: 'author' }] } }),
+      makePage('author'),
+    ]);
+    expect(graph.get('author')!.creator_of.map(t => t.slug)).toContain('essay');
+  });
+
+  it('infers related symmetrically', () => {
+    const { graph } = buildGraphFromPages([
+      makePage('a', { data: { title: 'A', related: [{ page: 'b' }] } }),
+      makePage('b'),
+    ]);
+    expect(graph.get('b')!.related.map(t => t.slug)).toContain('a');
+  });
+
   it('infers prev from next', () => {
     const { graph } = buildGraphFromPages([
       makePage('a', { data: { title: 'A', next: 'b' } }),
@@ -183,7 +231,17 @@ describe('buildGraphFromPages', () => {
 // -- getBreadcrumbs --
 
 describe('getBreadcrumbs', () => {
-  it('returns linear chain from root to current', () => {
+  it('returns linear part_of chain from root to current', () => {
+    const { graph, pages } = buildGraphFromPages([
+      makePage('root'),
+      makePage('mid', { data: { title: 'Mid', part_of: [{ page: 'root' }] } }),
+      makePage('leaf', { data: { title: 'Leaf', part_of: [{ page: 'mid' }] } }),
+    ]);
+    const crumbs = getBreadcrumbs('leaf', graph, pages);
+    expect(crumbs.map(c => c.slug)).toEqual(['root', 'mid', 'leaf']);
+  });
+
+  it('falls back to up chain for legacy pages', () => {
     const { graph, pages } = buildGraphFromPages([
       makePage('root'),
       makePage('mid', { data: { title: 'Mid', up: [{ page: 'root' }] } }),
@@ -191,6 +249,22 @@ describe('getBreadcrumbs', () => {
     ]);
     const crumbs = getBreadcrumbs('leaf', graph, pages);
     expect(crumbs.map(c => c.slug)).toEqual(['root', 'mid', 'leaf']);
+  });
+
+  it('prefers part_of over up for breadcrumbs', () => {
+    const { graph, pages } = buildGraphFromPages([
+      makePage('route-parent'),
+      makePage('semantic-parent'),
+      makePage('leaf', {
+        data: {
+          title: 'Leaf',
+          up: [{ page: 'route-parent' }],
+          part_of: [{ page: 'semantic-parent' }],
+        },
+      }),
+    ]);
+    const crumbs = getBreadcrumbs('leaf', graph, pages);
+    expect(crumbs.map(c => c.slug)).toEqual(['semantic-parent', 'leaf']);
   });
 
   it('handles cycle without infinite loop', () => {

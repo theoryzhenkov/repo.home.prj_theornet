@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Graph visualization: data pipeline, D3 force renderer, page-level interaction model"
-modified: 2026-03-24
-reviewed: 2026-03-24
+modified: 2026-05-09
+reviewed: 2026-05-09
 depends:
   - path: docs/L1-relations
   - path: docs/L1-scripts
@@ -59,11 +59,11 @@ D3 force simulation + SVG rendering
 |-------|------|-------------|
 | `source` | `string` | Source page slug |
 | `target` | `string` | Target page slug |
-| `type` | `EdgeType` | One of `'up' | 'is' | 'next' | 'ref'` |
+| `type` | `EdgeType` | One of `'part_of' | 'is' | 'subclass_of' | 'subject' | 'creator' | 'related' | 'next' | 'ref'` |
 
 ### EdgeType
 
-Union: `'up' | 'is' | 'next' | 'ref'`. Maps directly to relation semantics defined in the relations system.
+Union: `'part_of' | 'is' | 'subclass_of' | 'subject' | 'creator' | 'related' | 'next' | 'ref'`. Maps directly to relation semantics defined in the relations system.
 
 ## Subgraph extraction
 
@@ -74,7 +74,7 @@ Union: `'up' | 'is' | 'next' | 'ref'`. Maps directly to relation semantics defin
 3. Runs BFS from `rootSlug` up to `opts.depth` hops, traversing edges bidirectionally.
 4. Returns nodes and edges where both endpoints are in the visited set.
 
-Default props in `RelationsGraph.astro`: all four edge types, depth 1.
+Default props in `RelationsGraph.astro`: all edge types, depth 1.
 
 ## Edge deduplication
 
@@ -86,7 +86,7 @@ Default props in `RelationsGraph.astro`: all four edge types, depth 1.
 
 | Force | Parameter | Value |
 |-------|-----------|-------|
-| `link` | distance | `up` 86, `is` 94, `next` 102, `ref` 114 |
+| `link` | distance | `part_of` 86, `is` 94, `subclass_of` 98, `next` 102, `related` 120, other semantic/reference edges 114 |
 | `charge` | strength | `-18` for isolated nodes; otherwise `-118 - min(connections, 12) * 5` |
 | `x` / `y` anchor | strength | `0.14` for isolated nodes, `0.065` for connected components |
 | `center` | position | `(0, 0)` |
@@ -120,7 +120,7 @@ The renderer appends an SVG to the container with `width` and `height` at `100%`
 - `<defs>`: arrow markers for directed edge types
 - `<g>` root group (receives zoom transform)
   - `<g class="graph-edges">`: `<line>` elements per visible edge
-  - `<g class="graph-edge-labels">`: short text labels (`up`, `is`, `next`, `ref`)
+  - `<g class="graph-edge-labels">`: short text labels (`part`, `is`, `sub`, `subj`, `by`, `rel`, `next`, `ref`)
   - `<g class="graph-nodes">`: `<g>` per node
     - `<a class="graph-node-link">`
       - `<circle>`
@@ -136,8 +136,12 @@ Per the current design direction, edge types use **color as the categorical enco
 
 | Type | Color token | Width | Directed | Label |
 |------|-------------|-------|----------|-------|
-| `up` | `--color-rel-hierarchy` | 1.45 | yes | `up` |
+| `part_of` | `--color-rel-hierarchy` | 1.45 | yes | `part` |
 | `is` | `--color-rel-type` | 1.3 | yes | `is` |
+| `subclass_of` | `--color-rel-type` | 1.2 | yes | `sub` |
+| `subject` | `--color-rel-reference` | 1.05 | yes | `subj` |
+| `creator` | `--color-rel-sequence` | 1.05 | yes | `by` |
+| `related` | `--color-text-subtle` | 0.9 | no | `rel` |
 | `next` | `--color-rel-sequence` | 1.15 | yes | `next` |
 | `ref` | `--color-rel-reference` | 0.95 | yes | `ref` |
 

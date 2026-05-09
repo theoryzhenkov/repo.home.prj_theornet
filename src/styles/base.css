@@ -32,7 +32,7 @@
     font-size: 1.875rem;
     line-height: 1.2;
     letter-spacing: -0.01em;
-    margin-bottom: 0.75rem;
+    margin-bottom: theme(spacing.3);
   }
 
   h2 {

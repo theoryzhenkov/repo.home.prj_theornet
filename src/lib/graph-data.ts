@@ -12,7 +12,7 @@ export interface GraphEdge {
   type: EdgeType;
 }
 
-export type EdgeType = 'up' | 'is' | 'next' | 'ref';
+export type EdgeType = 'part_of' | 'is' | 'subclass_of' | 'subject' | 'creator' | 'related' | 'next' | 'ref';
 
 export interface GraphData {
   nodes: GraphNode[];
@@ -38,19 +38,50 @@ export function buildGraphData(
     const connections =
       rel.up.length + rel.down.length +
       rel.is.length + rel.has.length +
+      rel.subclass_of.length + rel.superclass_of.length +
+      rel.part_of.length + rel.has_part.length +
+      rel.subject.length + rel.subject_of.length +
+      rel.creator.length + rel.creator_of.length +
+      rel.related.length +
       (rel.next ? 1 : 0) + (rel.prev ? 1 : 0) +
       rel.ref.length + rel.refi.length;
 
     nodes.push({ id: slug, title: info.title, connections });
 
-    // Directional: up (source is part of target)
-    for (const target of rel.up) {
-      edges.push({ source: slug, target: target.slug, type: 'up' });
+    // Directional: part_of (source is part of target). Legacy up edges are
+    // emitted as part_of only when no explicit part_of relation is present.
+    const partOfTargets = rel.part_of.length > 0 ? rel.part_of : rel.up;
+    for (const target of partOfTargets) {
+      edges.push({ source: slug, target: target.slug, type: 'part_of' });
     }
 
-    // Directional: is (source is a target)
+    // Directional: is (source is an instance of target)
     for (const target of rel.is) {
       edges.push({ source: slug, target: target.slug, type: 'is' });
+    }
+
+    // Directional: subclass_of (source is subclass of target)
+    for (const target of rel.subclass_of) {
+      edges.push({ source: slug, target: target.slug, type: 'subclass_of' });
+    }
+
+    // Directional: subject (source is about target)
+    for (const target of rel.subject) {
+      edges.push({ source: slug, target: target.slug, type: 'subject' });
+    }
+
+    // Directional: creator (source was created by target)
+    for (const target of rel.creator) {
+      edges.push({ source: slug, target: target.slug, type: 'creator' });
+    }
+
+    // Symmetric: related (deduplicate both declarations)
+    for (const target of rel.related) {
+      const key = [slug, target.slug].sort().join('::') + '::related';
+      if (!seen.has(key)) {
+        seen.add(key);
+        edges.push({ source: slug, target: target.slug, type: 'related' });
+      }
     }
 
     // Directional: next (deduplicate with prev)

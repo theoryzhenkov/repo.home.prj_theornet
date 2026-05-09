@@ -15,30 +15,31 @@ if (breadcrumbs.length <= 1) {
 }
 ---
 
-<nav class="breadcrumb" aria-label="Breadcrumb">
-  <ol class="breadcrumb-list">
+<nav class="breadcrumb metadata-relations" aria-label="Breadcrumb">
+  <span class="metadata-relation-row">
+    <span class="metadata-relation-label">breadcrumbs:</span>
+    <span class="metadata-relation-values breadcrumb-list">
     {breadcrumbs.map((page, index) => {
       const isLast = index === breadcrumbs.length - 1;
       const isHome = page.slug === 'index';
       const label = isHome ? 'Home' : page.title;
       
       return (
-        <li class="breadcrumb-item">
+        <span class="breadcrumb-item metadata-relation-item">
+          {index > 0 && <span class="breadcrumb-separator" aria-hidden="true">/</span>}
           {!isLast ? (
-            <>
-              <a href={slugToHref(page.slug)} class="breadcrumb-link">
-                {label}
-              </a>
-              <span class="breadcrumb-separator" aria-hidden="true">/</span>
-            </>
+            <a href={slugToHref(page.slug)} class="metadata-link breadcrumb-link">
+              {label}
+            </a>
           ) : (
             <span class="breadcrumb-current" aria-current="page">
               {label}
             </span>
           )}
-        </li>
+        </span>
       );
     })}
-  </ol>
+    </span>
+  </span>
 </nav>
 

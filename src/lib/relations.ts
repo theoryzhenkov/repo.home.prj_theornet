@@ -6,10 +6,21 @@ export interface RelationTarget {
 }
 
 export interface PageRelations {
+  /** Legacy route hierarchy. Prefer part_of for new content. */
   up: RelationTarget[];
+  /** Legacy inverse route hierarchy. Prefer has_part for new content. */
   down: RelationTarget[];
   is: RelationTarget[];
   has: RelationTarget[];
+  subclass_of: RelationTarget[];
+  superclass_of: RelationTarget[];
+  part_of: RelationTarget[];
+  has_part: RelationTarget[];
+  subject: RelationTarget[];
+  subject_of: RelationTarget[];
+  creator: RelationTarget[];
+  creator_of: RelationTarget[];
+  related: RelationTarget[];
   next?: string;
   prev?: string;
   ref: string[];
@@ -31,7 +42,18 @@ export interface RawRelationEntry {
 
 export interface RawRelations {
   up?: RawRelationEntry[];
+  down?: RawRelationEntry[];
   is?: RawRelationEntry[];
+  has?: RawRelationEntry[];
+  subclass_of?: RawRelationEntry[];
+  superclass_of?: RawRelationEntry[];
+  part_of?: RawRelationEntry[];
+  has_part?: RawRelationEntry[];
+  subject?: RawRelationEntry[];
+  subject_of?: RawRelationEntry[];
+  creator?: RawRelationEntry[];
+  creator_of?: RawRelationEntry[];
+  related?: RawRelationEntry[];
   next?: string;
   prev?: string;
   ref?: string[];
@@ -50,6 +72,11 @@ export function emptyRelations(): PageRelations {
   return {
     up: [], down: [],
     is: [], has: [],
+    subclass_of: [], superclass_of: [],
+    part_of: [], has_part: [],
+    subject: [], subject_of: [],
+    creator: [], creator_of: [],
+    related: [],
     ref: [], refi: [],
   };
 }
@@ -62,6 +89,19 @@ export function addUniqueTarget(arr: RelationTarget[], slug: string, label?: str
 
 export function addUnique(arr: string[], value: string): void {
   if (!arr.includes(value)) arr.push(value);
+}
+
+function addInverseTarget(
+  graph: RelationsGraph,
+  target: RelationTarget,
+  inverseKey: keyof Pick<PageRelations,
+    'down' | 'up' | 'has' | 'is' | 'superclass_of' | 'subclass_of' |
+    'has_part' | 'part_of' | 'subject_of' | 'subject' | 'creator_of' | 'creator' | 'related'
+  >,
+  sourceSlug: string,
+): void {
+  const targetRel = graph.get(target.slug);
+  if (targetRel) addUniqueTarget(targetRel[inverseKey], sourceSlug, target.label);
 }
 
 /**
@@ -103,12 +143,23 @@ export interface PageInput {
  * Pure function — no Astro imports, fully testable.
  *
  * Inference rules:
- * - A.up includes B   -> B.down includes A
- * - A.is includes B   -> B.has includes A
- * - A.next = B        -> B.prev = A
- * - A.prev = B        -> B.next = A
- * - Markdown link A->B -> A.ref includes B, B.refi includes A
- * - A.refi = B (explicit) -> B.ref includes A
+ * - A.up includes B             -> B.down includes A (legacy)
+ * - A.down includes B           -> B.up includes A (legacy)
+ * - A.is includes B             -> B.has includes A
+ * - A.has includes B            -> B.is includes A
+ * - A.subclass_of includes B    -> B.superclass_of includes A
+ * - A.superclass_of includes B  -> B.subclass_of includes A
+ * - A.part_of includes B        -> B.has_part includes A
+ * - A.has_part includes B       -> B.part_of includes A
+ * - A.subject includes B        -> B.subject_of includes A
+ * - A.subject_of includes B     -> B.subject includes A
+ * - A.creator includes B        -> B.creator_of includes A
+ * - A.creator_of includes B     -> B.creator includes A
+ * - A.related includes B        -> B.related includes A
+ * - A.next = B                  -> B.prev = A
+ * - A.prev = B                  -> B.next = A
+ * - Markdown link A->B          -> A.ref includes B, B.refi includes A
+ * - A.refi = B (explicit)       -> B.ref includes A
  */
 export function buildGraphFromPages(allPages: PageInput[]): {
   graph: RelationsGraph;
@@ -127,7 +178,18 @@ export function buildGraphFromPages(allPages: PageInput[]): {
 
     const rel = emptyRelations();
     rel.up = parseRelationList(data.up);
+    rel.down = parseRelationList(data.down);
     rel.is = parseRelationList(data.is);
+    rel.has = parseRelationList(data.has);
+    rel.subclass_of = parseRelationList(data.subclass_of);
+    rel.superclass_of = parseRelationList(data.superclass_of);
+    rel.part_of = parseRelationList(data.part_of);
+    rel.has_part = parseRelationList(data.has_part);
+    rel.subject = parseRelationList(data.subject);
+    rel.subject_of = parseRelationList(data.subject_of);
+    rel.creator = parseRelationList(data.creator);
+    rel.creator_of = parseRelationList(data.creator_of);
+    rel.related = parseRelationList(data.related);
     rel.next = data.next;
     rel.prev = data.prev;
 
@@ -154,15 +216,19 @@ export function buildGraphFromPages(allPages: PageInput[]): {
 
   // Second pass: infer bidirectional relations
   for (const [slug, rel] of graph) {
-    for (const target of rel.up) {
-      const targetRel = graph.get(target.slug);
-      if (targetRel) addUniqueTarget(targetRel.down, slug, target.label);
-    }
-
-    for (const target of rel.is) {
-      const targetRel = graph.get(target.slug);
-      if (targetRel) addUniqueTarget(targetRel.has, slug, target.label);
-    }
+    for (const target of rel.up) addInverseTarget(graph, target, 'down', slug);
+    for (const target of rel.down) addInverseTarget(graph, target, 'up', slug);
+    for (const target of rel.is) addInverseTarget(graph, target, 'has', slug);
+    for (const target of rel.has) addInverseTarget(graph, target, 'is', slug);
+    for (const target of rel.subclass_of) addInverseTarget(graph, target, 'superclass_of', slug);
+    for (const target of rel.superclass_of) addInverseTarget(graph, target, 'subclass_of', slug);
+    for (const target of rel.part_of) addInverseTarget(graph, target, 'has_part', slug);
+    for (const target of rel.has_part) addInverseTarget(graph, target, 'part_of', slug);
+    for (const target of rel.subject) addInverseTarget(graph, target, 'subject_of', slug);
+    for (const target of rel.subject_of) addInverseTarget(graph, target, 'subject', slug);
+    for (const target of rel.creator) addInverseTarget(graph, target, 'creator_of', slug);
+    for (const target of rel.creator_of) addInverseTarget(graph, target, 'creator', slug);
+    for (const target of rel.related) addInverseTarget(graph, target, 'related', slug);
 
     if (rel.next) {
       const nextRel = graph.get(rel.next);
@@ -189,7 +255,8 @@ export function buildGraphFromPages(allPages: PageInput[]): {
 }
 
 /**
- * Get the breadcrumb trail for a page by walking up the `up` chain.
+ * Get the breadcrumb trail for a page by walking the `part_of` chain first,
+ * falling back to legacy `up` for older pages.
  * Returns array from root to current page.
  */
 export function getBreadcrumbs(
@@ -209,7 +276,7 @@ export function getBreadcrumbs(
     const rel = graph.get(current);
     if (!rel) break;
 
-    current = rel.up[0]?.slug;
+    current = rel.part_of[0]?.slug ?? rel.up[0]?.slug;
   }
 
   return breadcrumbs;

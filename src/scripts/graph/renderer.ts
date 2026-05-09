@@ -301,9 +301,11 @@ export function createGraph(
     .force('link', d3.forceLink<SimNode, SimEdge>(simEdges)
       .id((node) => node.id)
       .distance((edge) => {
-        if (edge.type === 'up') return 86;
+        if (edge.type === 'part_of') return 86;
         if (edge.type === 'is') return 94;
+        if (edge.type === 'subclass_of') return 98;
         if (edge.type === 'next') return 102;
+        if (edge.type === 'related') return 120;
         return 114;
       }))
     .force('charge', d3.forceManyBody<SimNode>().strength((node) => {

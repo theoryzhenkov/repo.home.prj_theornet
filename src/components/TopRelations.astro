@@ -21,17 +21,44 @@ interface RelationRow {
 
 const rows: RelationRow[] = [];
 
-if (relations.up.length > 0) {
-  rows.push({ label: 'Up', targets: relations.up });
+if (relations.part_of.length > 0) {
+  rows.push({ label: 'Part of', targets: relations.part_of });
 }
-if (relations.down.length > 0) {
-  rows.push({ label: 'Down', targets: relations.down });
+if (relations.has_part.length > 0) {
+  rows.push({ label: 'Has part', targets: relations.has_part });
 }
 if (relations.is.length > 0) {
   rows.push({ label: 'Is', targets: relations.is });
 }
 if (relations.has.length > 0) {
   rows.push({ label: 'Has', targets: relations.has });
+}
+if (relations.subclass_of.length > 0) {
+  rows.push({ label: 'Subclass of', targets: relations.subclass_of });
+}
+if (relations.superclass_of.length > 0) {
+  rows.push({ label: 'Superclass of', targets: relations.superclass_of });
+}
+if (relations.subject.length > 0) {
+  rows.push({ label: 'Subject', targets: relations.subject });
+}
+if (relations.subject_of.length > 0) {
+  rows.push({ label: 'Subject of', targets: relations.subject_of });
+}
+if (relations.creator.length > 0) {
+  rows.push({ label: 'Creator', targets: relations.creator });
+}
+if (relations.creator_of.length > 0) {
+  rows.push({ label: 'Creator of', targets: relations.creator_of });
+}
+if (relations.related.length > 0) {
+  rows.push({ label: 'Related', targets: relations.related });
+}
+if (relations.up.length > 0) {
+  rows.push({ label: 'Up', targets: relations.up });
+}
+if (relations.down.length > 0) {
+  rows.push({ label: 'Down', targets: relations.down });
 }
 if (relations.prev) {
   rows.push({ label: 'Prev', targets: [{ slug: relations.prev }] });

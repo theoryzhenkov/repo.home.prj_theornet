@@ -1,8 +1,8 @@
 ---
 scope: L0
 summary: "Content model: MDX pages, relation graph, schema"
-modified: 2026-03-15
-reviewed: 2026-03-15
+modified: 2026-05-09
+reviewed: 2026-05-09
 depends:
   - path: README
 dependents:
@@ -18,20 +18,27 @@ All site content lives in `src/content/pages/` as `.mdx` files, loaded by Astro'
 
 Every MDX page has YAML frontmatter with required `title` and `created` fields, plus optional relation fields. The schema is defined with Zod in `src/content.config.ts` and uses `.passthrough()` to allow arbitrary extra fields.
 
+The website relation model is a practical subset of the Obsidian PKM ontology: routes and folders are browsing affordances, while frontmatter relations carry semantic structure. New content should prefer `part_of` / `has_part` for composition over legacy `up` / `down` hierarchy fields.
+
 ## Relations
 
 Pages link to each other through declared frontmatter relations and auto-extracted references. The build-time graph builder (`src/lib/relations.ts`) infers inverse relations automatically.
 
 ### Hierarchy and typing
 
-Declared as `Record<string, string | null>` in frontmatter, where keys are target slugs and values are optional labels.
+Declared as arrays of `{ page, label? }` objects in frontmatter.
 
 | Frontmatter key | Meaning | Inverse (inferred) |
 | --------------- | ------- | ------------------- |
-| `up` | "this page is contained in..." | `down` on target |
-| `is` | "this page is a type/instance of..." | `has` on target |
+| `is` | "this page is an instance of..." | `has` on target |
+| `subclass_of` | class taxonomy / subsumption | `superclass_of` on target |
+| `part_of` | mereology / composition | `has_part` on target |
+| `subject` | aboutness | `subject_of` on target |
+| `creator` | authorship / creation | `creator_of` on target |
+| `related` | weak symmetric association | `related` on target |
+| `up` | legacy route hierarchy | `down` on target |
 
-Breadcrumbs walk up the `up` chain to build a containment path from root to current page.
+Breadcrumbs walk the `part_of` chain first and fall back to legacy `up` when `part_of` is absent.
 
 ### Sequential ordering
 

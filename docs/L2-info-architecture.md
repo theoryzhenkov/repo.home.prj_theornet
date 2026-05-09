@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Metadata model, spatial layout rules, and information density strategy for page chrome"
-modified: 2026-03-19
-reviewed: 2026-03-19
+modified: 2026-05-09
+reviewed: 2026-05-09
 depends:
   - path: docs/L1-design-vision
   - path: docs/L1-relations
@@ -30,11 +30,16 @@ Every page has these metadata fields. There is no separate "type" field -- the `
 | `title` | frontmatter | yes | Display name |
 | `created` | frontmatter | yes | First publication date |
 | `modified` | frontmatter | no | Last substantive edit |
-| `maturity` | frontmatter | no | Draft / In-progress / Stable / Evergreen |
-| `up` | frontmatter | no | Containment parents (hierarchy) |
+| `maturity` | frontmatter | no | Stub / Rough / Developed |
+| `part_of` | frontmatter | no | Composition parent / semantic containment |
+| `has_part` | inferred | -- | Parts (from others' `part_of`) |
 | `is` | frontmatter | no | Type/category classification |
-| `down` | inferred | -- | Children (from others' `up`) |
 | `has` | inferred | -- | Instances (from others' `is`) |
+| `subclass_of` / `superclass_of` | frontmatter + inferred | no / -- | Class taxonomy |
+| `subject` / `subject_of` | frontmatter + inferred | no / -- | Aboutness |
+| `creator` / `creator_of` | frontmatter + inferred | no / -- | Authorship / creation |
+| `related` | frontmatter + inferred | no | Weak symmetric association |
+| `up` / `down` | legacy frontmatter + inferred | no / -- | Route hierarchy fallback. Prefer `part_of` / `has_part` |
 | `next` / `prev` | frontmatter | no | Sequence links |
 | `ref` / `refi` | extracted + inferred | -- | Outbound / inbound references |
 | `description` | frontmatter | no | Subtitle or summary line |
@@ -69,13 +74,13 @@ The metadata strip itself is a compact monospace block with no extra spacing bet
 ### Metadata strip contents (in order)
 
 ```
-stable · 4 min · created 2025-06-12 · updated 2026-01-15
-is: research-project    down: sub-experiment-a, sub-experiment-b
+rough · 4 min · created 2025-06-12 · updated 2026-01-15
+part of: blog    is: blog-note    subject: personal-knowledge-management
 ```
 
 Row 1 is the **context line**: maturity badge, estimated read time, dates. All on one line, separated by `·` (middle dot). The type label is NOT repeated here — it already appears in the `is:` relation row, and duplicating it wastes space. This is the "ambient status" the design vision calls for, pulled down from the header into the content zone where it has immediate context.
 
-Row 2+ are **relation rows**: only shown when non-empty. Each row is `label: link, link, link`. Relation types appear in this fixed order: `up`, `is`, `has`, `down`, `prev`/`next`, `ref`, `refi`. Multiple relation types can share a row when space allows -- specifically, `up` and `is` combine onto one line since both are typically short.
+Row 2+ are **relation rows**: only shown when non-empty. Each row is `label: link, link, link`. Relation types appear in a fixed order biased toward PKM semantics: `part_of`, `has_part`, `is`, `has`, taxonomy, aboutness, authorship, `related`, legacy hierarchy, sequence, references.
 
 ### Why not the header?
 
@@ -95,13 +100,17 @@ Relations display inline within the metadata strip, not as a separate component 
 
 Fixed display order prevents cognitive load from layout variation across pages:
 
-1. `up` -- where am I in the hierarchy?
-2. `is` -- what kind of thing is this?
-3. `has` -- what instances does this contain? (only on concept/category pages)
-4. `down` -- what children live under this? (only on parent pages)
-5. `prev` / `next` -- sequence navigation (displayed as `< Prev Title | Next Title >`)
-6. `ref` -- outbound references (often omitted since they appear as inline links in prose)
-7. `refi` -- inbound references / backlinks
+1. `part_of` -- what larger thing contains this semantically?
+2. `has_part` -- what parts compose this?
+3. `is` -- what kind of thing is this?
+4. `has` -- what instances belong to this class/category?
+5. `subclass_of` / `superclass_of` -- class taxonomy
+6. `subject` / `subject_of` -- aboutness
+7. `creator` / `creator_of` -- authorship / creation
+8. `related` -- weak association
+9. `up` / `down` -- legacy route hierarchy fallback
+10. `prev` / `next` -- sequence navigation
+11. `ref` / `refi` -- references and backlinks
 
 ### Suppression rules
 
@@ -109,15 +118,20 @@ Not every relation type earns screen space on every page.
 
 | Relation | Show when |
 | --- | --- |
-| `up` | Always, if non-empty (critical for orientation) |
-| `is` | Always, if non-empty (displayed as type label in context line AND as relation row) |
+| `part_of` | Always, if non-empty (primary orientation relation) |
+| `has_part` | Only when > 0 parts exist |
+| `is` | Always, if non-empty |
 | `has` | Only on concept/category pages (pages that other pages point to via `is:`) |
-| `down` | Only when > 0 children exist |
+| `subclass_of` / `superclass_of` | Always, if non-empty on class pages |
+| `subject` / `subject_of` | Always, if non-empty |
+| `creator` / `creator_of` | Always, if non-empty |
+| `related` | Show if non-empty, but keep visually low-emphasis |
+| `up` / `down` | Legacy fallback. Suppress when equivalent `part_of` / `has_part` exists |
 | `prev` / `next` | Always, if set (sequence navigation is high value) |
 | `ref` | Suppress in the strip. Outbound refs are visible as links within prose. Showing them again in metadata is redundant. |
 | `refi` | Show as a "Backlinks" section at the page bottom, NOT in the metadata strip. Backlinks are reference material, not orientation metadata. |
 
-This means a typical article page shows: context line + `up` + `is` (combined row). Two lines of metadata. Dense.
+This means a typical article page shows: context line + `part_of` + `is` + perhaps `subject`. Two or three lines of metadata. Dense.
 
 ### Prev/Next display
 
@@ -136,17 +150,17 @@ The context line is the first row of the metadata strip. It packs the most decis
 Example with all segments:
 
 ```
-stable · 4 min · created 2025-06-12 · updated 2025-08-15 (7mo ago) · 3 backlinks · graph
+developed · 4 min · created 2025-06-12 · updated 2025-08-15 (7mo ago) · 3 backlinks · graph
 ```
 
 Example for a fresh page with no backlinks:
 
 ```
-in-progress · 8 min · created 2026-03-01 · graph
+rough · 8 min · created 2026-03-01 · graph
 ```
 
 Each segment:
-- **maturity**: One of `draft`, `in-progress`, `stable`, `evergreen`. Styled with a subtle status indicator (the only semantic color use, per design vision). Omitted if not set in frontmatter.
+- **maturity**: One of `stub`, `rough`, `developed`. Styled with a subtle status indicator (the only semantic color use, per design vision). Omitted if not set in frontmatter.
 - **read_time**: `N min` estimated from word count (~250 wpm). Omitted for pages under 2 minutes.
 - **created**: Always shown. Format: `YYYY-MM-DD` (ISO, matching the monospace/technical aesthetic; not "Mar 15, 2026" which mixes serif-friendly formatting into a monospace context).
 - **updated**: Shown only if `modified` differs from `created` by more than 24 hours. Same format.
@@ -198,7 +212,7 @@ The metadata strip should occupy no more than 3-4 lines of monospace text for a 
 
 1. **Kill the separate Metadata component.** Merge its content (dates) into the context line of the metadata strip.
 2. **Kill the separate relation heading.** Relations are rows in the strip, not a titled section.
-3. **Merge breadcrumbs and `up:` display.** The breadcrumb path is derived from the `up` chain. Showing both is redundant. Keep breadcrumbs as the navigation element above the title. Remove `up:` from the metadata strip ONLY IF the breadcrumb is visible. When breadcrumbs are hidden (0 or 1 ancestors), show `up:` in the strip.
+3. **Merge breadcrumbs and `part_of:` display.** The breadcrumb path is derived from the `part_of` chain, falling back to legacy `up`. Showing both is redundant. Keep breadcrumbs as the navigation element above the title. Remove `part_of:` from the metadata strip ONLY IF the breadcrumb is visible. When breadcrumbs are hidden (0 or 1 ancestors), show `part_of:` in the strip.
 4. **Move backlinks to page bottom.** They are reference material, not orientation. The reader does not need to see "5 pages link here" before deciding to read.
 5. **Move the graph visualization to the bottom.** The per-page relation graph is supplementary, not primary navigation. Position it near backlinks, after the prose content.
 
@@ -311,7 +325,7 @@ On narrow viewports:
 | ref-suppressed | MUST | Outbound `ref` relations do not appear in the metadata strip |
 | backlinks-bottom | MUST | `refi` (backlinks) display at page bottom, not in the metadata strip |
 | strip-budget | SHOULD | Metadata strip occupies 4 or fewer lines for a typical article page |
-| breadcrumb-up-dedup | SHOULD | `up:` relation row is suppressed when breadcrumbs are visible |
+| breadcrumb-part-of-dedup | SHOULD | `part_of:` relation row is suppressed when breadcrumbs are visible |
 | maturity-color | SHOULD | Maturity indicator is the only element in the strip using semantic color |
 | listing-type-col | SHOULD | Index/listing tables include a "Type" column derived from `is:` |
 | backlinks-snippet | MUST | Each backlink entry displays a text snippet from the backlinking page showing the surrounding context of the link |

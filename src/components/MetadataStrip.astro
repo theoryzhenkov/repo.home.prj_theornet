@@ -5,7 +5,7 @@ import { slugToHref } from '@/lib/slugs';
 interface Props {
   created: Date;
   modified?: Date;
-  maturity?: 'draft' | 'in-progress' | 'stable' | 'evergreen';
+  maturity?: 'stub' | 'rough' | 'developed';
   readTimeMinutes?: number;
   backlinksCount?: number;
   currentSlug: string;
@@ -48,18 +48,33 @@ const freshness = showUpdated && modified ? getFreshness(modified) : null;
 
 // Relations rendering
 interface RelationRow {
+  key: keyof PageRelations;
   label: string;
   targets: { slug: string; label?: string }[];
+  extraCount?: number;
 }
 
 function getTitle(slug: string): string {
   return pageInfoMap?.get(slug)?.title ?? slug;
 }
 
+function relationHref(key: keyof PageRelations): string {
+  return `/relations/${currentSlug}/${key}/`;
+}
+
 const relationOrder: { key: keyof PageRelations; label: string }[] = [
-  { key: 'up', label: 'up' },
+  { key: 'part_of', label: 'part of' },
+  { key: 'has_part', label: 'has part' },
   { key: 'is', label: 'is' },
   { key: 'has', label: 'has' },
+  { key: 'subclass_of', label: 'subclass of' },
+  { key: 'superclass_of', label: 'superclass of' },
+  { key: 'subject', label: 'subject' },
+  { key: 'subject_of', label: 'subject of' },
+  { key: 'creator', label: 'creator' },
+  { key: 'creator_of', label: 'creator of' },
+  { key: 'related', label: 'related' },
+  { key: 'up', label: 'up' },
   { key: 'down', label: 'down' },
   { key: 'prev', label: 'prev' },
   { key: 'next', label: 'next' },
@@ -78,9 +93,13 @@ if (relations) {
       const targets = val.map((v: RelationTarget | string) =>
         typeof v === 'string' ? { slug: v } : v,
       );
-      relationRows.push({ label, targets });
+      const visibleTargets = targets.slice(0, 6);
+      const extraCount = targets.length > visibleTargets.length
+        ? targets.length - visibleTargets.length
+        : undefined;
+      relationRows.push({ key, label, targets: visibleTargets, extraCount });
     } else if (typeof val === 'string') {
-      relationRows.push({ label, targets: [{ slug: val }] });
+      relationRows.push({ key, label, targets: [{ slug: val }] });
     }
   }
 }
@@ -127,15 +146,16 @@ const hasLinks = links && Object.keys(links).length > 0;
     <div class="metadata-relations">
       {relationRows.map((row) => (
         <div class="metadata-relation-row">
-          <span class="metadata-relation-label">{row.label}:</span>
+          <a href={relationHref(row.key)} class="metadata-relation-label metadata-link">{row.label}:</a>
           <div class="metadata-relation-values">
-            {row.targets.map((target) => (
+            {row.targets.map((target, index) => (
               <span class="metadata-relation-item">
-                <a href={slugToHref(target.slug)} class="metadata-link">
-                  {target.label ? `${target.label}: ` : ''}{getTitle(target.slug)}
-                </a>
+                <a href={slugToHref(target.slug)} class="metadata-link">{target.label ? `${target.label}: ` : ''}{getTitle(target.slug)}</a>{(index < row.targets.length - 1 || row.extraCount) ? ', ' : ''}
               </span>
             ))}
+            {row.extraCount ? (
+              <span class="metadata-relation-more">+{row.extraCount} more</span>
+            ) : null}
           </div>
         </div>
       ))}
