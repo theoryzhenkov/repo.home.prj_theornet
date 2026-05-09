@@ -2,5 +2,22 @@
 title: Blog
 description: ""
 created: 2026-01-18
+maturity: rough
+part_of:
+  - page: index
+is:
+  - page: classes/collection-page
 ---
+
+import ContentTable from '@components/ContentTable.astro';
+
+<ContentTable
+  path="blog/"
+  columns={[
+    { field: "title", label: "Title", sortable: true, type: "link" },
+    { field: "description", label: "Description" },
+    { field: "created", label: "Created", sortable: true, type: "date" },
+  ]}
+  defaultSort={{ field: "created", direction: "desc" }}
+/>
 
