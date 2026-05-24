@@ -13,12 +13,6 @@ subject:
   - page: concepts/jmap
 ---
 
-I have built Posthaste as a daily driver for my own mail to replace [MailMate](https://freron.com/) after migrating to [Stalwart](https://stalw.art/mail-server/#store) from [Proton](https://proton.me/mail). I wanted a client with all the power and convienience of MailMate, available across web, desktop and mobile, and with a JMAP support.
+Posthaste features intuitive query language, smart commands, themes and functionality extensions, local API daemon for agents and scripts, and baseline of all the features you expect from a powerful email solution. It is made to be friendly - available across all platforms, with clear UI/UX; and fast - built on minimal Rust backend over modern JMAP protocol (yeah, it supports IMAP too, bummer). Posthaste is fully open-source, too! You can self-host web version of it, you can turn it into a CLI tool, or have it display your Fediverse feed in a separate window.
 
-Posthaste is made to be friendly and very customisable! Some of my favourite features include themes, extensions, and of course a local API for agents to talk to. You can check out Posthaste here. It is easy to switch to: you can continue using your existing account from any provider, since Posthaste works over IMAP too. However, I encourage people to switch to one of the providers that support JMAP, currently it is mainly Fastmail and Stalwart.
-
-JMAP is a much, much better protocol than IMAP (standard over which Gmail, Apple Mail, Proton and others work), both for users and developers. It is more reliable, faster, and requires much less effort to get right. That means that JMAP users will get new features within Posthaste faster! Adopting JMAP helps to force large corporate monopolies to drop their hostile email standards to support the user demand for better, friendlier software. Help us make this a reality!
-
-You can read more about the bizzare state of the JMAP vs IMAP here.
-
-Posthaste is built with Rust backend and a Typescript + React frontend, built and distributed as desktop application with Tauri.
+Posthaste is fully local and doesn't keep any of your data. Your credentials are stored securily in your OS's secret storage.
