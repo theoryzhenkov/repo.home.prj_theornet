@@ -8,6 +8,12 @@
     "preview": "astro preview",
     "astro": "astro",
     "brand:generate": "bun run scripts/generate-brand-assets.ts",
+    "content": "bun run scripts/content.ts",
+    "content:new": "bun run scripts/content.ts new",
+    "content:list": "bun run scripts/content.ts list",
+    "content:edit": "bun run scripts/content.ts edit",
+    "content:archive": "bun run scripts/content.ts archive",
+    "content:delete": "bun run scripts/content.ts delete",
     "test": "bun test",
     "test:build": "astro build"
   },

@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Metadata model, spatial layout rules, and information density strategy for page chrome"
-modified: 2026-05-09
-reviewed: 2026-05-09
+modified: 2026-05-24
+reviewed: 2026-05-24
 depends:
   - path: docs/L1-design-vision
   - path: docs/L1-relations
@@ -184,7 +184,7 @@ The site's aesthetic is textured, technical, information-dense. ISO dates (`2026
 
 ## Index / listing pages
 
-Listing pages (e.g., `/projects/`) use the ContentTable component. The metadata model informs column selection.
+Listing pages (e.g., `/projects/`) use the ContentTable component. Collection membership comes from metadata relations, not directories; for example, the projects listing selects pages with `is: classes/project`. The metadata model informs column selection.
 
 ### Default columns
 

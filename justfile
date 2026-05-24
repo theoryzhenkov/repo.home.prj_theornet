@@ -1,4 +1,5 @@
 mod template
+mod content
 
 set dotenv-load := true
 

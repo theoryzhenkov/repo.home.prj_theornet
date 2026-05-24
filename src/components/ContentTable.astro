@@ -9,18 +9,44 @@ interface Column {
   type?: 'text' | 'date' | 'link' | 'url' | 'status' | 'links';
 }
 
+interface RelationEntry {
+  page: string;
+  label?: string;
+}
+
 interface Props {
-  path: string;
+  path?: string;
+  classSlug?: string;
   columns: Column[];
   defaultSort?: { field: string; direction: 'asc' | 'desc' };
   linkToPage?: boolean;
 }
 
-const { path, columns, defaultSort, linkToPage = true } = Astro.props;
+const { path, classSlug, columns, defaultSort, linkToPage = true } = Astro.props;
 
-// Query and filter content by path prefix
+if (!path && !classSlug) {
+  throw new Error('ContentTable requires either path or classSlug.');
+}
+
+function hasRelationTarget(value: unknown, targetSlug: string): boolean {
+  if (!Array.isArray(value)) return false;
+  return value.some((entry: unknown) => {
+    return Boolean(
+      entry
+      && typeof entry === 'object'
+      && 'page' in entry
+      && (entry as RelationEntry).page === targetSlug
+    );
+  });
+}
+
+// Query and filter content by path prefix and/or `is` class relation.
 const allPages = await getCollection('pages');
-const filteredPages = allPages.filter((page) => page.id.startsWith(path));
+const filteredPages = allPages.filter((page) => {
+  const matchesPath = path ? page.id.startsWith(path) : true;
+  const matchesClass = classSlug ? hasRelationTarget(page.data.is, classSlug) : true;
+  return matchesPath && matchesClass;
+});
 
 // Build row data with all fields
 const rows = filteredPages.map((page) => {

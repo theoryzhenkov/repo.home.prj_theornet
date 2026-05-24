@@ -1,8 +1,8 @@
 ---
 scope: root
 summary: "Entry point for the home.theor.net project"
-modified: 2026-05-08
-reviewed: 2026-03-19
+modified: 2026-05-24
+reviewed: 2026-05-24
 dependents:
   - path: docs/L0-content
   - path: docs/L0-infrastructure
@@ -34,6 +34,8 @@ just dev        # local dev server on :4321
 just build      # build to dist/ and generate Pagefind index
 just preview    # preview dist/
 just test       # run Bun tests
+just content new # create a page with blank relation metadata
+just content list # list content page slugs
 just docker-run # build & serve via Docker on :8080
 ```
 

@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Astro component catalog, props, slots, and page assembly data flow"
-modified: 2026-03-20
-reviewed: 2026-03-20
+modified: 2026-05-24
+reviewed: 2026-05-24
 depends:
   - path: docs/L1-routing
   - path: docs/L1-styles
@@ -73,7 +73,7 @@ The script runs on both `DOMContentLoaded` and `astro:page-load` to support view
 | `TOC` | `headings: { depth, slug, text }[]` | none | Filters to `h2` and `h3` only. Renders a `<nav>` with ordered list of anchor links. `h3` items are indented via `data-depth` attribute. Imports `toc-scrollspy.ts` for active-section highlighting. Hidden when no qualifying headings exist. |
 | `Footnote` | `id: string` | default | Produces a `<sup>` reference link (`#fnref-{id}`) and an adjacent `<span class="sidenote">` containing the slot content. The sidenote is positioned by CSS as a margin note on wide viewports. The `data-footnote-id` attribute is used by `footnotes.ts` for narrow-viewport fallback. |
 | `Footnotes` | none | none | Empty `<section>` container with an `<ol>`. Populated at runtime by `footnotes.ts`, which clones sidenote content into this list on narrow viewports. Has `data-empty="true"` by default. |
-| `ContentTable` | `path: string`, `columns: Column[]`, `defaultSort?: { field, direction }`, `linkToPage?: boolean` | none | Queries the `pages` collection, filters by `path` prefix. Builds a sortable, filterable `<table>`. Column types: `text`, `date`, `link`, `url`, `status`, `links`. Client-side JS handles sort toggling (via `aria-sort`) and filter dropdowns. |
+| `ContentTable` | `path?: string`, `classSlug?: string`, `columns: Column[]`, `defaultSort?: { field, direction }`, `linkToPage?: boolean` | none | Queries the `pages` collection, filters by optional `path` prefix and/or `is` relation target. Builds a sortable, filterable `<table>`. Column types: `text`, `date`, `link`, `url`, `status`, `links`. Client-side JS handles sort toggling (via `aria-sort`) and filter dropdowns. |
 
 ### Relations components
 
