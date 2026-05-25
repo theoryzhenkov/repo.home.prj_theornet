@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import { resolveLinkRecord, type LinkCardInfo } from '@/lib/link-cards';
 
 interface Column {
   field: string;
@@ -84,9 +85,9 @@ function formatValue(value: unknown, type?: string): string {
 }
 
 // Extract entries from a links record
-function getLinksEntries(value: unknown): [string, string][] {
+function getLinksEntries(value: unknown): LinkCardInfo[] {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return Object.entries(value) as [string, string][];
+    return resolveLinkRecord(value as Record<string, string>);
   }
   return [];
 }
@@ -168,11 +169,11 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
                   <a href={String(row._href)} class="ct-title-link">{displayValue}</a>
                 ) : isLinks ? (
                   <span class="ct-links-cell">
-                    {linksEntries.map(([type, url], i) => (
+                    {linksEntries.map((link, i) => (
                       <>
                         {i > 0 && ', '}
-                        <a href={String(url)} class="ct-external-link" target="_blank" rel="noopener noreferrer">
-                          {type}
+                        <a href={link.href} class="ct-external-link" target="_blank" rel="noopener noreferrer">
+                          {link.label}
                           <svg class="ct-external-icon" viewBox="0 0 16 16" aria-hidden="true">
                             <path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5H4.5v9h9V9.75a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 13.25 15H3.75A1.75 1.75 0 0 1 2 13.25V3.75C2 2.784 2.784 2 3.75 2Zm6.854.22a.75.75 0 0 1 .896-.22l3 1.5a.75.75 0 0 1 .126 1.238l-3 2.5a.75.75 0 0 1-.96-1.152l1.564-1.303-5.47 5.47a.75.75 0 0 1-1.06-1.06l5.47-5.47-1.303 1.564a.75.75 0 0 1-1.152-.96l1.5-3a.75.75 0 0 1 .389-.107Z" fill="currentColor"/>
                           </svg>

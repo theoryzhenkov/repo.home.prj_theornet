@@ -43,7 +43,6 @@ Every page has these metadata fields. There is no separate "type" field -- the `
 | `next` / `prev` | frontmatter | no | Sequence links |
 | `ref` / `refi` | extracted + inferred | -- | Outbound / inbound references |
 | `description` | frontmatter | no | Subtitle or summary line |
-| `links` | frontmatter | no | External URLs |
 
 ### `is:` subsumes type
 
@@ -66,7 +65,7 @@ All page chrome between the title and prose body consolidates into a single dens
 [Title (h1)]
 [Description]
 [Metadata strip]
-[Prose content]
+[Prose content, including optional manual content components]
 ```
 
 The metadata strip itself is a compact monospace block with no extra spacing between its rows. Every row uses the same typographic treatment: `--text-xs`, monospace, muted text color. This creates a single visual "panel" rather than scattered chrome.
@@ -80,7 +79,7 @@ part of: blog    is: blog-note    subject: personal-knowledge-management
 
 Row 1 is the **context line**: maturity badge, estimated read time, dates. All on one line, separated by `·` (middle dot). The type label is NOT repeated here — it already appears in the `is:` relation row, and duplicating it wastes space. This is the "ambient status" the design vision calls for, pulled down from the header into the content zone where it has immediate context.
 
-Row 2+ are **relation rows**: only shown when non-empty. Each row is `label: link, link, link`. Relation types appear in a fixed order biased toward PKM semantics: `part_of`, `has_part`, `is`, `has`, taxonomy, aboutness, authorship, `related`, legacy hierarchy, sequence, references.
+Row 2+ are **relation rows**: only shown when non-empty. Each row is `label: link, link, link`. Relation types appear in a fixed order biased toward PKM semantics: `part_of`, `has_part`, `is`, `has`, taxonomy, aboutness, authorship, `related`, legacy hierarchy, sequence, references. External URLs are not relation rows; authors render them manually in MDX when they are part of the page content.
 
 ### Why not the header?
 
@@ -132,6 +131,10 @@ Not every relation type earns screen space on every page.
 | `refi` | Show as a "Backlinks" section at the page bottom, NOT in the metadata strip. Backlinks are reference material, not orientation metadata. |
 
 This means a typical article page shows: context line + `part_of` + `is` + perhaps `subject`. Two or three lines of metadata. Dense.
+
+### External link cards
+
+Project/resource URLs are content, not page topology. Authors render them manually in MDX with `LinkCards` when a page needs README-style action cards for source repositories, install stores, latest releases, websites, or documentation. Cards use restrained monochrome surfaces with small monospace kind markers. Known kinds (`github`, `website`, `docs`, `release`, `chrome`, `firefox`) provide default labels; the MDX author controls ordering and can override labels/details.
 
 ### Prev/Next display
 

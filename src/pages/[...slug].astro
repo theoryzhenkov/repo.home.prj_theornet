@@ -1,27 +1,41 @@
 ---
-import { getCollection, getEntry, render } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 import Page from '@layouts/page/Page.astro';
 import { getBreadcrumbs, getPageRelations } from '@/lib/relations';
 import { buildRelationsGraph } from '@/lib/relations-graph';
+import { getGhostRouteEntries, getGhostRouteEntry } from '@/lib/site-pages';
+import { addHeadingIds, estimateHtmlReadTimeMinutes, extractHtmlHeadings } from '@/lib/ghost';
 
 export async function getStaticPaths() {
   const pages = await getCollection('pages');
-  return pages
+  const localPaths = pages
     .filter((page) => page.id !== 'index')
     .map((page) => ({
       params: { slug: page.id },
     }));
+
+  const ghostPaths = (await getGhostRouteEntries()).map((entry) => ({
+    params: { slug: entry.id },
+  }));
+
+  return [...localPaths, ...ghostPaths];
 }
 
 const { slug } = Astro.params;
-const entry = await getEntry('pages', slug!);
+const localPages = await getCollection('pages');
+const entry = localPages.find((page) => page.id === slug);
+const ghostEntry = entry ? undefined : await getGhostRouteEntry(slug!);
 
-if (!entry) {
+if (!entry && !ghostEntry) {
   return Astro.redirect('/404');
 }
 
-const { Content, headings } = await render(entry);
-const { data } = entry;
+const rendered = entry ? await render(entry) : undefined;
+const Content = rendered?.Content;
+const data = entry ? entry.data : ghostEntry!.data;
+const body = entry ? (entry.body ?? '') : (ghostEntry?.body ?? '');
+const ghostHtml = ghostEntry ? addHeadingIds(ghostEntry.html) : '';
+const baseHeadings = rendered?.headings ?? (ghostEntry ? extractHtmlHeadings(ghostHtml) : []);
 
 // Build relations graph
 const { graph, pages } = await buildRelationsGraph();
@@ -29,11 +43,12 @@ const breadcrumbs = getBreadcrumbs(slug!, graph, pages);
 const relations = getPageRelations(slug!, graph);
 
 // Compute read time from body word count
-const wordCount = entry.body ? entry.body.split(/\s+/).filter(Boolean).length : 0;
-const readTimeMinutes = Math.max(1, Math.round(wordCount / 238));
+const wordCount = body ? body.split(/\s+/).filter(Boolean).length : 0;
+const readTimeMinutes = ghostEntry
+  ? estimateHtmlReadTimeMinutes(ghostHtml)
+  : Math.max(1, Math.round(wordCount / 238));
 
 // Compute per-heading word counts for TOC
-const body = entry.body || '';
 const headingPositions: { depth: number; slug: string; text: string; position: number }[] = [];
 const headingRegex = /^(#{2,3})\s+(.+)$/gm;
 let match;
@@ -44,7 +59,7 @@ while ((match = headingRegex.exec(body)) !== null) {
   headingPositions.push({ depth, slug: headingSlug, text, position: match.index });
 }
 
-const enrichedHeadings = headings.map((h) => {
+const enrichedHeadings = ghostEntry ? baseHeadings : baseHeadings.map((h) => {
   if (h.depth < 2 || h.depth > 3) return h;
 
   // Find this heading in the source positions
@@ -87,9 +102,8 @@ const backlinks = (relations?.refi ?? []).map((refSlug) => {
   currentSlug={slug!}
   relations={relations}
   pageInfoMap={pages}
-  links={data.links}
   readTimeMinutes={readTimeMinutes}
   backlinks={backlinks}
 >
-  <Content />
+  {Content ? <Content /> : <Fragment set:html={ghostHtml} />}
 </Page>

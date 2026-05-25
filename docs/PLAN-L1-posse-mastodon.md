@@ -1,8 +1,8 @@
 ---
 scope: L1
 summary: "Plan for home/feed separation and Mastodon announcement POSSE"
-modified: 2026-05-18
-reviewed: 2026-05-18
+modified: 2026-06-19
+reviewed: 2026-06-19
 lifecycle: ephemeral
 type: PLAN
 depends:
@@ -14,6 +14,8 @@ depends:
 ---
 
 # Mastodon POSSE Plan
+
+> Status: superseded by the Ghost + ActivityPub direction. Ghost now owns canonical posts/pages at `ghost.theor.net`, and `home.theor.net` consumes Ghost pages/posts plus the public Ghost ActivityPub outbox. Keep this plan as historical context for the earlier Mastodon/feed split, not as current implementation guidance.
 
 Use `feed.theor.net` as the social feed and `home.theor.net` as the durable website. Do not make Mastodon-shaped content fit the home site, and do not mirror every home page into Mastodon.
 

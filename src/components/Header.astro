@@ -3,14 +3,25 @@ const navItems = [
   { href: '/', label: 'index' },
   { href: '/projects/', label: 'projects' },
   { href: '/blog/', label: 'blog' },
+  { href: '/notes/', label: 'notes' },
   { href: '/contact', label: 'contact' }
 ];
 
+function currentPageName(pathname: string) {
+  const segments = pathname.split('/').filter(Boolean);
+  return segments.length === 0 ? 'index' : segments.join('.');
+}
+
 const currentPath = Astro.url.pathname;
+const siteName = `theornet.home.${currentPageName(currentPath)}`;
 ---
 
 <header class="header" data-header>
   <div class="header-inner">
+    <a class="header-brand" href="/" aria-label={`${siteName} home`}>
+      <span class="header-brand-mark" aria-hidden="true">@</span>
+    </a>
+
     <nav class="header-nav" aria-label="Main navigation">
       {navItems.map((item) => (
         <a

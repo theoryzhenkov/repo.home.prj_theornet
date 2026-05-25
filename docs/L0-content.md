@@ -1,8 +1,8 @@
 ---
 scope: L0
 summary: "Content model: MDX pages, relation graph, schema"
-modified: 2026-05-24
-reviewed: 2026-05-24
+modified: 2026-06-19
+reviewed: 2026-06-19
 depends:
   - path: README
 dependents:
@@ -12,11 +12,18 @@ dependents:
 
 # Content System
 
-All site content lives in `src/content/pages/` as `.mdx` files, loaded by Astro's content collections via a glob loader (`src/content.config.ts`). A project-native content CLI creates, lists, edits, archives, and deletes these files while preserving Git/Jujutsu as the history layer. File paths are storage locations only; page topology comes from metadata relations such as `is` and `part_of`.
+The site has two build-time content sources:
+
+1. Local MDX pages in `src/content/pages/`, loaded by Astro's content collections via a glob loader (`src/content.config.ts`).
+2. Ghost content from `ghost.theor.net`, loaded during the static build when `GHOST_CONTENT_API_KEY` is configured.
+
+A project-native content CLI creates, lists, edits, archives, and deletes local MDX files while preserving Git/Jujutsu as the history layer. Ghost pages/posts are edited in Ghost Admin and are treated as generated site pages at build time. File paths and Ghost slugs are storage locations only; page topology comes from metadata relations such as `is` and `part_of`.
 
 ## Page schema
 
 Every MDX page has YAML frontmatter with required `title` and `created` fields, plus optional relation fields. The schema is defined with Zod in `src/content.config.ts` and uses `.passthrough()` to allow arbitrary extra fields.
+
+Ghost pages/posts can carry equivalent site metadata in the Ghost `frontmatter` field. The build accepts YAML or JSON. By default, Ghost posts become pages under `blog/{ghost-slug}` with `part_of: blog` and `is: classes/blog-note`; Ghost pages use their Ghost slug with `part_of: index` and `is: classes/page`. The Ghost metadata field can override the home route with `homePath`/`homeSlug` and can provide normal relation keys (`part_of`, `is`, `subject`, etc.).
 
 The website relation model is a practical subset of the Obsidian PKM ontology: routes and folders are browsing affordances, while frontmatter relations carry semantic structure. New content should prefer `part_of` / `has_part` for composition over legacy `up` / `down` hierarchy fields. Collection pages should query semantic metadata (for example, `is: classes/project`) instead of deriving membership from directories.
 
@@ -65,13 +72,29 @@ just content delete SLUG
 
 `new` asks for a path relative to `src/content/pages/` and a display name, then writes a blank frontmatter block with empty `part_of`, `is`, and `subject` lists for manual classification. `archive` is the preferred removal path; it moves pages under `archive/deleted-pages-YYYY-MM-DD/`. Hard deletion requires `--force`.
 
+## Ghost integration
+
+Ghost content is loaded by `src/lib/ghost.ts` and merged with local MDX inputs in `src/lib/site-pages.ts`. The merged page set feeds the relations graph, relation pages, popup index, and catch-all route generation. Local MDX slugs win if a Ghost page/post maps to the same home slug.
+
+Environment variables:
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `GHOST_CONTENT_API_URL` | no | Content API base URL; defaults to `https://ghost.theor.net/ghost/api/content` |
+| `GHOST_CONTENT_API_KEY` | for Ghost pages/posts | Public Ghost Content API key used at build time |
+| `GHOST_ACTIVITYPUB_OUTBOX_URL` | no | Public ActivityPub outbox URL for the `/notes/` feed |
+
+ActivityPub notes are not generated as individual local pages. The `/notes/` MDX page renders a continuous feed from the public Ghost ActivityPub outbox, and each note links to its ActivityPub object as the source of record.
+
 ## Key files
 
-- `src/content.config.ts` -- collection definition and Zod schema
-- `src/lib/content-admin.ts` -- content authoring operations and page templates
+- `src/content.config.ts` -- local collection definition and Zod schema
+- `src/lib/ghost.ts` -- Ghost Content API, Ghost frontmatter, and ActivityPub outbox integration
+- `src/lib/site-pages.ts` -- merged local/Ghost page inputs
+- `src/lib/content-admin.ts` -- local content authoring operations and page templates
 - `scripts/content.ts` -- CLI wrapper for content operations
 - `content.just` -- `just content ...` module
-- `src/content/pages/` -- all MDX content
+- `src/content/pages/` -- local MDX content
 - `src/lib/relations.ts` -- relation types, link extraction, `buildGraphFromPages()`, breadcrumbs
 - `src/lib/relations-graph.ts` -- Astro-dependent `buildRelationsGraph()` wrapper (memoized)
 - `src/lib/slugs.ts` -- shared slug/URL utilities

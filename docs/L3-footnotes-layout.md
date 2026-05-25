@@ -1,8 +1,8 @@
 ---
 scope: L3
 summary: "Footnotes layout engine: sidenote positioning, mode switching, and lifecycle"
-modified: 2026-03-19
-reviewed: 2026-03-19
+modified: 2026-05-24
+reviewed: 2026-05-24
 depends:
   - path: docs/L1-scripts
   - path: docs/L2-components
@@ -99,7 +99,7 @@ The engine hooks into three events to handle both initial load and Astro's clien
 ## Key Files
 
 - `src/scripts/footnotes.ts` -- layout engine (positioning, mode switching, lifecycle)
-- `src/components/Footnote.astro` -- per-footnote HTML structure (sup + sidenote pair)
+- `src/components/content/Footnote.astro` -- per-footnote HTML structure (sup + sidenote pair), imported by MDX pages
 - `src/components/Footnotes.astro` -- footer container for narrow-mode list
 - `src/styles/components.css` -- sidenote positioning CSS, highlight animation, footnote counter, narrow-mode styles
 - `src/styles/prose.css` -- `.prose` container (position: relative)

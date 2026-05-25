@@ -9,7 +9,12 @@ is:
   - page: classes/collection-page
 ---
 
-import ContentTable from '@components/ContentTable.astro';
+import ContentTable from '@components/content/ContentTable.astro';
+import GhostPostsList from '@components/ghost/GhostPostsList.astro';
+
+<GhostPostsList />
+
+## Local archive
 
 <ContentTable
   path="blog/"

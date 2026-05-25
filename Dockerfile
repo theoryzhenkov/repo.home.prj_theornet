@@ -1,6 +1,14 @@
 # Build stage
 FROM oven/bun:1-alpine AS builder
 
+ARG GHOST_CONTENT_API_URL=https://ghost.theor.net/ghost/api/content
+ARG GHOST_CONTENT_API_KEY
+ARG GHOST_ACTIVITYPUB_OUTBOX_URL=https://ghost.theor.net/.ghost/activitypub/outbox/index
+
+ENV GHOST_CONTENT_API_URL=$GHOST_CONTENT_API_URL
+ENV GHOST_CONTENT_API_KEY=$GHOST_CONTENT_API_KEY
+ENV GHOST_ACTIVITYPUB_OUTBOX_URL=$GHOST_ACTIVITYPUB_OUTBOX_URL
+
 WORKDIR /app
 
 # Copy package files

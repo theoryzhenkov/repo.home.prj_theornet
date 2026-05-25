@@ -11,7 +11,6 @@ interface Props {
   currentSlug: string;
   relations?: PageRelations;
   pageInfoMap?: PageInfoMap;
-  links?: Record<string, string>;
 }
 
 const {
@@ -23,7 +22,6 @@ const {
   currentSlug,
   relations,
   pageInfoMap,
-  links,
 } = Astro.props;
 
 function formatDate(date: Date): string {
@@ -105,7 +103,6 @@ if (relations) {
 }
 
 const hasRelationRows = relationRows.length > 0;
-const hasLinks = links && Object.keys(links).length > 0;
 ---
 
 <aside class="metadata-strip">
@@ -142,7 +139,7 @@ const hasLinks = links && Object.keys(links).length > 0;
     <a href={`/graph/?focus=${currentSlug}`} class="metadata-item metadata-link">graph</a>
   </div>
 
-  {(hasRelationRows || hasLinks) && (
+  {hasRelationRows && (
     <div class="metadata-relations">
       {relationRows.map((row) => (
         <div class="metadata-relation-row">
@@ -159,18 +156,6 @@ const hasLinks = links && Object.keys(links).length > 0;
           </div>
         </div>
       ))}
-      {hasLinks && (
-        <div class="metadata-relation-row">
-          <span class="metadata-relation-label">links:</span>
-          <div class="metadata-relation-values">
-            {Object.entries(links!).map(([type, url]) => (
-              <span class="metadata-relation-item">
-                <a href={url} class="metadata-link" target="_blank" rel="noopener noreferrer">{type}</a>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )}
 </aside>

@@ -42,6 +42,9 @@
     font-size: var(--prose-font-size);
     line-height: var(--prose-line-height);
     color: var(--color-text);
+    hyphens: auto;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
 
     & h1,
     & h2,
@@ -114,6 +117,14 @@
       margin-bottom: var(--prose-list-item-space);
     }
 
+    @media (width >= 900px) {
+      & p,
+      & li {
+        text-align: justify;
+        text-justify: inter-word;
+      }
+    }
+
     /* ─── Headings ─── */
     & h1[id],
     & h2[id],
@@ -167,6 +178,21 @@
     & a[href^="#"] {
       text-decoration: none;
       color: var(--color-accent);
+    }
+
+    /* Component links manage their own card styling. */
+    & a.external-link-card {
+      color: var(--color-text-muted);
+      text-decoration: none;
+    }
+
+    & a.external-link-card:hover {
+      color: var(--color-text);
+      text-decoration: none;
+    }
+
+    & a.external-link-card::after {
+      content: none;
     }
 
     /* ─── External Link Icon ─── */

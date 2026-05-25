@@ -1,0 +1,32 @@
+---
+import { getGhostRouteEntries } from '@/lib/site-pages';
+import { slugToHref } from '@/lib/slugs';
+
+const posts = (await getGhostRouteEntries())
+  .filter((entry) => entry.source === 'ghost-post')
+  .sort((a, b) => b.data.created.getTime() - a.data.created.getTime());
+
+function formatDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+---
+
+<section class="ghost-post-list" aria-labelledby="ghost-post-list-heading">
+  <h2 id="ghost-post-list-heading">Published posts</h2>
+
+  {posts.length > 0 ? (
+    <ol class="ghost-entry-list">
+      {posts.map((post) => (
+        <li class="ghost-entry">
+          <div class="ghost-entry-meta">
+            <time datetime={post.data.created.toISOString()}>{formatDate(post.data.created)}</time>
+          </div>
+          <h3><a href={slugToHref(post.id)}>{post.data.title}</a></h3>
+          {post.data.description && <p>{post.data.description}</p>}
+        </li>
+      ))}
+    </ol>
+  ) : (
+    <p class="ghost-feed-empty">No Ghost posts are available at build time.</p>
+  )}
+</section>

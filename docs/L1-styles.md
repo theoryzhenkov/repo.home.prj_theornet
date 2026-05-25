@@ -1,8 +1,8 @@
 ---
 scope: L1
 summary: "CSS architecture, design tokens, and style invariants"
-modified: 2026-03-24
-reviewed: 2026-03-24
+modified: 2026-05-24
+reviewed: 2026-05-24
 depends:
   - path: docs/L0-ui
   - path: docs/L1-design-vision
@@ -280,7 +280,7 @@ Heading sizes use raw `rem` values in `base.css`: h1 = 1.875rem (30px), h2 = 1.3
 
 | Token | Value | Purpose |
 | ----- | ----- | ------- |
-| `--width-content` | 70ch | Main content column max-width |
+| `--width-content` | 70ch | Main content measure; page grid centers this column with responsive `width: min(100% - gutter, var(--width-content))` behavior on narrow viewports |
 | `--width-sidebar` | 12rem | Aside margin sidebar width |
 | `--width-page` | 85rem | Overall page max-width |
 | `--height-header` | 2.5rem | Sticky header height (`:root`, used for scroll-padding) |

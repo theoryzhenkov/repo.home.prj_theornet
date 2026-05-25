@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Reading experience mechanics: TOC scroll-spy, sidenote alignment, link previews, and their interplay in the three-column layout"
-modified: 2026-03-20
-reviewed: 2026-03-20
+modified: 2026-05-24
+reviewed: 2026-05-24
 depends:
   - path: docs/L1-design-vision
   - path: docs/L1-styles
@@ -24,10 +24,10 @@ The page uses a three-zone structure:
 | Zone | Width | Contents |
 | ---- | ----- | -------- |
 | Left margin | ~200px, fixed | TOC navigation |
-| Center column | max 65-70ch | Prose, headings, inline elements |
+| Center column | max 70ch, fluid below that | Prose, headings, inline elements |
 | Right margin | ~250px | Sidenotes, link preview popups |
 
-The left and right margins collapse below the `1024px` breakpoint. Everything described below assumes wide viewport unless the mobile fallback section says otherwise.
+The left and right margins collapse below the `1024px` breakpoint. The center column keeps a normalized reading measure with `width: min(100% - gutter, var(--width-content))`, so text wraps naturally before lines become too long. Prose enables `text-wrap: pretty`, heading balance, automatic hyphenation, and `overflow-wrap: break-word` for graceful line breaks. At 900px and wider, prose paragraphs and list items use justified alignment, matching the Gwern-style dense reading measure while hyphenation prevents large word gaps. Everything described below assumes wide viewport unless the mobile fallback section says otherwise.
 
 ---
 
@@ -404,7 +404,7 @@ Popup z-indices are managed dynamically by `updateZOrder()` — sequential assig
 - `src/scripts/footnotes.ts` -- sidenote positioning engine, mode switching
 - `src/scripts/popups/` -- modular popup system (11 modules): content fetching, window management, drag, resize, taskbar
 - `src/components/TOC.astro` -- TOC markup, read time rendering, data attributes
-- `src/components/Footnote.astro` -- per-footnote HTML pair (sup + sidenote span)
+- `src/components/content/Footnote.astro` -- per-footnote HTML pair (sup + sidenote span), imported by MDX pages
 - `src/components/Footnotes.astro` -- narrow-mode footer container
 - `src/layouts/page/Page.astro` -- three-column grid assembly, `#popup-container`
 - `src/styles/components.css` -- sidenote CSS, TOC styling (entry states, connector lines, read time), popup styling

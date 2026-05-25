@@ -24,14 +24,13 @@ dependents:
 | --- | --- | --- | --- |
 | `title` | `string` | yes | Page `<h1>` and passed to `Head` for `<title>` |
 | `description` | `string` | no | Rendered below the title as inline HTML via `marked.parseInline()`. A plain-text variant (markdown links stripped) goes to the `<meta>` description |
-| `created` | `Date` | yes | Forwarded to `Metadata` |
-| `modified` | `Date` | no | Forwarded to `Metadata` |
+| `created` | `Date` | yes | Forwarded to `MetadataStrip` |
+| `modified` | `Date` | no | Forwarded to `MetadataStrip` |
 | `headings` | `{ depth, slug, text }[]` | yes | Forwarded to `TOC` |
 | `breadcrumbs` | `PageInfo[]` | no | Forwarded to `Breadcrumb` |
 | `currentSlug` | `string` | no | Forwarded to `Breadcrumb` |
-| `relations` | `PageRelations` | no | Forwarded to `TopRelations` |
-| `pageInfoMap` | `PageInfoMap` | no | Forwarded to `TopRelations` |
-| `links` | `Record<string, string>` | no | External links, forwarded to `TopRelations` |
+| `relations` | `PageRelations` | no | Forwarded to `MetadataStrip` |
+| `pageInfoMap` | `PageInfoMap` | no | Forwarded to `MetadataStrip` |
 
 ### Assembly
 
@@ -40,9 +39,9 @@ The grid is `aside-margin | main | (implicit right aside)`. Inside `<main>`:
 1. `Breadcrumb` -- hierarchy path
 2. `<h1>` title
 3. Description paragraph (`set:html` with parsed markdown)
-4. `TopRelations` -- relation rows (only if `relations` and `pageInfoMap` both present)
-5. `Metadata` -- created/modified dates
-6. `<slot />` wrapped in `.prose` -- the MDX content
+4. `MetadataStrip` -- dates, maturity, graph/backlink affordances, and relation rows
+5. `<slot />` wrapped in `.prose` -- the MDX content, including any manually imported content components such as `LinkCards`
+6. `Backlinks` -- incoming references after prose
 7. `Footnotes` -- after the prose content (JS-populated on narrow viewports)
 
 `TOC` sits in the left `aside-margin`. `Search` is placed after the grid (fixed-position modal). A `#popup-container` div follows for hover popups.
@@ -68,18 +67,21 @@ The script runs on both `DOMContentLoaded` and `astro:page-load` to support view
 
 ### Content components
 
+Author-facing MDX components live in `src/components/content/` and should be imported from pages with `@components/content/...`.
+
 | Component | Props | Slots | Behavior |
 | --- | --- | --- | --- |
 | `TOC` | `headings: { depth, slug, text }[]` | none | Filters to `h2` and `h3` only. Renders a `<nav>` with ordered list of anchor links. `h3` items are indented via `data-depth` attribute. Imports `toc-scrollspy.ts` for active-section highlighting. Hidden when no qualifying headings exist. |
 | `Footnote` | `id: string` | default | Produces a `<sup>` reference link (`#fnref-{id}`) and an adjacent `<span class="sidenote">` containing the slot content. The sidenote is positioned by CSS as a margin note on wide viewports. The `data-footnote-id` attribute is used by `footnotes.ts` for narrow-viewport fallback. |
 | `Footnotes` | none | none | Empty `<section>` container with an `<ol>`. Populated at runtime by `footnotes.ts`, which clones sidenote content into this list on narrow viewports. Has `data-empty="true"` by default. |
 | `ContentTable` | `path?: string`, `classSlug?: string`, `columns: Column[]`, `defaultSort?: { field, direction }`, `linkToPage?: boolean` | none | Queries the `pages` collection, filters by optional `path` prefix and/or `is` relation target. Builds a sortable, filterable `<table>`. Column types: `text`, `date`, `link`, `url`, `status`, `links`. Client-side JS handles sort toggling (via `aria-sort`) and filter dropdowns. |
+| `LinkCards` | `links: { kind?, label?, href, detail? }[]`, `label?: string` | none | Manually imported into MDX pages to render compact README-style external link cards. Known kinds (`github`, `website`, `release`, `chrome`, `firefox`, `docs`) get default labels and kind markers; authors control card order and may override labels/details. |
 
 ### Relations components
 
 | Component | Props | Slots | Behavior |
 | --- | --- | --- | --- |
-| `TopRelations` | `relations: PageRelations`, `pages: PageInfoMap`, `links?: Record<string, string>` | none | Renders all relation rows (Up, Down, Is, Has, Prev, Next, Ref, Refi) as labeled link lists. Appends a "Links" row for external links if present. Uses `slugToHref()` from `slugs.ts` for link targets. |
+| `TopRelations` | `relations: PageRelations`, `pages: PageInfoMap`, `links?: Record<string, string>` | none | Legacy relation-list component. Renders relation rows as labeled link lists and can append external links; current page layout uses `MetadataStrip` instead. |
 | `RelationsGraph` | `graph: RelationsGraph`, `pages: PageInfoMap`, `rootSlug: string`, `relationTypes?: EdgeType[]`, `depth?: number`, `height?: string` | none | Calls `buildSubgraphData` to extract a subgraph, serializes it as JSON into a `data-graph` attribute. Client-side JS (via `createGraph` from `@/scripts/graph/renderer`) renders a D3 force-directed graph. Defaults: depth 1, types `['up', 'is', 'next', 'ref']`, height `300px`. Draggable, not zoomable. |
 
 ### Search
@@ -96,17 +98,19 @@ The catch-all route `[...slug].astro` drives all page rendering:
 2. For each page, it calls `render(entry)` to get the `Content` component and extracted `headings`.
 3. It calls `buildRelationsGraph()` which scans all pages and builds the full graph and `PageInfoMap`.
 4. From the graph it derives `breadcrumbs` (via `getBreadcrumbs`) and `relations` (via `getPageRelations`) for the current slug.
-5. All of this, plus frontmatter fields (`title`, `description`, `created`, `modified`, `links`), is passed as props to `Page.astro`.
-6. `Page.astro` distributes props to child components without transformation, except for `description` which it processes into both an HTML and a plain-text variant.
+5. All of this, plus frontmatter fields (`title`, `description`, `created`, `modified`), is passed as props to `Page.astro`.
+6. `Page.astro` distributes props to child components without transformation, except for `description` which it processes into both an HTML and a plain-text variant. External project/resource links are ordinary MDX content rendered through manually imported components such as `LinkCards`.
 
 `buildRelationsGraph()` is memoized, so the graph is built once per build process and reused across all pages.
 
 ## Key files
 
 - `src/layouts/page/Page.astro` -- main layout, prop distribution, heading links script
-- `src/components/` -- all components listed above
+- `src/components/` -- layout and site components
+- `src/components/content/` -- author-facing components imported directly from MDX pages
 - `src/pages/[...slug].astro` -- data flow: collection query, graph build, prop assembly
 - `src/lib/relations.ts` -- `buildGraphFromPages`, `getBreadcrumbs`, `getPageRelations`, type definitions
+- `src/lib/link-cards.ts` -- external link-card normalization for manual MDX components and table helpers
 - `src/lib/relations-graph.ts` -- `buildRelationsGraph` (memoized Astro wrapper)
 - `src/lib/graph-data.ts` -- `buildSubgraphData`, `EdgeType`
 - `src/scripts/popups/` (11 modules), `src/scripts/footnotes.ts`, `src/scripts/toc-scrollspy.ts` -- client-side behavior

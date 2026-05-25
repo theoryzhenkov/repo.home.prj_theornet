@@ -1,8 +1,8 @@
 ---
 scope: L0
 summary: "UI components, layout system, and DSRD design tokens"
-modified: 2026-05-09
-reviewed: 2026-05-09
+modified: 2026-05-24
+reviewed: 2026-05-24
 
 depends:
   - path: README
@@ -56,8 +56,9 @@ The page template lives in `src/layouts/page/Page.astro`, rendered by the catch-
 | `TopRelations.astro` | Display page relations (`part_of`, `has_part`, `is`, `has`, taxonomy, aboutness, authorship, sequence, refs, and legacy hierarchy) |
 | `RelationsGraph.astro` | D3 force-directed graph of all pages |
 | `Search.astro` | Pagefind search integration |
-| `Footnote.astro` / `Footnotes.astro` | Inline footnotes with popup behavior (`footnotes.ts`) |
-| `ContentTable.astro` | Renders page listings |
+| `content/Footnote.astro` / `Footnotes.astro` | Inline footnotes with popup behavior (`footnotes.ts`) |
+| `content/ContentTable.astro` | Renders page listings from MDX pages |
+| `content/LinkCards.astro` | Renders README-style external link cards from MDX pages |
 | `Metadata.astro` | Page metadata display |
 | `Head.astro` | HTML head with meta tags |
 

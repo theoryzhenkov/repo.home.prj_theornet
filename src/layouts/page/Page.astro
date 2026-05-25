@@ -28,7 +28,6 @@ interface Props {
   currentSlug?: string;
   relations?: PageRelations;
   pageInfoMap?: PageInfoMap;
-  links?: Record<string, string>;
   readTimeMinutes?: number;
   backlinks?: BacklinkEntry[];
 }
@@ -44,7 +43,6 @@ const {
   currentSlug = '',
   relations,
   pageInfoMap,
-  links,
   readTimeMinutes,
   backlinks = [],
 } = Astro.props;
@@ -83,7 +81,6 @@ const backlinksCount = backlinks.length || (relations?.refi?.length ?? 0);
               currentSlug={currentSlug}
               relations={relations}
               pageInfoMap={pageInfoMap}
-              links={links}
             />
           </header>
 

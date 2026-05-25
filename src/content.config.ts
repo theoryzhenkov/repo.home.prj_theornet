@@ -35,8 +35,6 @@ const pages = defineCollection({
     prev: z.string().optional(),
     ref: z.array(z.string()).optional(),
     refi: z.array(z.string()).optional(),
-    // External links (type → url)
-    links: z.record(z.string(), z.string()).optional(),
   }).passthrough(),
 });
 

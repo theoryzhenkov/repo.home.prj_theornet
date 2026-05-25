@@ -1,0 +1,40 @@
+---
+import { getGhostNotes } from '@/lib/ghost';
+
+const notes = await getGhostNotes();
+
+function formatDateTime(date: Date): string {
+  return new Intl.DateTimeFormat('en', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  }).format(date);
+}
+---
+
+<section class="ghost-notes-feed" aria-labelledby="ghost-notes-feed-heading">
+  <h2 id="ghost-notes-feed-heading">Notes feed</h2>
+
+  {notes.length > 0 ? (
+    <ol class="ghost-note-list">
+      {notes.map((note) => (
+        <li class="ghost-note">
+          <article>
+            <header class="ghost-note-header">
+              <time datetime={note.published.toISOString()}>{formatDateTime(note.published)}</time>
+              <a class="ghost-note-source no-icon" href={note.sourceUrl} target="_blank" rel="noopener noreferrer">
+                ActivityPub source
+              </a>
+            </header>
+            <div class="ghost-note-content" set:html={note.contentHtml} />
+          </article>
+        </li>
+      ))}
+    </ol>
+  ) : (
+    <p class="ghost-feed-empty">No public notes are available yet.</p>
+  )}
+</section>

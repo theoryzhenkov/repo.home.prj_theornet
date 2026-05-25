@@ -2,8 +2,8 @@
  * Astro-dependent entry point for building the relations graph.
  * Separated from relations.ts so that pure logic can be tested without Astro imports.
  */
-import { getCollection } from 'astro:content';
-import { buildGraphFromPages, type RelationsGraph, type PageInfoMap, type PageInput } from './relations';
+import { buildGraphFromPages, type RelationsGraph, type PageInfoMap } from './relations';
+import { getAllSitePageInputs } from './site-pages';
 
 let cached: { graph: RelationsGraph; pages: PageInfoMap } | null = null;
 
@@ -16,7 +16,7 @@ export async function buildRelationsGraph(): Promise<{
   pages: PageInfoMap;
 }> {
   if (cached) return cached;
-  const allPages = await getCollection('pages');
-  cached = buildGraphFromPages(allPages as PageInput[]);
+  const allPages = await getAllSitePageInputs();
+  cached = buildGraphFromPages(allPages);
   return cached;
 }

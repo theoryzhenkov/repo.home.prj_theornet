@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
-import { getCollection } from 'astro:content';
+import { getAllSitePageInputs } from '@/lib/site-pages';
+
 export const GET: APIRoute = async () => {
-  const pages = await getCollection('pages');
+  const pages = await getAllSitePageInputs();
 
   const index: Record<string, {
     title: string;
@@ -14,11 +15,15 @@ export const GET: APIRoute = async () => {
     const path = page.id === 'index' ? '/' : `/${page.id}`;
     index[path] = {
       title: page.data.title,
-      description: page.data.description,
-      maturity: page.data.maturity,
+      description: 'description' in page.data && typeof page.data.description === 'string'
+        ? page.data.description
+        : undefined,
+      maturity: 'maturity' in page.data && typeof page.data.maturity === 'string'
+        ? page.data.maturity
+        : undefined,
     };
   }
-  
+
   return new Response(JSON.stringify(index, null, 2), {
     headers: {
       'Content-Type': 'application/json',

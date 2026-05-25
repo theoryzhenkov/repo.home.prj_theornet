@@ -1,0 +1,41 @@
+---
+import { resolveLinkCards, type LinkCardInput, type LinkCardKind } from '@/lib/link-cards';
+
+interface Props {
+  links: LinkCardInput[];
+  label?: string;
+}
+
+const { links, label = 'External links' } = Astro.props;
+const linkCards = resolveLinkCards(links);
+const iconLabels: Record<LinkCardKind, string> = {
+  github: 'gh',
+  chrome: 'cr',
+  firefox: 'ff',
+  release: 'rel',
+  website: 'web',
+  docs: 'doc',
+  other: '↗',
+};
+---
+
+{linkCards.length > 0 && (
+  <nav class="external-links" aria-label={label}>
+    {linkCards.map((link) => (
+      <a
+        class="external-link-card no-icon"
+        data-link-kind={link.kind}
+        href={link.href}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span class="external-link-mark" aria-hidden="true">{iconLabels[link.kind]}</span>
+        <span class="external-link-text">
+          <span class="external-link-label">{link.label}</span>
+          <span class="external-link-host">{link.detail}</span>
+        </span>
+        <span class="external-link-arrow" aria-hidden="true">↗</span>
+      </a>
+    ))}
+  </nav>
+)}
