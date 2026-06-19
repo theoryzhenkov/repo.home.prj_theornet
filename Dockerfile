@@ -4,6 +4,7 @@ FROM oven/bun:1-alpine AS builder
 ARG GHOST_CONTENT_API_URL=https://ghost.theor.net/ghost/api/content
 ARG GHOST_CONTENT_API_KEY
 ARG GHOST_ACTIVITYPUB_OUTBOX_URL=https://ghost.theor.net/.ghost/activitypub/outbox/index
+ARG GHOST_CONTENT_CACHE_BUST=local
 
 ENV GHOST_CONTENT_API_URL=$GHOST_CONTENT_API_URL
 ENV GHOST_CONTENT_API_KEY=$GHOST_CONTENT_API_KEY
@@ -20,8 +21,8 @@ RUN bun install --frozen-lockfile
 # Copy source files
 COPY . .
 
-# Build the site
-RUN bun run build
+# Build the site. The cache-bust value ensures Ghost-triggered rebuilds refetch remote content.
+RUN echo "$GHOST_CONTENT_CACHE_BUST" > /tmp/ghost-content-cache-bust && bun run build
 
 # Production stage
 FROM nginx:alpine AS production

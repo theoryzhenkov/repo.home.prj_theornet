@@ -23,7 +23,7 @@ Two-stage Dockerfile: `oven/bun:1-alpine` builds, `nginx:alpine` serves. Custom 
 
 ## Deployment
 
-Docker images are pushed to GHCR via CI. The workflow runs on pushes to `main`, can be triggered manually with `workflow_dispatch`, and also accepts a future `repository_dispatch` event of type `ghost-content-changed` for Ghost-driven rebuilds. The host is a Hetzner server running NixOS. DNS is managed with Terraform in the separate [theor.net-infra](https://github.com/theoryzhenkov/theor.net-infra) repo. Domain registered through Porkbun.
+Docker images are pushed to GHCR via CI. The workflow runs on pushes to `main`, can be triggered manually with `workflow_dispatch`, and also accepts a future `repository_dispatch` event of type `ghost-content-changed` for Ghost-driven rebuilds. Each workflow run passes a cache-bust build argument so Docker does not reuse an old `bun run build` layer when only remote Ghost content changed. The host is a Hetzner server running NixOS. DNS is managed with Terraform in the separate [theor.net-infra](https://github.com/theoryzhenkov/theor.net-infra) repo. Domain registered through Porkbun.
 
 GitHub Actions configuration:
 

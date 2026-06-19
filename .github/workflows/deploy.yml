@@ -51,6 +51,7 @@ jobs:
             GHOST_CONTENT_API_URL=${{ vars.GHOST_CONTENT_API_URL || 'https://ghost.theor.net/ghost/api/content' }}
             GHOST_CONTENT_API_KEY=${{ secrets.GHOST_CONTENT_API_KEY }}
             GHOST_ACTIVITYPUB_OUTBOX_URL=${{ vars.GHOST_ACTIVITYPUB_OUTBOX_URL || 'https://ghost.theor.net/.ghost/activitypub/outbox/index' }}
+            GHOST_CONTENT_CACHE_BUST=${{ github.run_id }}-${{ github.run_attempt }}
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/home.prj_theornet:buildcache
           cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/home.prj_theornet:buildcache,mode=max
 
