@@ -43,8 +43,8 @@ brand-generate:
 
 # Build the production Docker image.
 docker-build:
-    docker build -t home-theor-net .
+    docker build -t home.prj_theornet .
 
 # Build and serve the production Docker image on http://localhost:8080.
 docker-run: docker-build
-    docker run --rm -p 8080:80 home-theor-net
+    docker run --rm -p 8080:80 home.prj_theornet

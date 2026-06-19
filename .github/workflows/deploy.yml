@@ -34,7 +34,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ghcr.io/${{ github.repository }}/home-theor-net
+          images: ghcr.io/${{ github.repository }}/home.prj_theornet
           tags: |
             type=sha,prefix=
             type=raw,value=latest
@@ -51,9 +51,9 @@ jobs:
             GHOST_CONTENT_API_URL=${{ vars.GHOST_CONTENT_API_URL || 'https://ghost.theor.net/ghost/api/content' }}
             GHOST_CONTENT_API_KEY=${{ secrets.GHOST_CONTENT_API_KEY }}
             GHOST_ACTIVITYPUB_OUTBOX_URL=${{ vars.GHOST_ACTIVITYPUB_OUTBOX_URL || 'https://ghost.theor.net/.ghost/activitypub/outbox/index' }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/home-theor-net:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/home-theor-net:buildcache,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/home.prj_theornet:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/home.prj_theornet:buildcache,mode=max
 
       - name: Image pushed
         run: |
-          echo "✔ Image pushed to ghcr.io/${{ github.repository }}/home-theor-net:latest"
+          echo "✔ Image pushed to ghcr.io/${{ github.repository }}/home.prj_theornet:latest"
