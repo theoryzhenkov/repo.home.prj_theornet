@@ -23,7 +23,7 @@ A project-native content CLI creates, lists, edits, archives, and deletes local 
 
 Every MDX page has YAML frontmatter with required `title` and `created` fields, plus optional relation fields. The schema is defined with Zod in `src/content.config.ts` and uses `.passthrough()` to allow arbitrary extra fields.
 
-Ghost pages/posts can carry equivalent site metadata in the Ghost `frontmatter` field. The build accepts YAML or JSON. By default, Ghost posts become pages under `blog/{ghost-slug}` with `part_of: blog` and `is: classes/blog-note`; Ghost pages use their Ghost slug with `part_of: index` and `is: classes/page`. The Ghost metadata field can override the home route with `homePath`/`homeSlug` and can provide normal relation keys (`part_of`, `is`, `subject`, etc.).
+Ghost pages/posts can carry equivalent site metadata in the Ghost `frontmatter` field. The build accepts YAML or JSON. By default, Ghost posts and Ghost pages both use their Ghost slug as a root-level home route. Ghost posts keep `part_of: blog` and `is: classes/blog-note`; Ghost pages keep `part_of: index` and `is: classes/page`. The Ghost metadata field can override the home route with `homePath`/`homeSlug` and can provide normal relation keys (`part_of`, `is`, `subject`, etc.).
 
 The website relation model is a practical subset of the Obsidian PKM ontology: routes and folders are browsing affordances, while frontmatter relations carry semantic structure. New content should prefer `part_of` / `has_part` for composition over legacy `up` / `down` hierarchy fields. Collection pages should query semantic metadata (for example, `is: classes/project`) instead of deriving membership from directories.
 

@@ -265,7 +265,7 @@ export function ghostContentToHomeEntry(item: GhostContentItem, source: GhostHom
     ?? slugFromPath(frontmatter.home_path)
     ?? slugFromPath(frontmatter.homeSlug)
     ?? slugFromPath(frontmatter.home_slug)
-    ?? (source === 'ghost-post' ? `blog/${item.slug}` : item.slug);
+    ?? item.slug;
 
   const title = stringValue(frontmatter.title) ?? item.title;
   const description = stringValue(frontmatter.description)

@@ -28,7 +28,7 @@ The site generates fully static HTML at build time (`output: 'static'` in `astro
 
 `[...slug].astro` defines `getStaticPaths()` which combines local MDX pages with Ghost-backed pages/posts. Local pages come from `getCollection('pages')`; the entry with `id === 'index'` is excluded because `index.astro` handles `/`. The slug corresponds to the file path under `src/content/pages/` with the `.mdx` extension stripped -- so `src/content/pages/projects/blank.mdx` becomes the slug `projects/blank` and the URL `/projects/blank/`.
 
-Ghost pages/posts come from `src/lib/site-pages.ts`, which wraps `src/lib/ghost.ts`. Ghost posts default to `/blog/{ghost-slug}/`. Ghost pages default to `/{ghost-slug}/`. Ghost `frontmatter` metadata can override the home route with `homePath` or `homeSlug`. Local MDX slugs win over Ghost-derived slugs to prevent duplicate static paths.
+Ghost pages/posts come from `src/lib/site-pages.ts`, which wraps `src/lib/ghost.ts`. Ghost posts and pages both default to `/{ghost-slug}/`; blog membership is expressed by metadata (`is: classes/blog-note`, `part_of: blog`) rather than by a `/blog/` path prefix. Ghost `frontmatter` metadata can override the home route with `homePath` or `homeSlug`. Local MDX slugs win over Ghost-derived slugs to prevent duplicate static paths.
 
 ## Relations graph per page
 

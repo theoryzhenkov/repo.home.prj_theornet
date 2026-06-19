@@ -25,7 +25,7 @@ describe('parseGhostFrontmatter', () => {
 });
 
 describe('ghostContentToHomeEntry', () => {
-  it('maps Ghost posts into blog pages by default', () => {
+  it('maps Ghost posts to root routes by default while preserving blog relations', () => {
     const entry = ghostContentToHomeEntry({
       id: 'post-1',
       title: 'A post',
@@ -35,7 +35,7 @@ describe('ghostContentToHomeEntry', () => {
       url: 'https://ghost.theor.net/a-post/',
     }, 'ghost-post');
 
-    expect(entry.id).toBe('blog/a-post');
+    expect(entry.id).toBe('a-post');
     expect(entry.data.part_of).toEqual([{ page: 'blog' }]);
     expect(entry.data.is).toEqual([{ page: 'classes/blog-note' }]);
     expect(entry.data.created.toISOString()).toBe('2026-06-01T00:00:00.000Z');
