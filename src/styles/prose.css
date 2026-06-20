@@ -13,11 +13,11 @@
     --prose-h6-size: calc(0.875rem * var(--prose-scale));
     --prose-h1-margin-bottom: calc(theme(spacing.3) * var(--prose-space-scale));
     --prose-h2-margin-top: calc(1.5rem * var(--prose-space-scale));
-    --prose-h2-margin-bottom: calc(0.5rem * var(--prose-space-scale));
+    --prose-h2-margin-bottom: calc(0.875rem * var(--prose-space-scale));
     --prose-h3-margin-top: calc(1rem * var(--prose-space-scale));
-    --prose-h3-margin-bottom: calc(0.25rem * var(--prose-space-scale));
+    --prose-h3-margin-bottom: calc(0.625rem * var(--prose-space-scale));
     --prose-h4-margin-top: calc(0.75rem * var(--prose-space-scale));
-    --prose-h4-margin-bottom: calc(0.25rem * var(--prose-space-scale));
+    --prose-h4-margin-bottom: calc(0.5rem * var(--prose-space-scale));
     --prose-block-space-compact: calc(0.75rem * var(--prose-space-scale));
     --prose-block-space: calc(1.5rem * var(--prose-space-scale));
     --prose-list-indent: calc(1.25rem * var(--prose-space-scale));
