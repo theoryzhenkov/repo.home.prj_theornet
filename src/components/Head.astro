@@ -1,13 +1,15 @@
 ---
 import '@/styles/global.css';
 import { getThemeBootScript } from '@/scripts/theme';
+import type { GhostStatsScriptConfig } from '@/lib/ghost-analytics';
 
 interface Props {
   title: string;
   description?: string;
+  ghostStats?: GhostStatsScriptConfig;
 }
 
-const { title, description } = Astro.props;
+const { title, description, ghostStats } = Astro.props;
 
 function currentPageName(pathname: string) {
   const segments = pathname.split('/').filter(Boolean);
@@ -41,4 +43,19 @@ const themeBootScript = getThemeBootScript();
 
     initializeTheme();
   </script>
+
+  {ghostStats && (
+    <script
+      is:inline
+      defer
+      src={ghostStats.scriptUrl}
+      data-stringify-payload="false"
+      data-datasource={ghostStats.datasource}
+      data-storage="localStorage"
+      data-host={ghostStats.endpoint}
+      tb_site_uuid={ghostStats.siteUuid}
+      tb_post_uuid={ghostStats.postUuid}
+      tb_post_type={ghostStats.postType}
+    ></script>
+  )}
 </head>

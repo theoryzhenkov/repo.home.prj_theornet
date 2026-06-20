@@ -5,6 +5,7 @@ import { getBreadcrumbs, getPageRelations } from '@/lib/relations';
 import { buildRelationsGraph } from '@/lib/relations-graph';
 import { getGhostRouteEntries, getGhostRouteEntry } from '@/lib/site-pages';
 import { addHeadingIds, estimateHtmlReadTimeMinutes, extractHtmlHeadings } from '@/lib/ghost';
+import { getGhostStatsConfig } from '@/lib/ghost-analytics';
 
 export async function getStaticPaths() {
   const pages = await getCollection('pages');
@@ -36,6 +37,7 @@ const data = entry ? entry.data : ghostEntry!.data;
 const body = entry ? (entry.body ?? '') : (ghostEntry?.body ?? '');
 const ghostHtml = ghostEntry ? addHeadingIds(ghostEntry.html) : '';
 const baseHeadings = rendered?.headings ?? (ghostEntry ? extractHtmlHeadings(ghostHtml) : []);
+const ghostStats = ghostEntry ? await getGhostStatsConfig(ghostEntry.ghostStats) : undefined;
 
 // Build relations graph
 const { graph, pages } = await buildRelationsGraph();
@@ -104,6 +106,7 @@ const backlinks = (relations?.refi ?? []).map((refSlug) => {
   pageInfoMap={pages}
   readTimeMinutes={readTimeMinutes}
   backlinks={backlinks}
+  ghostStats={ghostStats}
 >
   {Content ? <Content /> : <Fragment set:html={ghostHtml} />}
 </Page>

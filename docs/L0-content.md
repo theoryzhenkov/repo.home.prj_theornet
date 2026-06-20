@@ -1,8 +1,8 @@
 ---
 scope: L0
 summary: "Content model: MDX pages, relation graph, schema"
-modified: 2026-06-19
-reviewed: 2026-06-19
+modified: 2026-06-20
+reviewed: 2026-06-20
 depends:
   - path: README
 dependents:
@@ -23,7 +23,7 @@ A project-native content CLI creates, lists, edits, archives, and deletes local 
 
 Every MDX page has YAML frontmatter with required `title` and `created` fields, plus optional relation fields. The schema is defined with Zod in `src/content.config.ts` and uses `.passthrough()` to allow arbitrary extra fields.
 
-Ghost pages/posts can carry equivalent site metadata in the Ghost `frontmatter` field. The build accepts YAML or JSON. By default, Ghost posts and Ghost pages both use their Ghost slug as a root-level home route. Ghost posts keep `part_of: blog` and `is: classes/blog-note`; Ghost pages keep `part_of: index` and `is: classes/page`. The Ghost metadata field can override the home route with `homePath`/`homeSlug` and can provide normal relation keys (`part_of`, `is`, `subject`, etc.).
+Ghost pages/posts can carry equivalent site metadata in the Ghost `frontmatter` field. The build accepts YAML or JSON. By default, Ghost posts and Ghost pages both use their Ghost slug as a root-level home route. Ghost posts keep `part_of: blog` and `is: classes/blog-note`; Ghost pages keep `part_of: index` and `is: classes/page`. The Ghost metadata field can override the home route with `homePath`/`homeSlug`, can set an explicit `description`, and can provide normal relation keys (`part_of`, `is`, `subject`, etc.). Ghost excerpts and body text are not promoted to Home metadata.
 
 The website relation model is a practical subset of the Obsidian PKM ontology: routes and folders are browsing affordances, while frontmatter relations carry semantic structure. New content should prefer `part_of` / `has_part` for composition over legacy `up` / `down` hierarchy fields. Collection pages should query semantic metadata (for example, `is: classes/project`) instead of deriving membership from directories.
 
@@ -76,6 +76,8 @@ just content delete SLUG
 
 Ghost content is loaded by `src/lib/ghost.ts` and merged with local MDX inputs in `src/lib/site-pages.ts`. The merged page set feeds the relations graph, relation pages, popup index, and catch-all route generation. Local MDX slugs win if a Ghost page/post maps to the same home slug.
 
+Ghost-backed pages retain their Ghost `uuid` and content type so Home can attribute page views back to Ghost traffic analytics. When `GHOST_STATS_ENDPOINT` is configured, the catch-all route fetches Ghost's public site UUID and renders Ghost's stock `ghost-stats.min.js` tracker with `tb_site_uuid`, `tb_post_uuid`, and `tb_post_type` attributes. Local MDX pages do not emit Ghost analytics.
+
 Environment variables:
 
 | Variable | Required | Purpose |
@@ -83,6 +85,10 @@ Environment variables:
 | `GHOST_CONTENT_API_URL` | no | Content API base URL; defaults to `https://ghost.theor.net/ghost/api/content` |
 | `GHOST_CONTENT_API_KEY` | for Ghost pages/posts | Public Ghost Content API key used at build time |
 | `GHOST_ACTIVITYPUB_OUTBOX_URL` | no | Public ActivityPub outbox URL for the `/notes/` feed |
+| `GHOST_STATS_ENDPOINT` | for Ghost analytics | Tracker endpoint used by `ghost-stats.min.js`; production uses the same-origin `/.ghost/analytics/api/v1/page_hit` path |
+| `GHOST_STATS_SITE_API_URL` | no | Public Ghost Admin site endpoint used to read `site_uuid`; defaults to `https://ghost.theor.net/ghost/api/admin/site/` |
+| `GHOST_STATS_SCRIPT_URL` | no | Ghost stats script URL; defaults to `https://ghost.theor.net/public/ghost-stats.min.js` |
+| `GHOST_STATS_DATASOURCE` | no | Tinybird datasource name; defaults to `analytics_events` |
 
 ActivityPub notes are not generated as individual local pages. The `/notes/` MDX page renders a continuous feed from the public Ghost ActivityPub outbox, and each note links to its ActivityPub object as the source of record.
 

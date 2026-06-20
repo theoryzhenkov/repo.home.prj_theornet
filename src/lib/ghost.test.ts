@@ -28,6 +28,7 @@ describe('ghostContentToHomeEntry', () => {
   it('maps Ghost posts to root routes by default while preserving blog relations', () => {
     const entry = ghostContentToHomeEntry({
       id: 'post-1',
+      uuid: 'post-uuid-1',
       title: 'A post',
       slug: 'a-post',
       html: '<p>Hello.</p>',
@@ -38,12 +39,40 @@ describe('ghostContentToHomeEntry', () => {
     expect(entry.id).toBe('a-post');
     expect(entry.data.part_of).toEqual([{ page: 'blog' }]);
     expect(entry.data.is).toEqual([{ page: 'classes/blog-note' }]);
+    expect(entry.data.description).toBeUndefined();
+    expect(entry.ghostStats).toEqual({ postUuid: 'post-uuid-1', postType: 'post' });
     expect(entry.data.created.toISOString()).toBe('2026-06-01T00:00:00.000Z');
+  });
+
+  it('uses explicit frontmatter descriptions without inferring from Ghost excerpts', () => {
+    const withoutDescription = ghostContentToHomeEntry({
+      id: 'post-1',
+      title: 'A post',
+      slug: 'a-post',
+      html: '<p>The body should not become metadata.</p>',
+      excerpt: 'Ghost generated excerpt should be ignored.',
+      custom_excerpt: 'Ghost custom excerpt should also be ignored.',
+      published_at: '2026-06-01T00:00:00.000Z',
+    }, 'ghost-post');
+
+    const withDescription = ghostContentToHomeEntry({
+      id: 'post-2',
+      title: 'A post with metadata',
+      slug: 'a-post-with-metadata',
+      html: '<p>The body should not become metadata.</p>',
+      excerpt: 'Ghost generated excerpt should be ignored.',
+      frontmatter: 'description: Explicit metadata description.',
+      published_at: '2026-06-01T00:00:00.000Z',
+    }, 'ghost-post');
+
+    expect(withoutDescription.data.description).toBeUndefined();
+    expect(withDescription.data.description).toBe('Explicit metadata description.');
   });
 
   it('lets frontmatter override the home route and relations', () => {
     const entry = ghostContentToHomeEntry({
       id: 'page-1',
+      uuid: 'page-uuid-1',
       title: 'Ghost About',
       slug: 'about-me',
       html: '<p>Hello.</p>',
@@ -55,6 +84,7 @@ describe('ghostContentToHomeEntry', () => {
     expect(entry.data.maturity).toBe('developed');
     expect(entry.data.part_of).toEqual([{ page: 'index' }]);
     expect(entry.data.subject).toEqual([{ page: 'concepts/software' }]);
+    expect(entry.ghostStats).toEqual({ postUuid: 'page-uuid-1', postType: 'page' });
   });
 });
 

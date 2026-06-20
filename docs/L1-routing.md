@@ -2,7 +2,7 @@
 scope: L1
 summary: "Route structure, static path generation, and remark plugin pipeline"
 modified: 2026-06-19
-reviewed: 2026-06-19
+reviewed: 2026-06-20
 depends:
   - path: docs/L0-content
   - path: docs/L0-ui

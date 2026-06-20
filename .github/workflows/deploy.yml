@@ -51,6 +51,10 @@ jobs:
             GHOST_CONTENT_API_URL=${{ vars.GHOST_CONTENT_API_URL || 'https://ghost.theor.net/ghost/api/content' }}
             GHOST_CONTENT_API_KEY=${{ secrets.GHOST_CONTENT_API_KEY }}
             GHOST_ACTIVITYPUB_OUTBOX_URL=${{ vars.GHOST_ACTIVITYPUB_OUTBOX_URL || 'https://ghost.theor.net/.ghost/activitypub/outbox/index' }}
+            GHOST_STATS_ENDPOINT=${{ vars.GHOST_STATS_ENDPOINT || '/.ghost/analytics/api/v1/page_hit' }}
+            GHOST_STATS_SITE_API_URL=${{ vars.GHOST_STATS_SITE_API_URL || 'https://ghost.theor.net/ghost/api/admin/site/' }}
+            GHOST_STATS_SCRIPT_URL=${{ vars.GHOST_STATS_SCRIPT_URL || 'https://ghost.theor.net/public/ghost-stats.min.js' }}
+            GHOST_STATS_DATASOURCE=${{ vars.GHOST_STATS_DATASOURCE || 'analytics_events' }}
             GHOST_CONTENT_CACHE_BUST=${{ github.run_id }}-${{ github.run_attempt }}
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/home.prj_theornet:buildcache
           cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/home.prj_theornet:buildcache,mode=max
