@@ -392,68 +392,6 @@
       padding-left: 0.75rem;
     }
 
-    /* ─── Ghost editor cards ─── */
-    & .kg-card {
-      margin-block: var(--prose-block-space);
-    }
-
-    & .kg-callout-card {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: calc(0.75rem * var(--prose-space-scale));
-      align-items: start;
-      padding: var(--prose-frame-padding-sm-block) var(--prose-frame-padding-sm-inline);
-      color: var(--color-text);
-      background-color: color-mix(in oklch, var(--color-bg-subtle) 72%, white);
-      border: 1px solid color-mix(in oklch, var(--color-border-subtle) 82%, white);
-      border-left: 3px solid var(--color-accent);
-      border-radius: var(--radius-md);
-    }
-
-    & .kg-callout-card-white {
-      background-color: color-mix(in oklch, var(--color-bg) 96%, white);
-    }
-
-    & .kg-callout-card-blue {
-      border-left-color: var(--color-link);
-      background-color: color-mix(in oklch, var(--color-link) 8%, var(--color-bg));
-    }
-
-    & .kg-callout-card-green {
-      border-left-color: var(--color-status-stable);
-      background-color: color-mix(in oklch, var(--color-status-stable) 8%, var(--color-bg));
-    }
-
-    & .kg-callout-card-yellow {
-      border-left-color: var(--color-status-draft);
-      background-color: color-mix(in oklch, var(--color-status-draft) 10%, var(--color-bg));
-    }
-
-    & .kg-callout-card-red {
-      border-left-color: var(--color-error);
-      background-color: color-mix(in oklch, var(--color-error) 8%, var(--color-bg));
-    }
-
-    & .kg-callout-card-pink,
-    & .kg-callout-card-purple,
-    & .kg-callout-card-accent {
-      border-left-color: var(--color-accent);
-      background-color: color-mix(in oklch, var(--color-accent) 8%, var(--color-bg));
-    }
-
-    & .kg-callout-emoji {
-      line-height: 1.35;
-      font-size: calc(1.1rem * var(--prose-scale));
-    }
-
-    & .kg-callout-text > :first-child {
-      margin-top: 0;
-    }
-
-    & .kg-callout-text > :last-child {
-      margin-bottom: 0;
-    }
-
     /* ─── Details / Summary ─── */
     & details {
       margin-block: var(--prose-block-space);

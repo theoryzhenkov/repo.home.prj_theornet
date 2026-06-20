@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Visual treatment for embedded content types: callouts, code, images, iframes, details, tables, blockquotes, and TODO markers"
-modified: 2026-03-19
-reviewed: 2026-03-19
+modified: 2026-06-20
+reviewed: 2026-06-20
 depends:
   - path: docs/L1-design-vision
   - path: docs/L1-styles
@@ -51,7 +51,7 @@ Callouts are structurally important interruptions -- they break the prose flow t
 ### Title bar
 
 - **Typography.** Monospace (`var(--font-mono)`), `var(--text-sm)` (0.875rem), `font-weight: 600`. The mono face signals "metadata/system information," consistent with how the site uses monospace for non-prose elements.
-- **Icon.** No icon. Icons add visual clutter and require maintaining an icon set that stays coherent across themes. The left border color plus the title text ("Note," "Warning," etc.) provide sufficient type identification. If icons are added later, they should be inline SVG at `1em` size, monochrome, placed before the title text.
+- **Icon.** Optional inline Lucide-style SVG at `1em`, monochrome, placed before the title text. Icons are allowed when authored by Ghost/Home integrations but should remain secondary to the left border and title text; no emoji icons.
 - **Separator.** A `1px solid var(--color-border-subtle)` line between the title and the body. This creates a micro-hierarchy within the callout without using additional background colors.
 
 ### Body
@@ -342,7 +342,7 @@ Every visual property maps to an existing design token. No raw color values, no 
 | column-width | MUST | No embedded element renders wider than `var(--width-content)` |
 | border-radius | MUST | All framed embedded elements use `var(--radius-md)` or `var(--radius-sm)` (inline elements) |
 | callout-left-border | MUST | Callouts display a 3px left border in their type-specific color |
-| callout-no-icon | SHOULD | Callouts use title text and border color as type signal, not icons |
+| callout-icon-restraint | SHOULD | Callout icons, when present, are monochrome inline SVGs and remain secondary to title text and border color |
 | code-bg-distinct | MUST | Code blocks use `var(--color-bg-muted)`, visually distinct from callout `var(--color-bg-subtle)` |
 | code-overflow-scroll | MUST | Code blocks with horizontal overflow are scrollable, not clipped or wrapped |
 | code-copy-hover | SHOULD | Copy button appears on hover over the code block |

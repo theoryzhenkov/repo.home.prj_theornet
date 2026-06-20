@@ -1217,11 +1217,30 @@
   }
 
   [data-callout-title] {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     font-weight: 600;
     padding: 0.75rem 1rem 0;
     color: var(--color-text);
+  }
+
+  [data-callout-icon] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    color: currentColor;
+    flex: 0 0 auto;
+
+    & svg {
+      width: 1em;
+      height: 1em;
+      stroke: currentColor;
+    }
   }
 
   /* Separator between title and body */
