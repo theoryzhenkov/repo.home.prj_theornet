@@ -1,7 +1,8 @@
 ---
-import { getCollection, render } from 'astro:content';
 import Page from '@layouts/page/Page.astro';
 import ContentTable from '@components/content/ContentTable.astro';
+import LinkCards from '@components/content/LinkCards.astro';
+import GhostNotesFeed from '@components/ghost/GhostNotesFeed.astro';
 import { getBreadcrumbs, getPageRelations } from '@/lib/relations';
 import { buildRelationsGraph } from '@/lib/relations-graph';
 import { getGhostRouteEntries, getGhostRouteEntry } from '@/lib/site-pages';
@@ -9,80 +10,33 @@ import { addHeadingIds, estimateHtmlReadTimeMinutes, extractHtmlHeadings } from 
 import { parseHomeShortcodes } from '@/lib/home-shortcodes';
 
 export async function getStaticPaths() {
-  const pages = await getCollection('pages');
-  const localPaths = pages
-    .filter((page) => page.id !== 'index')
-    .map((page) => ({
-      params: { slug: page.id },
+  return (await getGhostRouteEntries())
+    .filter((entry) => entry.id !== 'index')
+    .map((entry) => ({
+      params: { slug: entry.id },
     }));
-
-  const ghostPaths = (await getGhostRouteEntries()).map((entry) => ({
-    params: { slug: entry.id },
-  }));
-
-  return [...localPaths, ...ghostPaths];
 }
 
 const { slug } = Astro.params;
-const localPages = await getCollection('pages');
-const entry = localPages.find((page) => page.id === slug);
-const ghostEntry = entry ? undefined : await getGhostRouteEntry(slug!);
+const ghostEntry = await getGhostRouteEntry(slug!);
 
-if (!entry && !ghostEntry) {
+if (!ghostEntry) {
   return Astro.redirect('/404');
 }
 
-const rendered = entry ? await render(entry) : undefined;
-const Content = rendered?.Content;
-const data = entry ? entry.data : ghostEntry!.data;
-const body = entry ? (entry.body ?? '') : (ghostEntry?.body ?? '');
-const ghostHtml = ghostEntry ? addHeadingIds(ghostEntry.html) : '';
-const ghostBlocks = ghostEntry ? parseHomeShortcodes(ghostHtml) : [];
-const baseHeadings = rendered?.headings ?? (ghostEntry ? extractHtmlHeadings(ghostHtml) : []);
+const data = ghostEntry.data;
+const body = ghostEntry.body ?? '';
+const ghostHtml = addHeadingIds(ghostEntry.html);
+const ghostBlocks = parseHomeShortcodes(ghostHtml);
+const baseHeadings = extractHtmlHeadings(ghostHtml);
 
 // Build relations graph
 const { graph, pages } = await buildRelationsGraph();
 const breadcrumbs = getBreadcrumbs(slug!, graph, pages);
 const relations = getPageRelations(slug!, graph);
+const readTimeMinutes = estimateHtmlReadTimeMinutes(ghostHtml);
 
-// Compute read time from body word count
-const wordCount = body ? body.split(/\s+/).filter(Boolean).length : 0;
-const readTimeMinutes = ghostEntry
-  ? estimateHtmlReadTimeMinutes(ghostHtml)
-  : Math.max(1, Math.round(wordCount / 238));
-
-// Compute per-heading word counts for TOC
-const headingPositions: { depth: number; slug: string; text: string; position: number }[] = [];
-const headingRegex = /^(#{2,3})\s+(.+)$/gm;
-let match;
-while ((match = headingRegex.exec(body)) !== null) {
-  const depth = match[1].length;
-  const text = match[2].trim();
-  const headingSlug = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  headingPositions.push({ depth, slug: headingSlug, text, position: match.index });
-}
-
-const enrichedHeadings = ghostEntry ? baseHeadings : baseHeadings.map((h) => {
-  if (h.depth < 2 || h.depth > 3) return h;
-
-  // Find this heading in the source positions
-  const idx = headingPositions.findIndex((hp) => hp.slug === h.slug);
-  if (idx === -1) return h;
-
-  // Find next heading of same or higher level
-  const start = headingPositions[idx].position;
-  let end = body.length;
-  for (let i = idx + 1; i < headingPositions.length; i++) {
-    if (headingPositions[i].depth <= headingPositions[idx].depth) {
-      end = headingPositions[i].position;
-      break;
-    }
-  }
-
-  const sectionText = body.slice(start, end);
-  const sectionWordCount = sectionText.split(/\s+/).filter(Boolean).length;
-  return { ...h, wordCount: sectionWordCount };
-});
+const enrichedHeadings = baseHeadings;
 
 // Build backlinks from refi
 const backlinks = (relations?.refi ?? []).map((refSlug) => {
@@ -114,14 +68,15 @@ const defaultContentTableColumns = [
   readTimeMinutes={readTimeMinutes}
   backlinks={backlinks}
 >
-  {Content ? <Content /> : ghostBlocks.map((block) => (
-    block.type === 'html'
-      ? <Fragment set:html={block.html} />
-      : <ContentTable
-          path={block.path}
-          classSlug={block.classSlug}
-          columns={defaultContentTableColumns}
-          defaultSort={{ field: block.classSlug ? 'created' : 'title', direction: block.classSlug ? 'desc' : 'asc' }}
-        />
-  ))}
+  {ghostBlocks.map((block) => {
+    if (block.type === 'html') return <Fragment set:html={block.html} />;
+    if (block.type === 'notes-feed') return <GhostNotesFeed />;
+    if (block.type === 'link-cards') return <LinkCards links={block.links as any} />;
+    return <ContentTable
+      path={block.path}
+      classSlug={block.classSlug}
+      columns={defaultContentTableColumns}
+      defaultSort={{ field: block.classSlug ? 'created' : 'title', direction: block.classSlug ? 'desc' : 'asc' }}
+    />;
+  })}
 </Page>

@@ -15,4 +15,14 @@ describe('parseHomeShortcodes', () => {
       { type: 'content-table', classSlug: 'classes/project' },
     ]);
   });
+
+  it('parses notes feed and link card shortcodes', () => {
+    expect(parseHomeShortcodes('::notes-feed{}\n::link-cards{github="https://github.com/x" chrome="https://chrome.example"}')).toEqual([
+      { type: 'notes-feed' },
+      { type: 'link-cards', links: [
+        { kind: 'github', href: 'https://github.com/x' },
+        { kind: 'chrome', href: 'https://chrome.example' },
+      ] },
+    ]);
+  });
 });

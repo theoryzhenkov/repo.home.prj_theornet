@@ -93,6 +93,14 @@ function quotedProp(componentSource: string, propName: string): string | undefin
   return componentSource.match(pattern)?.[1];
 }
 
+function linkCardsAttrs(componentSource: string): string {
+  const attrs: string[] = [];
+  for (const match of componentSource.matchAll(/kind:\s*['"]([^'"]+)['"]\s*,\s*href:\s*['"]([^'"]+)['"]/g)) {
+    attrs.push(`${match[1]}="${match[2]}"`);
+  }
+  return attrs.join(' ');
+}
+
 function replaceMdxComponents(body: string): { body: string; componentUsages: string[]; warnings: string[] } {
   const componentUsages = new Set<string>();
   const warnings: string[] = [];
@@ -107,6 +115,16 @@ function replaceMdxComponents(body: string): { body: string; componentUsages: st
       ].filter(Boolean).join(' ');
       warnings.push(`Replaced self-closing MDX component <${name} /> with ::content-table shortcode.`);
       return `\n\n::content-table{${attrs}}\n\n`;
+    }
+
+    if (name === 'GhostNotesFeed') {
+      warnings.push(`Replaced self-closing MDX component <${name} /> with ::notes-feed shortcode.`);
+      return '\n\n::notes-feed{}\n\n';
+    }
+
+    if (name === 'LinkCards') {
+      warnings.push(`Replaced self-closing MDX component <${name} /> with ::link-cards shortcode.`);
+      return `\n\n::link-cards{${linkCardsAttrs(full)}}\n\n`;
     }
 
     warnings.push(`Replaced self-closing MDX component <${name} /> with an import placeholder.`);
