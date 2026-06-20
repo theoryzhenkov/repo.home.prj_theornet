@@ -103,6 +103,25 @@ describe('activityPubActivitiesToNotes', () => {
     expect(notes).toHaveLength(1);
     expect(notes[0].sourceUrl).toBe('https://ghost.theor.net/.ghost/activitypub/note/1');
     expect(notes[0].contentHtml).toBe('<p>Hello Fediverse.</p>');
+    expect(notes[0].tags).toEqual([]);
+  });
+
+  it('extracts and links note hashtags', () => {
+    const notes = activityPubActivitiesToNotes([{
+      type: 'Create',
+      to: 'as:Public',
+      object: {
+        id: 'https://ghost.theor.net/.ghost/activitypub/note/1',
+        type: 'Note',
+        content: '<p>#theor_note about #Posthaste.</p>',
+        published: '2026-06-18T20:58:08.673Z',
+      },
+    }]);
+
+    expect(notes[0].tags).toEqual(['posthaste', 'theor_note']);
+    expect(notes[0].contentHtml).toContain('href="/notes/?tag=theor_note"');
+    expect(notes[0].contentHtml).toContain('data-note-tag="posthaste"');
+    expect(notes[0].searchText).toContain('posthaste');
   });
 
   it('preserves reply links for threaded notes', () => {

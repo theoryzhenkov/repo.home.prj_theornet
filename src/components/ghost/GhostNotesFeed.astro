@@ -5,6 +5,8 @@ interface NoteThread {
   root: GhostNote;
   replies: GhostNote[];
   lastActivity: Date;
+  tags: string[];
+  searchText: string;
 }
 
 const notes = await getGhostNotes();
@@ -37,6 +39,10 @@ function replyIntentUrl(note: GhostNote): string {
   const url = new URL('/share', mastodonInstance);
   url.searchParams.set('text', `${fediverseHandle} ${note.sourceUrl}`);
   return url.toString();
+}
+
+function uniqueSorted(values: string[]): string[] {
+  return [...new Set(values)].sort((a, b) => a.localeCompare(b));
 }
 
 function groupThreads(items: GhostNote[]): NoteThread[] {
@@ -73,29 +79,57 @@ function groupThreads(items: GhostNote[]): NoteThread[] {
       const replies = (repliesByRoot.get(root.id) ?? [])
         .filter((reply) => reply.id !== root.id)
         .sort((a, b) => a.published.getTime() - b.published.getTime());
+      const threadNotes = [root, ...replies];
       const lastActivity = replies.reduce(
         (latest, reply) => noteTimestamp(reply).getTime() > latest.getTime() ? noteTimestamp(reply) : latest,
         noteTimestamp(root),
       );
-      return { root, replies, lastActivity };
+      return {
+        root,
+        replies,
+        lastActivity,
+        tags: uniqueSorted(threadNotes.flatMap((note) => note.tags)),
+        searchText: threadNotes.map((note) => note.searchText).join(' '),
+      };
     })
     .sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime());
 }
 
 const threads = groupThreads(notes);
+const allTags = uniqueSorted(threads.flatMap((thread) => thread.tags));
 ---
 
-<section class="notes-feed" aria-label="Public notes from the Theor Fediverse account">
+<section class="notes-feed" aria-label="Public notes from the Theor Fediverse account" data-notes-feed>
   <div class="notes-feed-toolbar">
     <a class="notes-feed-profile no-icon" href={mastodonProfileUrl} rel="me">Follow / reply</a>
+    <label class="notes-feed-search-label">
+      <span>Search notes</span>
+      <input class="notes-feed-search" type="search" placeholder="Search note text…" data-notes-search />
+    </label>
   </div>
+
+  {allTags.length > 0 && (
+    <nav class="notes-feed-tags" aria-label="Filter notes by tag">
+      <a class="notes-feed-tag no-icon" href="/notes/" data-notes-tag="">all</a>
+      {allTags.map((tag) => (
+        <a class="notes-feed-tag no-icon" href={`/notes/?tag=${encodeURIComponent(tag)}`} data-notes-tag={tag}>#{tag}</a>
+      ))}
+    </nav>
+  )}
+
+  <p class="notes-feed-filter-state" data-notes-filter-state hidden></p>
 
   {threads.length > 0 ? (
     <ol class="note-thread-list">
       {threads.map((thread) => {
         const noteCount = thread.replies.length + 1;
         return (
-          <li class="note-thread" data-has-replies={thread.replies.length > 0 ? 'true' : 'false'}>
+          <li
+            class="note-thread"
+            data-has-replies={thread.replies.length > 0 ? 'true' : 'false'}
+            data-note-tags={thread.tags.join(' ')}
+            data-note-search={thread.searchText}
+          >
             <article class="note-card" data-depth="root">
               <header class="note-meta">
                 <a class="note-date no-icon" href={thread.root.sourceUrl} target="_blank" rel="noopener noreferrer">
@@ -148,4 +182,73 @@ const threads = groupThreads(notes);
   ) : (
     <p class="notes-feed-empty">No public notes are available yet.</p>
   )}
+
+  <p class="notes-feed-empty" data-notes-empty-filter hidden>No notes match this filter.</p>
 </section>
+
+<script>
+  function initNotesFeedFilters() {
+    const feed = document.querySelector('[data-notes-feed]');
+    if (!(feed instanceof HTMLElement)) return;
+
+    const search = feed.querySelector('[data-notes-search]');
+    const state = feed.querySelector('[data-notes-filter-state]');
+    const empty = feed.querySelector('[data-notes-empty-filter]');
+    const threads = [...feed.querySelectorAll('.note-thread')].filter((item): item is HTMLElement => item instanceof HTMLElement);
+    const tagLinks = [...feed.querySelectorAll('[data-notes-tag]')].filter((item): item is HTMLAnchorElement => item instanceof HTMLAnchorElement);
+
+    const params = new URLSearchParams(window.location.search);
+    let activeTag = (params.get('tag') || '').toLowerCase();
+
+    function applyFilters() {
+      const query = search instanceof HTMLInputElement ? search.value.trim().toLowerCase() : '';
+      let visible = 0;
+
+      for (const thread of threads) {
+        const tags = (thread.dataset.noteTags || '').split(/\s+/).filter(Boolean);
+        const text = thread.dataset.noteSearch || '';
+        const matchesTag = !activeTag || tags.includes(activeTag);
+        const matchesSearch = !query || text.includes(query);
+        const show = matchesTag && matchesSearch;
+        thread.hidden = !show;
+        if (show) visible += 1;
+      }
+
+      for (const link of tagLinks) {
+        link.dataset.active = (link.dataset.notesTag || '') === activeTag ? 'true' : 'false';
+      }
+
+      if (state instanceof HTMLElement) {
+        const parts = [activeTag ? `tag #${activeTag}` : '', query ? `search “${query}”` : ''].filter(Boolean);
+        state.textContent = parts.length > 0 ? `Showing ${visible} thread${visible === 1 ? '' : 's'} for ${parts.join(' + ')}.` : '';
+        state.hidden = parts.length === 0;
+      }
+      if (empty instanceof HTMLElement) empty.hidden = visible !== 0;
+    }
+
+    for (const link of tagLinks) {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        activeTag = (link.dataset.notesTag || '').toLowerCase();
+        const next = new URL(window.location.href);
+        if (activeTag) next.searchParams.set('tag', activeTag);
+        else next.searchParams.delete('tag');
+        window.history.replaceState({}, '', next);
+        applyFilters();
+      });
+    }
+
+    if (search instanceof HTMLInputElement) {
+      search.addEventListener('input', applyFilters);
+    }
+
+    applyFilters();
+  }
+
+  document.addEventListener('astro:page-load', initNotesFeedFilters);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNotesFeedFilters);
+  } else {
+    initNotesFeedFilters();
+  }
+</script>

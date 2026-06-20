@@ -111,6 +111,8 @@ export interface GhostNote {
   published: Date;
   updated?: Date;
   inReplyTo?: string;
+  tags: string[];
+  searchText: string;
 }
 
 let ghostEntriesCache: Promise<GhostHomeEntry[]> | null = null;
@@ -396,6 +398,42 @@ function audienceIncludesPublic(value: string | string[] | undefined): boolean {
   return values.some((item) => PUBLIC_AUDIENCE_VALUES.has(item));
 }
 
+function extractNoteTags(html: string): string[] {
+  const text = stripHtml(html);
+  const tags = new Set<string>();
+  for (const match of text.matchAll(/(^|\s)#([A-Za-z0-9_][A-Za-z0-9_-]*)/g)) {
+    tags.add(match[2].toLowerCase());
+  }
+  return [...tags].sort((a, b) => a.localeCompare(b));
+}
+
+function linkifyNoteTags(html: string): string {
+  return html.split(/(<[^>]+>)/g).map((part) => {
+    if (part.startsWith('<')) return part;
+    return part.replace(/(^|\s)#([A-Za-z0-9_][A-Za-z0-9_-]*)/g, (_match, prefix: string, tag: string) => {
+      const normalized = tag.toLowerCase();
+      return `${prefix}<a class="note-tag no-icon" href="/notes/?tag=${encodeURIComponent(normalized)}" data-note-tag="${normalized}">#${tag}</a>`;
+    });
+  }).join('');
+}
+
+function createGhostNote(input: {
+  id: string;
+  sourceUrl: string;
+  contentHtml: string;
+  published: Date;
+  updated?: Date;
+  inReplyTo?: string;
+}): GhostNote {
+  const tags = extractNoteTags(input.contentHtml);
+  return {
+    ...input,
+    contentHtml: linkifyNoteTags(input.contentHtml),
+    tags,
+    searchText: stripHtml(input.contentHtml).toLowerCase(),
+  };
+}
+
 export function activityPubActivitiesToNotes(activities: ActivityPubActivity[]): GhostNote[] {
   return activities.flatMap((activity) => {
     if (activity.type !== 'Create' || !activity.object || typeof activity.object === 'string') return [];
@@ -411,14 +449,14 @@ export function activityPubActivitiesToNotes(activities: ActivityPubActivity[]):
 
     const updated = object.updated ? new Date(object.updated) : undefined;
 
-    return [{
+    return [createGhostNote({
       id: object.id,
       sourceUrl: object.url ?? object.id,
       contentHtml: object.content,
       published,
       ...(updated && !Number.isNaN(updated.getTime()) ? { updated } : {}),
       ...(object.inReplyTo ? { inReplyTo: object.inReplyTo } : {}),
-    }];
+    })];
   }).sort((a, b) => b.published.getTime() - a.published.getTime());
 }
 
@@ -428,13 +466,13 @@ function publicPostToNote(post: ActivityPubPublicPost, inReplyTo?: string): Ghos
   const published = new Date(post.publishedAt);
   if (Number.isNaN(published.getTime())) return undefined;
 
-  return {
+  return createGhostNote({
     id: post.id,
     sourceUrl: post.url || post.id,
     contentHtml: post.content,
     published,
     ...(inReplyTo ? { inReplyTo } : {}),
-  };
+  });
 }
 
 export function activityPubReplyChainToNotes(replyChain: ActivityPubReplyChain): GhostNote[] {
