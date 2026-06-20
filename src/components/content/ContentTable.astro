@@ -1,6 +1,5 @@
 ---
 import { getAllSitePageInputs } from '@/lib/site-pages';
-import { getGhostNotes } from '@/lib/ghost';
 import { resolveLinkRecord, type LinkCardInfo } from '@/lib/link-cards';
 import { slugToHref } from '@/lib/slugs';
 
@@ -23,13 +22,12 @@ interface Props {
   columns: Column[];
   defaultSort?: { field: string; direction: 'asc' | 'desc' };
   linkToPage?: boolean;
-  includeGhostNotes?: boolean;
 }
 
-const { path, classSlug, columns, defaultSort, linkToPage = true, includeGhostNotes = false } = Astro.props;
+const { path, classSlug, columns, defaultSort, linkToPage = true } = Astro.props;
 
-if (!path && !classSlug && !includeGhostNotes) {
-  throw new Error('ContentTable requires path, classSlug, or includeGhostNotes.');
+if (!path && !classSlug) {
+  throw new Error('ContentTable requires path or classSlug.');
 }
 
 function hasRelationTarget(value: unknown, targetSlug: string): boolean {
@@ -44,26 +42,6 @@ function hasRelationTarget(value: unknown, targetSlug: string): boolean {
   });
 }
 
-function stripHtml(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function truncate(value: string, maxLength: number): string {
-  if (value.length <= maxLength) return value;
-  return `${value.slice(0, maxLength - 1).trimEnd()}…`;
-}
-
 // Query and filter content by path prefix and/or `is` class relation.
 const allPages = await getAllSitePageInputs();
 const filteredPages = allPages.filter((page) => {
@@ -73,30 +51,12 @@ const filteredPages = allPages.filter((page) => {
 });
 
 // Build row data with all fields.
-const pageRows = filteredPages.map((page) => {
+const rows = filteredPages.map((page) => {
   const data: Record<string, unknown> = { ...page.data };
   data._id = page.id;
   data._href = slugToHref(page.id);
-  data._external = false;
   return data;
 });
-
-const ghostNoteRows = includeGhostNotes
-  ? (await getGhostNotes()).map((note) => {
-    const content = stripHtml(note.contentHtml);
-    return {
-      title: truncate(content || 'Untitled note', 120),
-      created: note.published,
-      ...(note.updated ? { modified: note.updated } : {}),
-      source_url: note.sourceUrl,
-      _id: note.id,
-      _href: note.sourceUrl,
-      _external: true,
-    } satisfies Record<string, unknown>;
-  })
-  : [];
-
-const rows = [...pageRows, ...ghostNoteRows];
 
 // Get unique values for filterable columns
 const filterOptions: Record<string, string[]> = {};
@@ -207,14 +167,7 @@ const tableId = `content-table-${Math.random().toString(36).slice(2, 9)}`;
                 class="ct-td"
               >
                 {isPageLink ? (
-                  <a
-                    href={String(row._href)}
-                    class="ct-title-link"
-                    target={row._external ? '_blank' : undefined}
-                    rel={row._external ? 'noopener noreferrer' : undefined}
-                  >
-                    {displayValue}
-                  </a>
+                  <a href={String(row._href)} class="ct-title-link">{displayValue}</a>
                 ) : isLinks ? (
                   <span class="ct-links-cell">
                     {linksEntries.map((link, i) => (

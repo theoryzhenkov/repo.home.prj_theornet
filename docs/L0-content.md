@@ -85,12 +85,14 @@ Environment variables:
 | `GHOST_CONTENT_API_URL` | no | Content API base URL; defaults to `https://ghost.theor.net/ghost/api/content` |
 | `GHOST_CONTENT_API_KEY` | for Ghost pages/posts | Public Ghost Content API key used at build time |
 | `GHOST_ACTIVITYPUB_OUTBOX_URL` | no | Public ActivityPub outbox URL for the `/notes/` feed |
+| `PUBLIC_FEDIVERSE_HANDLE` | no | Handle displayed in the notes feed and prefilled in Mastodon reply links; defaults to `@theoryzhenkov@ap.theor.net` |
+| `PUBLIC_MASTODON_INSTANCE_URL` | no | Mastodon instance used for profile/share links in the notes feed; defaults to `https://mastodon.social` |
 | `GHOST_STATS_ENDPOINT` | for Ghost analytics | Tracker endpoint used by `ghost-stats.min.js`; production uses the same-origin `/.ghost/analytics/api/v1/page_hit` path |
 | `GHOST_STATS_SITE_API_URL` | no | Public Ghost Admin site endpoint used to read `site_uuid`; defaults to `https://ghost.theor.net/ghost/api/admin/site/` |
 | `GHOST_STATS_SCRIPT_URL` | no | Ghost stats script URL; defaults to `https://ghost.theor.net/public/ghost-stats.min.js` |
 | `GHOST_STATS_DATASOURCE` | no | Tinybird datasource name; defaults to `analytics_events` |
 
-ActivityPub notes are not generated as individual local pages. The `/notes/` MDX page renders local note rows and public Ghost ActivityPub notes through the same `ContentTable` presentation; Ghost note rows link to their ActivityPub object as the source of record.
+ActivityPub notes are not generated as individual local pages. The `/notes/` MDX page renders public Ghost ActivityPub notes as a polished microblog feed. Notes are grouped into threads when `inReplyTo` points at another fetched note, each note links to its ActivityPub object as the source of record, and reply actions open a Mastodon composer prefilled with the site's Fediverse handle and note URL.
 
 ## Key files
 

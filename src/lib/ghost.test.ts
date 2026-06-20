@@ -106,6 +106,22 @@ describe('activityPubActivitiesToNotes', () => {
     expect(notes[0].contentHtml).toBe('<p>Hello Fediverse.</p>');
   });
 
+  it('preserves reply links for threaded notes', () => {
+    const notes = activityPubActivitiesToNotes([{
+      type: 'Create',
+      to: 'as:Public',
+      object: {
+        id: 'https://ghost.theor.net/.ghost/activitypub/note/2',
+        type: 'Note',
+        content: '<p>Reply.</p>',
+        published: '2026-06-18T21:00:08.673Z',
+        inReplyTo: 'https://ghost.theor.net/.ghost/activitypub/note/1',
+      },
+    }]);
+
+    expect(notes[0].inReplyTo).toBe('https://ghost.theor.net/.ghost/activitypub/note/1');
+  });
+
   it('ignores non-public notes', () => {
     const notes = activityPubActivitiesToNotes([{
       type: 'Create',

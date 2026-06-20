@@ -788,6 +788,185 @@
     }
   }
 
+  /* ─── Notes feed ─── */
+  .notes-feed {
+    margin-block: theme(spacing.4);
+  }
+
+  .notes-feed-header {
+    display: flex;
+    justify-content: space-between;
+    gap: theme(spacing.4);
+    align-items: end;
+    margin-bottom: theme(spacing.4);
+    padding-bottom: theme(spacing.3);
+    border-bottom: 1px solid var(--color-border-subtle);
+
+    & h2 {
+      margin: 0 0 theme(spacing.1);
+    }
+
+    & p {
+      margin: 0;
+      color: var(--color-text-muted);
+    }
+  }
+
+  .notes-feed-profile,
+  .note-action {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    line-height: 1.2;
+    text-decoration: none;
+    color: var(--color-accent);
+
+    &:hover {
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
+    }
+  }
+
+  .notes-feed-profile {
+    flex-shrink: 0;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid color-mix(in oklch, var(--color-accent) 28%, var(--color-border));
+    border-radius: var(--radius-sm);
+    background-color: color-mix(in oklch, var(--color-highlight-subtle) 46%, var(--color-bg));
+  }
+
+  .note-thread-list,
+  .note-replies {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .note-thread {
+    position: relative;
+    padding-block: theme(spacing.2);
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+
+  .note-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: theme(spacing.3);
+    padding-block: theme(spacing.2);
+  }
+
+  .note-thread[data-has-replies="true"] .note-card[data-depth="root"]::before {
+    content: "";
+    position: absolute;
+    left: 1rem;
+    top: 3rem;
+    bottom: -0.25rem;
+    width: 1px;
+    background-color: var(--color-border-subtle);
+  }
+
+  .note-replies {
+    margin-left: calc(2rem + theme(spacing.3));
+  }
+
+  .note-replies .note-card {
+    grid-template-columns: 1.65rem minmax(0, 1fr);
+    gap: theme(spacing.2);
+    padding-block: theme(spacing.2);
+  }
+
+  .note-avatar {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-3xs);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--color-accent);
+    background-color: color-mix(in oklch, var(--color-bg) 92%, white);
+    border: 1px solid color-mix(in oklch, var(--color-accent) 22%, var(--color-border));
+    border-radius: 999px;
+  }
+
+  .note-card[data-depth="reply"] .note-avatar {
+    width: 1.65rem;
+    height: 1.65rem;
+    font-size: 0.56rem;
+  }
+
+  .note-header,
+  .note-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: theme(spacing.1) theme(spacing.2);
+    align-items: baseline;
+    font-family: var(--font-mono);
+    font-size: var(--text-3xs);
+    color: var(--color-text-subtle);
+  }
+
+  .note-author {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .note-time {
+    color: var(--color-text-subtle);
+    text-decoration: none;
+  }
+
+  .note-reply-context {
+    display: inline-flex;
+    margin-top: theme(spacing.1);
+    font-family: var(--font-mono);
+    font-size: var(--text-3xs);
+    color: var(--color-text-subtle);
+    text-decoration: none;
+  }
+
+  .note-content {
+    margin-top: theme(spacing.2);
+
+    & > :first-child {
+      margin-top: 0;
+    }
+
+    & > :last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .note-actions {
+    margin-top: theme(spacing.2);
+  }
+
+  .notes-feed-empty {
+    margin-block: theme(spacing.2);
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    color: var(--color-text-subtle);
+  }
+
+  @media (width <= 640px) {
+    .notes-feed-header {
+      display: block;
+    }
+
+    .notes-feed-profile {
+      display: inline-flex;
+      margin-top: theme(spacing.2);
+    }
+
+    .note-replies {
+      margin-left: theme(spacing.6);
+    }
+  }
+
   /* ─── Aside Panel (shared container for TOC, Footnotes, Relations) ─── */
   .aside-panel {
     margin-bottom: 1rem;

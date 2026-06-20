@@ -9,15 +9,6 @@ is:
   - page: classes/collection-page
 ---
 
-import ContentTable from '@components/content/ContentTable.astro';
+import GhostNotesFeed from '@components/ghost/GhostNotesFeed.astro';
 
-<ContentTable
-  path="notes/"
-  includeGhostNotes={true}
-  columns={[
-    { field: "title", label: "Note", sortable: true, type: "link" },
-    { field: "created", label: "Created", sortable: true, type: "date" },
-    { field: "source_url", label: "Source", type: "url" },
-  ]}
-  defaultSort={{ field: "created", direction: "desc" }}
-/>
+<GhostNotesFeed />

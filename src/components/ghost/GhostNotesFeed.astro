@@ -1,0 +1,146 @@
+---
+import { getGhostNotes, type GhostNote } from '@/lib/ghost';
+
+interface NoteThread {
+  root: GhostNote;
+  replies: GhostNote[];
+  lastActivity: Date;
+}
+
+const notes = await getGhostNotes();
+
+const fediverseHandle = import.meta.env.PUBLIC_FEDIVERSE_HANDLE || '@theoryzhenkov@ap.theor.net';
+const mastodonInstance = (import.meta.env.PUBLIC_MASTODON_INSTANCE_URL || 'https://mastodon.social').replace(/\/$/, '');
+const mastodonHandlePath = fediverseHandle.replace(/^@/, '');
+const mastodonProfileUrl = `${mastodonInstance}/@${mastodonHandlePath}`;
+
+function formatDateTime(date: Date): string {
+  return new Intl.DateTimeFormat('en', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  }).format(date);
+}
+
+function noteTimestamp(note: GhostNote): Date {
+  return note.updated ?? note.published;
+}
+
+function noteKeys(note: GhostNote): string[] {
+  return [note.id, note.sourceUrl].filter(Boolean);
+}
+
+function replyIntentUrl(note: GhostNote): string {
+  const url = new URL('/share', mastodonInstance);
+  url.searchParams.set('text', `${fediverseHandle} ${note.sourceUrl}`);
+  return url.toString();
+}
+
+function groupThreads(items: GhostNote[]): NoteThread[] {
+  const noteByKey = new Map<string, GhostNote>();
+  for (const note of items) {
+    for (const key of noteKeys(note)) noteByKey.set(key, note);
+  }
+
+  const repliesByRoot = new Map<string, GhostNote[]>();
+  const childIds = new Set<string>();
+
+  for (const note of items) {
+    if (!note.inReplyTo) continue;
+
+    const parent = noteByKey.get(note.inReplyTo);
+    if (!parent) continue;
+
+    const parentRoot = parent.inReplyTo && noteByKey.get(parent.inReplyTo)
+      ? noteByKey.get(parent.inReplyTo)!
+      : parent;
+    const rootKey = parentRoot.id;
+    childIds.add(note.id);
+    repliesByRoot.set(rootKey, [...(repliesByRoot.get(rootKey) ?? []), note]);
+  }
+
+  return items
+    .filter((note) => !childIds.has(note.id))
+    .map((root) => {
+      const replies = (repliesByRoot.get(root.id) ?? [])
+        .filter((reply) => reply.id !== root.id)
+        .sort((a, b) => a.published.getTime() - b.published.getTime());
+      const lastActivity = replies.reduce(
+        (latest, reply) => noteTimestamp(reply).getTime() > latest.getTime() ? noteTimestamp(reply) : latest,
+        noteTimestamp(root),
+      );
+      return { root, replies, lastActivity };
+    })
+    .sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime());
+}
+
+const threads = groupThreads(notes);
+---
+
+<section class="notes-feed" aria-labelledby="notes-feed-heading">
+  <header class="notes-feed-header">
+    <div>
+      <h2 id="notes-feed-heading">Notes feed</h2>
+      <p>Short public notes from <a href={mastodonProfileUrl} rel="me">{fediverseHandle}</a>.</p>
+    </div>
+    <a class="notes-feed-profile no-icon" href={mastodonProfileUrl} rel="me">Follow / reply</a>
+  </header>
+
+  {threads.length > 0 ? (
+    <ol class="note-thread-list">
+      {threads.map((thread) => (
+        <li class="note-thread" data-has-replies={thread.replies.length > 0 ? 'true' : 'false'}>
+          <article class="note-card" data-depth="root">
+            <div class="note-avatar" aria-hidden="true">TR</div>
+            <div class="note-body">
+              <header class="note-header">
+                <a class="note-author no-icon" href={mastodonProfileUrl} rel="me">{fediverseHandle}</a>
+                <span aria-hidden="true">·</span>
+                <a class="note-time no-icon" href={thread.root.sourceUrl} target="_blank" rel="noopener noreferrer">
+                  <time datetime={thread.root.published.toISOString()}>{formatDateTime(thread.root.published)}</time>
+                </a>
+              </header>
+              {thread.root.inReplyTo && <a class="note-reply-context no-icon" href={thread.root.inReplyTo}>In reply to another note</a>}
+              <div class="note-content" set:html={thread.root.contentHtml} />
+              <footer class="note-actions">
+                <a class="note-action no-icon" href={replyIntentUrl(thread.root)} target="_blank" rel="noopener noreferrer">Reply on Mastodon</a>
+                <a class="note-action no-icon" href={thread.root.sourceUrl} target="_blank" rel="noopener noreferrer">Open source</a>
+              </footer>
+            </div>
+          </article>
+
+          {thread.replies.length > 0 && (
+            <ol class="note-replies" aria-label="Thread replies">
+              {thread.replies.map((reply) => (
+                <li>
+                  <article class="note-card" data-depth="reply">
+                    <div class="note-avatar" aria-hidden="true">TR</div>
+                    <div class="note-body">
+                      <header class="note-header">
+                        <a class="note-author no-icon" href={mastodonProfileUrl} rel="me">{fediverseHandle}</a>
+                        <span aria-hidden="true">·</span>
+                        <a class="note-time no-icon" href={reply.sourceUrl} target="_blank" rel="noopener noreferrer">
+                          <time datetime={reply.published.toISOString()}>{formatDateTime(reply.published)}</time>
+                        </a>
+                      </header>
+                      <div class="note-content" set:html={reply.contentHtml} />
+                      <footer class="note-actions">
+                        <a class="note-action no-icon" href={replyIntentUrl(reply)} target="_blank" rel="noopener noreferrer">Reply on Mastodon</a>
+                        <a class="note-action no-icon" href={reply.sourceUrl} target="_blank" rel="noopener noreferrer">Open source</a>
+                      </footer>
+                    </div>
+                  </article>
+                </li>
+              ))}
+            </ol>
+          )}
+        </li>
+      ))}
+    </ol>
+  ) : (
+    <p class="notes-feed-empty">No public notes are available yet.</p>
+  )}
+</section>

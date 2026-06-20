@@ -89,6 +89,7 @@ export interface GhostNote {
   contentHtml: string;
   published: Date;
   updated?: Date;
+  inReplyTo?: string;
 }
 
 let ghostEntriesCache: Promise<GhostHomeEntry[]> | null = null;
@@ -397,6 +398,7 @@ export function activityPubActivitiesToNotes(activities: ActivityPubActivity[]):
       contentHtml: object.content,
       published,
       ...(updated && !Number.isNaN(updated.getTime()) ? { updated } : {}),
+      ...(object.inReplyTo ? { inReplyTo: object.inReplyTo } : {}),
     }];
   }).sort((a, b) => b.published.getTime() - a.published.getTime());
 }
