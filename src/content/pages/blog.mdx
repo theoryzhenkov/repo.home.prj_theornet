@@ -10,14 +10,9 @@ is:
 ---
 
 import ContentTable from '@components/content/ContentTable.astro';
-import GhostPostsList from '@components/ghost/GhostPostsList.astro';
-
-<GhostPostsList />
-
-## Local archive
 
 <ContentTable
-  path="blog/"
+  classSlug="classes/blog-note"
   columns={[
     { field: "title", label: "Title", sortable: true, type: "link" },
     { field: "description", label: "Description" },

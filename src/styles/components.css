@@ -788,74 +788,6 @@
     }
   }
 
-  /* ─── Ghost-backed content ─── */
-  .ghost-post-list,
-  .ghost-notes-feed {
-    margin-block: theme(spacing.4);
-  }
-
-  .ghost-entry-list,
-  .ghost-note-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .ghost-entry,
-  .ghost-note {
-    padding-block: theme(spacing.3);
-    border-top: 1px solid var(--color-border-subtle);
-  }
-
-  .ghost-entry:last-child,
-  .ghost-note:last-child {
-    border-bottom: 1px solid var(--color-border-subtle);
-  }
-
-  .ghost-entry h3,
-  .ghost-note h3 {
-    margin: 0 0 theme(spacing.1);
-    font-size: var(--text-lg);
-    line-height: 1.25;
-  }
-
-  .ghost-entry p {
-    margin: 0;
-    color: var(--color-text-muted);
-  }
-
-  .ghost-entry-meta,
-  .ghost-note-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: theme(spacing.2);
-    margin-bottom: theme(spacing.1);
-    font-family: var(--font-mono);
-    font-size: var(--text-3xs);
-    color: var(--color-text-subtle);
-  }
-
-  .ghost-note-source {
-    color: var(--color-accent);
-    text-decoration: none;
-  }
-
-  .ghost-note-source:hover {
-    text-decoration: underline;
-  }
-
-  .ghost-note-content > :last-child {
-    margin-bottom: 0;
-  }
-
-  .ghost-feed-empty {
-    margin-block: theme(spacing.2);
-    font-family: var(--font-mono);
-    font-size: var(--text-2xs);
-    color: var(--color-text-subtle);
-  }
-
   /* ─── Aside Panel (shared container for TOC, Footnotes, Relations) ─── */
   .aside-panel {
     margin-bottom: 1rem;
@@ -942,9 +874,16 @@
     display: flex;
     justify-content: space-between;
     align-items: baseline;
+    color: var(--color-text-subtle);
+    text-decoration: none;
     border-left: 2px solid transparent;
     transition: border-color var(--transition-duration-fast) var(--ease-out),
+                color var(--transition-duration-fast) var(--ease-out),
                 opacity var(--transition-duration-fast) var(--ease-out);
+
+    &:visited {
+      color: var(--color-text-subtle);
+    }
   }
 
   .toc-entry[data-depth="2"] {
@@ -976,44 +915,30 @@
 
   /* TOC entry states via data-state attribute */
   .toc-entry[data-state="active"] {
+    color: var(--color-text);
     border-left-color: var(--color-accent);
     font-weight: 600;
     opacity: 1;
 
-    & a {
+    &:visited {
       color: var(--color-text);
     }
   }
 
   .toc-entry[data-state="unread"] {
+    color: var(--color-text-subtle);
     opacity: 0.5;
-
-    & a {
-      color: var(--color-text-subtle);
-    }
   }
 
   .toc-entry[data-state="read"] {
+    color: var(--color-text-subtle);
     opacity: 0.35;
-
-    & a {
-      color: var(--color-text-subtle);
-    }
   }
 
   /* Default (non-active, non-read, non-unread) */
   .toc-entry:not([data-state]) {
+    color: var(--color-text-subtle);
     opacity: 0.7;
-
-    & a {
-      color: var(--color-text-subtle);
-    }
-  }
-
-  .toc-entry a {
-    text-decoration: none;
-    flex: 1;
-    min-width: 0;
   }
 
   .toc-read-time {

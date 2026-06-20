@@ -90,7 +90,7 @@ Environment variables:
 | `GHOST_STATS_SCRIPT_URL` | no | Ghost stats script URL; defaults to `https://ghost.theor.net/public/ghost-stats.min.js` |
 | `GHOST_STATS_DATASOURCE` | no | Tinybird datasource name; defaults to `analytics_events` |
 
-ActivityPub notes are not generated as individual local pages. The `/notes/` MDX page renders a continuous feed from the public Ghost ActivityPub outbox, and each note links to its ActivityPub object as the source of record.
+ActivityPub notes are not generated as individual local pages. The `/notes/` MDX page renders local note rows and public Ghost ActivityPub notes through the same `ContentTable` presentation; Ghost note rows link to their ActivityPub object as the source of record.
 
 ## Key files
 
