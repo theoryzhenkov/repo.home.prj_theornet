@@ -30,6 +30,8 @@ The site generates fully static HTML at build time (`output: 'static'` in `astro
 
 Ghost pages/posts come from `src/lib/site-pages.ts`, which wraps `src/lib/ghost.ts`. Ghost posts and pages both default to `/{ghost-slug}/`; blog membership is expressed by metadata (`is: classes/blog-note`, `part_of: blog`) rather than by a `/blog/` path prefix. Ghost `frontmatter` metadata can override the home route with `homePath` or `homeSlug`. Local MDX slugs win over Ghost-derived slugs to prevent duplicate static paths.
 
+At runtime, nginx serves only generated static files and directories. Missing paths return 404 instead of falling back to `/`, so stale Ghost paths such as `/blog/{ghost-slug}/` do not masquerade as the homepage.
+
 ## Relations graph per page
 
 Both `index.astro` and `[...slug].astro` follow the same data-loading pattern: call `buildRelationsGraph()` to get the full graph and page metadata map, then derive the current page's breadcrumbs via `getBreadcrumbs(slug, graph, pages)` and its direct relations via `getPageRelations(slug, graph)`. These are passed as props to the `Page` layout component.
