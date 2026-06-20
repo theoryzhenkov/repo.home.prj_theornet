@@ -6,9 +6,9 @@
     --prose-font-size: calc(1rem * var(--prose-scale));
     --prose-line-height: var(--text-base--line-height);
     --prose-h1-size: calc(1.875rem * var(--prose-scale));
-    --prose-h2-size: calc(1.3125rem * var(--prose-scale));
-    --prose-h3-size: calc(1.125rem * var(--prose-scale));
-    --prose-h4-size: calc(1rem * var(--prose-scale));
+    --prose-h2-size: calc(1.6rem * var(--prose-scale));
+    --prose-h3-size: calc(1.3rem * var(--prose-scale));
+    --prose-h4-size: calc(1.125rem * var(--prose-scale));
     --prose-h5-size: calc(0.9375rem * var(--prose-scale));
     --prose-h6-size: calc(0.875rem * var(--prose-scale));
     --prose-h1-margin-bottom: calc(theme(spacing.3) * var(--prose-space-scale));
@@ -103,7 +103,7 @@
     }
 
     & p {
-      margin-bottom: var(--prose-block-space-compact);
+      margin-bottom: var(--prose-block-space);
       text-wrap: pretty;
     }
 
@@ -117,12 +117,9 @@
       margin-bottom: var(--prose-list-item-space);
     }
 
-    @media (width >= 900px) {
-      & p,
-      & li {
-        text-align: justify;
-        text-justify: inter-word;
-      }
+    & p,
+    & li {
+      text-align: left;
     }
 
     /* ─── Headings ─── */
@@ -245,10 +242,7 @@
     & :not(pre) > code {
       font-family: var(--font-mono);
       font-size: var(--prose-inline-code-size);
-      background-color: var(--color-bg-muted);
-      border: 1px solid var(--color-border-subtle);
-      border-radius: var(--radius-sm);
-      padding: 0.1em 0.3em;
+      color: var(--color-text-muted);
     }
 
     /* Code block language label */
