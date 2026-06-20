@@ -166,8 +166,11 @@ function init() {
   headings = [];
   tocLinks.forEach((link) => {
     const href = link.getAttribute('href');
-    if (!href) return;
-    const heading = document.querySelector(href);
+    if (!href || !href.startsWith('#')) return;
+    // Use getElementById, not querySelector: heading slugs can start with a
+    // digit (e.g. Ghost posts with numbered headings), which is an invalid
+    // CSS id selector and would throw, aborting the scroll spy.
+    const heading = document.getElementById(href.slice(1));
     if (heading instanceof HTMLElement) {
       headings.push(heading);
     }
