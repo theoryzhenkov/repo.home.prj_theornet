@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import {
   activityPubActivitiesToNotes,
+  activityPubReplyChainToNotes,
   addHeadingIds,
   extractHtmlHeadings,
   ghostContentToHomeEntry,
@@ -133,6 +134,44 @@ describe('activityPubActivitiesToNotes', () => {
     }]);
 
     expect(notes).toEqual([]);
+  });
+
+  it('maps public Ghost reply chains into notes with reconstructed parent links', () => {
+    const notes = activityPubReplyChainToNotes({
+      ancestors: { chain: [] },
+      post: {
+        id: 'https://ghost.theor.net/.ghost/activitypub/note/root',
+        type: 0,
+        content: '<p>Root.</p>',
+        url: 'https://ghost.theor.net/.ghost/activitypub/note/root',
+        publishedAt: '2026-06-18T20:58:08.673Z',
+      },
+      children: [{
+        post: {
+          id: 'https://ghost.theor.net/.ghost/activitypub/note/reply-1',
+          type: 0,
+          content: '<p>Reply 1.</p>',
+          url: 'https://ghost.theor.net/.ghost/activitypub/note/reply-1',
+          publishedAt: '2026-06-18T21:00:08.673Z',
+        },
+        chain: [{
+          id: 'https://ghost.theor.net/.ghost/activitypub/note/reply-2',
+          type: 0,
+          content: '<p>Reply 2.</p>',
+          url: 'https://ghost.theor.net/.ghost/activitypub/note/reply-2',
+          publishedAt: '2026-06-18T21:01:08.673Z',
+        }],
+      }],
+    });
+
+    expect(notes.map((note) => note.id)).toEqual([
+      'https://ghost.theor.net/.ghost/activitypub/note/root',
+      'https://ghost.theor.net/.ghost/activitypub/note/reply-1',
+      'https://ghost.theor.net/.ghost/activitypub/note/reply-2',
+    ]);
+    expect(notes[0].inReplyTo).toBeUndefined();
+    expect(notes[1].inReplyTo).toBe(notes[0].id);
+    expect(notes[2].inReplyTo).toBe(notes[1].id);
   });
 });
 

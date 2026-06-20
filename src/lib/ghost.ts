@@ -4,6 +4,7 @@ import type { PageInput, RawRelationEntry, RawRelations } from './relations';
 
 const DEFAULT_CONTENT_API_URL = 'https://ghost.theor.net/ghost/api/content';
 const DEFAULT_OUTBOX_URL = 'https://ghost.theor.net/.ghost/activitypub/outbox/index';
+const DEFAULT_PUBLIC_REPLIES_API_URL = 'https://ghost.theor.net/.ghost/activitypub/v1/public/replies';
 const PUBLIC_AUDIENCE_VALUES = new Set([
   'as:Public',
   'Public',
@@ -81,6 +82,28 @@ interface ActivityPubCollection {
   orderedItems?: ActivityPubActivity[];
 }
 
+interface ActivityPubPublicPost {
+  id: string;
+  type: number;
+  content: string;
+  url: string;
+  publishedAt: string;
+  authoredByMe?: boolean;
+}
+
+interface ActivityPubReplyChainChild {
+  post: ActivityPubPublicPost;
+  chain: ActivityPubPublicPost[];
+}
+
+interface ActivityPubReplyChain {
+  ancestors: {
+    chain: ActivityPubPublicPost[];
+  };
+  post: ActivityPubPublicPost;
+  children: ActivityPubReplyChainChild[];
+}
+
 export interface GhostNote {
   id: string;
   sourceUrl: string;
@@ -108,6 +131,10 @@ function ghostContentApiKey(): string | undefined {
 
 function ghostOutboxUrl(): string {
   return env('GHOST_ACTIVITYPUB_OUTBOX_URL') ?? DEFAULT_OUTBOX_URL;
+}
+
+function ghostPublicRepliesApiUrl(): string {
+  return env('GHOST_ACTIVITYPUB_PUBLIC_REPLIES_API_URL') ?? DEFAULT_PUBLIC_REPLIES_API_URL;
 }
 
 function stripFrontmatterFence(raw: string): string {
@@ -395,6 +422,73 @@ export function activityPubActivitiesToNotes(activities: ActivityPubActivity[]):
   }).sort((a, b) => b.published.getTime() - a.published.getTime());
 }
 
+function publicPostToNote(post: ActivityPubPublicPost, inReplyTo?: string): GhostNote | undefined {
+  if (post.type !== 0 || !post.id || !post.content || !post.publishedAt) return undefined;
+
+  const published = new Date(post.publishedAt);
+  if (Number.isNaN(published.getTime())) return undefined;
+
+  return {
+    id: post.id,
+    sourceUrl: post.url || post.id,
+    contentHtml: post.content,
+    published,
+    ...(inReplyTo ? { inReplyTo } : {}),
+  };
+}
+
+export function activityPubReplyChainToNotes(replyChain: ActivityPubReplyChain): GhostNote[] {
+  const notes: GhostNote[] = [];
+  let previousAncestorId: string | undefined;
+
+  for (const ancestor of replyChain.ancestors.chain) {
+    const note = publicPostToNote(ancestor, previousAncestorId);
+    if (note) notes.push(note);
+    previousAncestorId = ancestor.id;
+  }
+
+  const root = publicPostToNote(replyChain.post, previousAncestorId);
+  if (root) notes.push(root);
+
+  for (const child of replyChain.children) {
+    const childNote = publicPostToNote(child.post, replyChain.post.id);
+    if (childNote) notes.push(childNote);
+
+    let parentId = child.post.id;
+    for (const chainPost of child.chain) {
+      const chainNote = publicPostToNote(chainPost, parentId);
+      if (chainNote) notes.push(chainNote);
+      parentId = chainPost.id;
+    }
+  }
+
+  return notes;
+}
+
+async function fetchActivityPubReplyChain(postId: string): Promise<ActivityPubReplyChain> {
+  const url = `${ghostPublicRepliesApiUrl().replace(/\/$/, '')}/${encodeURIComponent(postId)}`;
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Ghost ActivityPub public replies request failed: ${response.status} ${response.statusText}`);
+  }
+
+  return await response.json() as ActivityPubReplyChain;
+}
+
+function dedupeNotes(notes: GhostNote[]): GhostNote[] {
+  const byId = new Map<string, GhostNote>();
+  for (const note of notes) {
+    byId.set(note.id, note);
+  }
+
+  return [...byId.values()].sort((a, b) => b.published.getTime() - a.published.getTime());
+}
+
 export async function getGhostNotes(): Promise<GhostNote[]> {
   if (ghostNotesCache) return ghostNotesCache;
 
@@ -414,7 +508,12 @@ export async function getGhostNotes(): Promise<GhostNote[]> {
       nextUrl = page.next;
     }
 
-    return activityPubActivitiesToNotes(activities);
+    const outboxNotes = activityPubActivitiesToNotes(activities);
+    const threadNotes = await Promise.all(
+      outboxNotes.map(async (note) => activityPubReplyChainToNotes(await fetchActivityPubReplyChain(note.id))),
+    );
+
+    return dedupeNotes([...outboxNotes, ...threadNotes.flat()]);
   })();
 
   return ghostNotesCache;
