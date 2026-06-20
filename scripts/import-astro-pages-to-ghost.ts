@@ -88,6 +88,11 @@ function stripMdxImports(body: string): string {
     .trim();
 }
 
+function quotedProp(componentSource: string, propName: string): string | undefined {
+  const pattern = new RegExp(`${propName}\\s*=\\s*["']([^"']+)["']`);
+  return componentSource.match(pattern)?.[1];
+}
+
 function replaceMdxComponents(body: string): { body: string; componentUsages: string[]; warnings: string[] } {
   const componentUsages = new Set<string>();
   const warnings: string[] = [];
@@ -95,6 +100,15 @@ function replaceMdxComponents(body: string): { body: string; componentUsages: st
 
   converted = converted.replace(/<([A-Z][A-Za-z0-9_.]*)(\s[^>]*)?\/>/g, (full, name: string) => {
     componentUsages.add(name);
+    if (name === 'ContentTable') {
+      const attrs = [
+        quotedProp(full, 'path') ? `path="${quotedProp(full, 'path')}"` : '',
+        quotedProp(full, 'classSlug') ? `classSlug="${quotedProp(full, 'classSlug')}"` : '',
+      ].filter(Boolean).join(' ');
+      warnings.push(`Replaced self-closing MDX component <${name} /> with ::content-table shortcode.`);
+      return `\n\n::content-table{${attrs}}\n\n`;
+    }
+
     warnings.push(`Replaced self-closing MDX component <${name} /> with an import placeholder.`);
     return `\n\n<div data-astro-import-placeholder="${escapeHtml(name)}"><strong>Astro component placeholder:</strong> ${escapeHtml(full)}</div>\n\n`;
   });

@@ -1,10 +1,12 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Page from '@layouts/page/Page.astro';
+import ContentTable from '@components/content/ContentTable.astro';
 import { getBreadcrumbs, getPageRelations } from '@/lib/relations';
 import { buildRelationsGraph } from '@/lib/relations-graph';
 import { getGhostRouteEntries, getGhostRouteEntry } from '@/lib/site-pages';
 import { addHeadingIds, estimateHtmlReadTimeMinutes, extractHtmlHeadings } from '@/lib/ghost';
+import { parseHomeShortcodes } from '@/lib/home-shortcodes';
 
 export async function getStaticPaths() {
   const pages = await getCollection('pages');
@@ -35,6 +37,7 @@ const Content = rendered?.Content;
 const data = entry ? entry.data : ghostEntry!.data;
 const body = entry ? (entry.body ?? '') : (ghostEntry?.body ?? '');
 const ghostHtml = ghostEntry ? addHeadingIds(ghostEntry.html) : '';
+const ghostBlocks = ghostEntry ? parseHomeShortcodes(ghostHtml) : [];
 const baseHeadings = rendered?.headings ?? (ghostEntry ? extractHtmlHeadings(ghostHtml) : []);
 
 // Build relations graph
@@ -89,6 +92,12 @@ const backlinks = (relations?.refi ?? []).map((refSlug) => {
     slug: refSlug,
   };
 });
+
+const defaultContentTableColumns = [
+  { field: 'title', label: 'Title', sortable: true, type: 'link' as const },
+  { field: 'description', label: 'Description' },
+  { field: 'created', label: 'Created', sortable: true, type: 'date' as const },
+];
 ---
 
 <Page
@@ -105,5 +114,14 @@ const backlinks = (relations?.refi ?? []).map((refSlug) => {
   readTimeMinutes={readTimeMinutes}
   backlinks={backlinks}
 >
-  {Content ? <Content /> : <Fragment set:html={ghostHtml} />}
+  {Content ? <Content /> : ghostBlocks.map((block) => (
+    block.type === 'html'
+      ? <Fragment set:html={block.html} />
+      : <ContentTable
+          path={block.path}
+          classSlug={block.classSlug}
+          columns={defaultContentTableColumns}
+          defaultSort={{ field: block.classSlug ? 'created' : 'title', direction: block.classSlug ? 'desc' : 'asc' }}
+        />
+  ))}
 </Page>
