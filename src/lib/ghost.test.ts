@@ -40,7 +40,6 @@ describe('ghostContentToHomeEntry', () => {
     expect(entry.data.part_of).toEqual([{ page: 'blog' }]);
     expect(entry.data.is).toEqual([{ page: 'classes/blog-note' }]);
     expect(entry.data.description).toBeUndefined();
-    expect(entry.ghostStats).toEqual({ postUuid: 'post-uuid-1', postType: 'post' });
     expect(entry.data.created.toISOString()).toBe('2026-06-01T00:00:00.000Z');
   });
 
@@ -84,7 +83,6 @@ describe('ghostContentToHomeEntry', () => {
     expect(entry.data.maturity).toBe('developed');
     expect(entry.data.part_of).toEqual([{ page: 'index' }]);
     expect(entry.data.subject).toEqual([{ page: 'concepts/software' }]);
-    expect(entry.ghostStats).toEqual({ postUuid: 'page-uuid-1', postType: 'page' });
   });
 });
 

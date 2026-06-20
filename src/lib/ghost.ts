@@ -1,6 +1,5 @@
 import { load as loadYaml } from 'js-yaml';
 import { pathToSlug } from './slugs';
-import type { GhostStatsResource } from './ghost-analytics';
 import type { PageInput, RawRelationEntry, RawRelations } from './relations';
 
 const DEFAULT_CONTENT_API_URL = 'https://ghost.theor.net/ghost/api/content';
@@ -54,7 +53,6 @@ export interface GhostHomeEntry extends PageInput {
   sourceUrl: string;
   html: string;
   data: GhostPageData;
-  ghostStats?: GhostStatsResource;
 }
 
 export interface ActivityPubObject {
@@ -283,12 +281,6 @@ export function ghostContentToHomeEntry(item: GhostContentItem, source: GhostHom
     sourceUrl: item.url ?? `https://ghost.theor.net/${item.slug}/`,
     html,
     body: stripHtml(html),
-    ...(item.uuid ? {
-      ghostStats: {
-        postUuid: item.uuid,
-        postType: source === 'ghost-post' ? 'post' : 'page',
-      },
-    } : {}),
     data: {
       ...defaultRelations,
       ...frontmatterRelations,

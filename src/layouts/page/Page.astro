@@ -8,7 +8,6 @@ import Footnotes from '@components/Footnotes.astro';
 import Backlinks from '@components/Backlinks.astro';
 import Search from '@components/Search.astro';
 import Breadcrumb from '@components/Breadcrumb.astro';
-import type { GhostStatsScriptConfig } from '@/lib/ghost-analytics';
 import type { PageInfo, PageRelations, PageInfoMap } from '@/lib/relations';
 
 interface BacklinkEntry {
@@ -31,7 +30,6 @@ interface Props {
   pageInfoMap?: PageInfoMap;
   readTimeMinutes?: number;
   backlinks?: BacklinkEntry[];
-  ghostStats?: GhostStatsScriptConfig;
 }
 
 const {
@@ -47,7 +45,6 @@ const {
   pageInfoMap,
   readTimeMinutes,
   backlinks = [],
-  ghostStats,
 } = Astro.props;
 
 const descriptionHtml = description ? marked.parseInline(description) : undefined;
@@ -59,7 +56,7 @@ const backlinksCount = backlinks.length || (relations?.refi?.length ?? 0);
 
 <!DOCTYPE html>
 <html lang="en">
-  <Head title={title} description={descriptionPlain} ghostStats={ghostStats} />
+  <Head title={title} description={descriptionPlain} />
 
   <body class="has-site-header">
     <Header />
