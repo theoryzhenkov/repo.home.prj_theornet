@@ -45,21 +45,26 @@ function groupThreads(items: GhostNote[]): NoteThread[] {
     for (const key of noteKeys(note)) noteByKey.set(key, note);
   }
 
+  const rootById = new Map<string, GhostNote>();
+  function rootFor(note: GhostNote): GhostNote {
+    const cached = rootById.get(note.id);
+    if (cached) return cached;
+
+    const parent = note.inReplyTo ? noteByKey.get(note.inReplyTo) : undefined;
+    const root = parent ? rootFor(parent) : note;
+    rootById.set(note.id, root);
+    return root;
+  }
+
   const repliesByRoot = new Map<string, GhostNote[]>();
   const childIds = new Set<string>();
 
   for (const note of items) {
-    if (!note.inReplyTo) continue;
+    const root = rootFor(note);
+    if (root.id === note.id) continue;
 
-    const parent = noteByKey.get(note.inReplyTo);
-    if (!parent) continue;
-
-    const parentRoot = parent.inReplyTo && noteByKey.get(parent.inReplyTo)
-      ? noteByKey.get(parent.inReplyTo)!
-      : parent;
-    const rootKey = parentRoot.id;
     childIds.add(note.id);
-    repliesByRoot.set(rootKey, [...(repliesByRoot.get(rootKey) ?? []), note]);
+    repliesByRoot.set(root.id, [...(repliesByRoot.get(root.id) ?? []), note]);
   }
 
   return items
@@ -80,65 +85,65 @@ function groupThreads(items: GhostNote[]): NoteThread[] {
 const threads = groupThreads(notes);
 ---
 
-<section class="notes-feed" aria-labelledby="notes-feed-heading">
-  <header class="notes-feed-header">
-    <div>
-      <h2 id="notes-feed-heading">Notes feed</h2>
-      <p>Short public notes from <a href={mastodonProfileUrl} rel="me">{fediverseHandle}</a>.</p>
-    </div>
+<section class="notes-feed" aria-label="Public notes from the Theor Fediverse account">
+  <div class="notes-feed-toolbar">
     <a class="notes-feed-profile no-icon" href={mastodonProfileUrl} rel="me">Follow / reply</a>
-  </header>
+  </div>
 
   {threads.length > 0 ? (
     <ol class="note-thread-list">
-      {threads.map((thread) => (
-        <li class="note-thread" data-has-replies={thread.replies.length > 0 ? 'true' : 'false'}>
-          <article class="note-card" data-depth="root">
-            <div class="note-avatar" aria-hidden="true">TR</div>
-            <div class="note-body">
-              <header class="note-header">
-                <a class="note-author no-icon" href={mastodonProfileUrl} rel="me">{fediverseHandle}</a>
-                <span aria-hidden="true">·</span>
-                <a class="note-time no-icon" href={thread.root.sourceUrl} target="_blank" rel="noopener noreferrer">
+      {threads.map((thread) => {
+        const noteCount = thread.replies.length + 1;
+        return (
+          <li class="note-thread" data-has-replies={thread.replies.length > 0 ? 'true' : 'false'}>
+            <article class="note-card" data-depth="root">
+              <header class="note-meta">
+                <a class="note-date no-icon" href={thread.root.sourceUrl} target="_blank" rel="noopener noreferrer">
                   <time datetime={thread.root.published.toISOString()}>{formatDateTime(thread.root.published)}</time>
                 </a>
+                {thread.replies.length > 0 && (
+                  <a class="note-thread-label no-icon" href={thread.root.sourceUrl} target="_blank" rel="noopener noreferrer">
+                    thread · {noteCount} notes
+                  </a>
+                )}
               </header>
-              {thread.root.inReplyTo && <a class="note-reply-context no-icon" href={thread.root.inReplyTo}>In reply to another note</a>}
-              <div class="note-content" set:html={thread.root.contentHtml} />
-              <footer class="note-actions">
-                <a class="note-action no-icon" href={replyIntentUrl(thread.root)} target="_blank" rel="noopener noreferrer">Reply on Mastodon</a>
-                <a class="note-action no-icon" href={thread.root.sourceUrl} target="_blank" rel="noopener noreferrer">Open source</a>
-              </footer>
-            </div>
-          </article>
 
-          {thread.replies.length > 0 && (
-            <ol class="note-replies" aria-label="Thread replies">
-              {thread.replies.map((reply) => (
-                <li>
-                  <article class="note-card" data-depth="reply">
-                    <div class="note-avatar" aria-hidden="true">TR</div>
-                    <div class="note-body">
-                      <header class="note-header">
-                        <a class="note-author no-icon" href={mastodonProfileUrl} rel="me">{fediverseHandle}</a>
-                        <span aria-hidden="true">·</span>
-                        <a class="note-time no-icon" href={reply.sourceUrl} target="_blank" rel="noopener noreferrer">
+              {thread.root.inReplyTo && <a class="note-reply-context no-icon" href={thread.root.inReplyTo}>replying to another note</a>}
+              <div class="note-content" set:html={thread.root.contentHtml} />
+
+              <footer class="note-actions">
+                <a class="note-action no-icon" href={thread.root.sourceUrl} target="_blank" rel="noopener noreferrer">permalink</a>
+                <span aria-hidden="true">·</span>
+                <a class="note-action no-icon" href={replyIntentUrl(thread.root)} target="_blank" rel="noopener noreferrer">reply</a>
+              </footer>
+            </article>
+
+            {thread.replies.length > 0 && (
+              <ol class="note-replies" aria-label="Thread replies">
+                {thread.replies.map((reply) => (
+                  <li>
+                    <article class="note-card" data-depth="reply">
+                      <header class="note-meta">
+                        <a class="note-date no-icon" href={reply.sourceUrl} target="_blank" rel="noopener noreferrer">
                           <time datetime={reply.published.toISOString()}>{formatDateTime(reply.published)}</time>
                         </a>
                       </header>
+
                       <div class="note-content" set:html={reply.contentHtml} />
+
                       <footer class="note-actions">
-                        <a class="note-action no-icon" href={replyIntentUrl(reply)} target="_blank" rel="noopener noreferrer">Reply on Mastodon</a>
-                        <a class="note-action no-icon" href={reply.sourceUrl} target="_blank" rel="noopener noreferrer">Open source</a>
+                        <a class="note-action no-icon" href={reply.sourceUrl} target="_blank" rel="noopener noreferrer">permalink</a>
+                        <span aria-hidden="true">·</span>
+                        <a class="note-action no-icon" href={replyIntentUrl(reply)} target="_blank" rel="noopener noreferrer">reply</a>
                       </footer>
-                    </div>
-                  </article>
-                </li>
-              ))}
-            </ol>
-          )}
-        </li>
-      ))}
+                    </article>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </li>
+        );
+      })}
     </ol>
   ) : (
     <p class="notes-feed-empty">No public notes are available yet.</p>

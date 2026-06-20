@@ -788,149 +788,112 @@
     }
   }
 
-  /* ─── Notes feed ─── */
+  /* ─── Notes archive ─── */
   .notes-feed {
     margin-block: theme(spacing.4);
   }
 
-  .notes-feed-header {
+  .notes-feed-toolbar {
     display: flex;
-    justify-content: space-between;
-    gap: theme(spacing.4);
-    align-items: end;
-    margin-bottom: theme(spacing.4);
-    padding-bottom: theme(spacing.3);
-    border-bottom: 1px solid var(--color-border-subtle);
-
-    & h2 {
-      margin: 0 0 theme(spacing.1);
-    }
-
-    & p {
-      margin: 0;
-      color: var(--color-text-muted);
-    }
+    justify-content: flex-end;
+    margin-bottom: theme(spacing.5);
   }
 
-  .notes-feed-profile,
-  .note-action {
+  .notes-feed .notes-feed-profile,
+  .notes-feed .note-action,
+  .notes-feed .note-date,
+  .notes-feed .note-thread-label,
+  .notes-feed .note-reply-context {
     font-family: var(--font-mono);
-    font-size: var(--text-2xs);
-    line-height: 1.2;
+    font-size: var(--text-3xs);
+    line-height: 1.35;
     text-decoration: none;
-    color: var(--color-accent);
+    color: var(--color-text-subtle);
 
     &:hover {
+      color: var(--color-accent);
       text-decoration: underline;
       text-underline-offset: 0.18em;
     }
   }
 
-  .notes-feed-profile {
-    flex-shrink: 0;
-    padding: 0.35rem 0.5rem;
-    border: 1px solid color-mix(in oklch, var(--color-accent) 28%, var(--color-border));
-    border-radius: var(--radius-sm);
-    background-color: color-mix(in oklch, var(--color-highlight-subtle) 46%, var(--color-bg));
+  .notes-feed .notes-feed-profile {
+    color: var(--color-accent);
   }
 
-  .note-thread-list,
-  .note-replies {
+  .notes-feed .note-thread-list,
+  .notes-feed .note-replies {
     list-style: none;
     margin: 0;
     padding: 0;
   }
 
-  .note-thread {
-    position: relative;
-    padding-block: theme(spacing.2);
+  .notes-feed .note-thread {
+    padding-block: theme(spacing.5);
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .notes-feed .note-thread:last-child {
     border-bottom: 1px solid var(--color-border-subtle);
   }
 
-  .note-card {
+  .notes-feed .note-card {
     position: relative;
+  }
+
+  .notes-feed .note-card[data-depth="reply"] {
+    padding-left: theme(spacing.4);
+    border-left: 1px solid var(--color-border-subtle);
+  }
+
+  .notes-feed .note-replies {
     display: grid;
-    grid-template-columns: 2rem minmax(0, 1fr);
-    gap: theme(spacing.3);
-    padding-block: theme(spacing.2);
+    gap: theme(spacing.5);
+    margin-top: theme(spacing.5);
+    margin-left: theme(spacing.4);
   }
 
-  .note-thread[data-has-replies="true"] .note-card[data-depth="root"]::before {
-    content: "";
-    position: absolute;
-    left: 1rem;
-    top: 3rem;
-    bottom: -0.25rem;
-    width: 1px;
-    background-color: var(--color-border-subtle);
-  }
-
-  .note-replies {
-    margin-left: calc(2rem + theme(spacing.3));
-  }
-
-  .note-replies .note-card {
-    grid-template-columns: 1.65rem minmax(0, 1fr);
-    gap: theme(spacing.2);
-    padding-block: theme(spacing.2);
-  }
-
-  .note-avatar {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
-    font-family: var(--font-mono);
-    font-size: var(--text-3xs);
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    color: var(--color-accent);
-    background-color: color-mix(in oklch, var(--color-bg) 92%, white);
-    border: 1px solid color-mix(in oklch, var(--color-accent) 22%, var(--color-border));
-    border-radius: 999px;
-  }
-
-  .note-card[data-depth="reply"] .note-avatar {
-    width: 1.65rem;
-    height: 1.65rem;
-    font-size: 0.56rem;
-  }
-
-  .note-header,
-  .note-actions {
+  .notes-feed .note-meta,
+  .notes-feed .note-actions {
     display: flex;
     flex-wrap: wrap;
     gap: theme(spacing.1) theme(spacing.2);
     align-items: baseline;
-    font-family: var(--font-mono);
-    font-size: var(--text-3xs);
     color: var(--color-text-subtle);
   }
 
-  .note-author {
-    color: var(--color-text-muted);
-    text-decoration: none;
-    font-weight: 600;
+  .notes-feed .note-date {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
-  .note-time {
-    color: var(--color-text-subtle);
-    text-decoration: none;
+  .notes-feed .note-thread-label {
+    color: var(--color-accent);
   }
 
-  .note-reply-context {
+  .notes-feed .note-reply-context {
     display: inline-flex;
-    margin-top: theme(spacing.1);
-    font-family: var(--font-mono);
-    font-size: var(--text-3xs);
-    color: var(--color-text-subtle);
-    text-decoration: none;
+    margin-top: theme(spacing.2);
   }
 
-  .note-content {
-    margin-top: theme(spacing.2);
+  .notes-feed .note-content {
+    margin-top: theme(spacing.3);
+    font-family: var(--font-serif);
+    font-size: var(--prose-font-size, var(--text-base));
+    line-height: var(--prose-line-height, 1.65);
+    color: var(--color-text);
+
+    & p {
+      margin-block: 0 theme(spacing.3);
+    }
+
+    & a {
+      color: var(--color-accent);
+      text-decoration-line: underline;
+      text-decoration-skip-ink: auto;
+      text-underline-offset: 2px;
+      text-decoration-thickness: 1px;
+    }
 
     & > :first-child {
       margin-top: 0;
@@ -941,8 +904,10 @@
     }
   }
 
-  .note-actions {
-    margin-top: theme(spacing.2);
+  .notes-feed .note-actions {
+    margin-top: theme(spacing.3);
+    font-family: var(--font-mono);
+    font-size: var(--text-3xs);
   }
 
   .notes-feed-empty {
@@ -953,17 +918,22 @@
   }
 
   @media (width <= 640px) {
-    .notes-feed-header {
-      display: block;
+    .notes-feed-toolbar {
+      justify-content: flex-start;
+      margin-bottom: theme(spacing.4);
     }
 
-    .notes-feed-profile {
-      display: inline-flex;
-      margin-top: theme(spacing.2);
+    .notes-feed .note-thread {
+      padding-block: theme(spacing.4);
     }
 
-    .note-replies {
-      margin-left: theme(spacing.6);
+    .notes-feed .note-replies {
+      gap: theme(spacing.4);
+      margin-left: theme(spacing.3);
+    }
+
+    .notes-feed .note-card[data-depth="reply"] {
+      padding-left: theme(spacing.3);
     }
   }
 
