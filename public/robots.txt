@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://theor.net/sitemap-index.xml

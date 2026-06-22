@@ -10,13 +10,9 @@ interface Props {
 
 const { title, description, image } = Astro.props;
 
-function pageSlug(pathname: string) {
-  return pathname.split('/').filter(Boolean).join('.');
-}
-
 const siteName = 'theor.net';
-const slug = pageSlug(Astro.url.pathname);
-const fullTitle = slug ? `${siteName}.${slug}` : siteName;
+// Content-first title for SEO/usability: real page title, then the brand.
+const fullTitle = title ? `${title} · ${siteName}` : siteName;
 const themeBootScript = getThemeBootScript();
 ---
 
