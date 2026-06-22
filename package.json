@@ -12,6 +12,7 @@
     "content:new": "bun run scripts/content.ts new",
     "content:list": "bun run scripts/content.ts list",
     "content:edit": "bun run scripts/content.ts edit",
+    "content:watch": "bun run scripts/content-watch.ts",
     "content:archive": "bun run scripts/content.ts archive",
     "content:delete": "bun run scripts/content.ts delete",
     "test": "bun test",

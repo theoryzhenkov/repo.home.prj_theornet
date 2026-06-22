@@ -1,7 +1,8 @@
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 
-export const CONTENT_ROOT = 'src/content/pages';
+export const DEFAULT_CONTENT_ROOT = 'src/content/pages';
+export const CONTENT_ROOT_ENV = 'CONTENT_PAGES_DIR';
 
 export interface RelationEntry {
   page: string;
@@ -11,6 +12,12 @@ export interface RelationEntry {
 export interface NewPageInput {
   path: string;
   name: string;
+  today: string;
+}
+
+export interface EnsureFrontmatterInput {
+  content: string;
+  title: string;
   today: string;
 }
 
@@ -40,6 +47,13 @@ export function slugifyTitle(title: string): string {
     .replace(/^[-/]+|[-/]+$/g, '');
 }
 
+export function titleFromSlug(slug: string): string {
+  const lastSegment = slug.split('/').filter(Boolean).at(-1) ?? slug;
+  return lastSegment
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
 export function normalizePagePath(path: string): string {
   const trimmedPath = path.trim().replaceAll('\\', '/').replace(/\.mdx$/, '');
   if (trimmedPath.startsWith('/')) {
@@ -57,6 +71,11 @@ export function normalizePagePath(path: string): string {
   return cleanPath;
 }
 
+export function contentRootFromEnv(env: Record<string, string | undefined> = process.env): string {
+  const configured = env[CONTENT_ROOT_ENV]?.trim();
+  return configured || DEFAULT_CONTENT_ROOT;
+}
+
 export function slugToContentPath(contentRoot: string, slug: string): string {
   return join(contentRoot, `${slug}.mdx`);
 }
@@ -68,19 +87,34 @@ export function pathToSlug(contentRoot: string, path: string): string {
 
 export function renderNewPage(input: NewPageInput): RenderedPage {
   const slug = normalizePagePath(input.path);
-  const lines = [
-    '---',
-    `title: ${yamlScalar(input.name)}`,
-    'description: ""',
-    `created: ${input.today}`,
-    'part_of: []',
-    'is: []',
-    'subject: []',
-    '---',
-    '',
-  ];
+  const content = renderDefaultPageFrontmatter(input.name, input.today);
 
-  return { slug, content: `${lines.join('\n')}\n` };
+  return { slug, content };
+}
+
+export function ensurePageFrontmatter(input: EnsureFrontmatterInput): string {
+  const content = input.content;
+  const match = content.match(/^---\n([\s\S]*?)\n---(?=\n|$)/);
+  if (!match) {
+    return `${renderDefaultPageFrontmatter(input.title, input.today)}${content.trimStart()}`;
+  }
+
+  let frontmatter = match[1];
+  if (!/^title:\s*.*$/m.test(frontmatter)) {
+    frontmatter = `title: ${yamlScalar(input.title)}\n${frontmatter}`;
+  }
+  if (!/^created:\s*.*$/m.test(frontmatter)) {
+    frontmatter = frontmatter.replace(/^(title:\s*.*)$/m, `$1\ncreated: ${input.today}`);
+  }
+  if (/^modified:\s*.*$/m.test(frontmatter)) {
+    frontmatter = frontmatter.replace(/^modified:\s*.*$/m, `modified: ${input.today}`);
+  } else if (/^created:\s*.*$/m.test(frontmatter)) {
+    frontmatter = frontmatter.replace(/^(created:\s*.*)$/m, `$1\nmodified: ${input.today}`);
+  } else {
+    frontmatter = `${frontmatter}\nmodified: ${input.today}`;
+  }
+
+  return `---\n${frontmatter}\n---${content.slice(match[0].length)}`;
 }
 
 export async function createPage(contentRoot: string, input: NewPageInput): Promise<RenderedPage> {
@@ -139,6 +173,43 @@ export async function deletePage(contentRoot: string, slug: string): Promise<voi
   await rm(source);
 }
 
+export async function bumpPageModified(contentRoot: string, slug: string, today: string): Promise<boolean> {
+  const source = slugToContentPath(contentRoot, slug);
+  if (!await exists(source)) {
+    throw new Error(`Page does not exist: ${slug}`);
+  }
+
+  const content = await readFile(source, 'utf8');
+  const updated = updateModifiedFrontmatter(content, today);
+  if (updated === content) return false;
+
+  await writeFile(source, updated, 'utf8');
+  return true;
+}
+
+export function updateModifiedFrontmatter(content: string, today: string): string {
+  const match = content.match(/^---\n([\s\S]*?)\n---(?=\n|$)/);
+  if (!match) {
+    throw new Error('Page is missing YAML frontmatter.');
+  }
+
+  const frontmatter = match[1];
+  if (new RegExp(`^modified:\\s*${escapeRegExp(today)}\\s*$`, 'm').test(frontmatter)) {
+    return content;
+  }
+
+  let updatedFrontmatter: string;
+  if (/^modified:\s*.*$/m.test(frontmatter)) {
+    updatedFrontmatter = frontmatter.replace(/^modified:\s*.*$/m, `modified: ${today}`);
+  } else if (/^created:\s*.*$/m.test(frontmatter)) {
+    updatedFrontmatter = frontmatter.replace(/^(created:\s*.*)$/m, `$1\nmodified: ${today}`);
+  } else {
+    updatedFrontmatter = `${frontmatter}\nmodified: ${today}`;
+  }
+
+  return `---\n${updatedFrontmatter}\n---${content.slice(match[0].length)}`;
+}
+
 export async function pageExists(contentRoot: string, slug: string): Promise<boolean> {
   return exists(slugToContentPath(contentRoot, slug));
 }
@@ -167,8 +238,28 @@ async function exists(path: string): Promise<boolean> {
   }
 }
 
+function renderDefaultPageFrontmatter(title: string, today: string): string {
+  const lines = [
+    '---',
+    `title: ${yamlScalar(title)}`,
+    'description: ""',
+    `created: ${today}`,
+    `modified: ${today}`,
+    'part_of: []',
+    'is: []',
+    'subject: []',
+    '---',
+    '',
+  ];
+  return `${lines.join('\n')}\n`;
+}
+
 function yamlScalar(value: string): string {
   return JSON.stringify(value);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function parseFrontmatter(content: string): Record<string, string> {

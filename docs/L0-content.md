@@ -16,7 +16,7 @@ The site has one canonical page/content source: local MDX files in `src/content/
 
 Short-form social notes are not stored in this repository. They live in the tangent service and are fetched from tangent's public JSON API during static builds for the `/notes/` feed.
 
-A project-native content CLI creates, lists, edits, archives, and deletes local MDX files while preserving Git/Jujutsu as the history layer. File paths are storage locations; page topology comes from metadata relations such as `is` and `part_of`.
+A project-native content helper can create, list, edit, archive, delete, and watch local MDX files while preserving Git/Jujutsu as the history layer. File paths are storage locations; page topology comes from metadata relations such as `is` and `part_of`.
 
 ## Page schema
 
@@ -85,19 +85,24 @@ Environment variables:
 | `PUBLIC_FEDIVERSE_HANDLE` | no | Handle displayed in the notes feed and prefilled in Mastodon reply links; defaults to `@theor@theor.net` |
 | `PUBLIC_MASTODON_INSTANCE_URL` | no | Mastodon instance used for profile/share links in the notes feed; defaults to `https://mastodon.social` |
 
-## Authoring commands
+## Authoring commands and watcher
 
-The `content` just module wraps `scripts/content.ts`:
+The `content` just module wraps `scripts/content.ts` and `scripts/content-watch.ts`:
 
 ```sh
-just content new              # prompt for path and name, then create blank relation metadata
+just content new              # prompt for path and name, then create default frontmatter
 just content list             # list content page slugs and titles
-just content edit SLUG
+just content edit SLUG        # open $EDITOR and bump modified if the file changes
+just content watch            # watch Zed/external-editor saves
 just content archive SLUG
 just content delete SLUG
 ```
 
-`new` asks for a path relative to `src/content/pages/` and a display name, then writes a blank frontmatter block with empty `part_of`, `is`, and `subject` lists for manual classification. `archive` is the preferred removal path; it moves pages under `archive/deleted-pages-YYYY-MM-DD/`. Hard deletion requires `--force`.
+`new` asks for a path relative to the pages directory and a display name, then writes the default frontmatter block: `title`, empty `description`, `created`, `modified`, and empty `part_of`, `is`, and `subject` lists.
+
+`watch` is the preferred workflow when editing in Zed or another external editor. It polls the pages directory recursively, initializes missing frontmatter for new `.mdx` files, preserves existing `created` dates, and updates `modified` when a watched page changes. The pages directory defaults to `src/content/pages`, can be changed per command with `--content-root DIR`, or set for the process with `CONTENT_PAGES_DIR=DIR`. The polling interval defaults to `1000ms` and can be changed with `--interval MS` or `CONTENT_WATCH_INTERVAL_MS`.
+
+`archive` is the preferred removal path; it moves pages under `archive/deleted-pages-YYYY-MM-DD/`. Hard deletion requires `--force`.
 
 ## Key files
 
@@ -107,6 +112,7 @@ just content delete SLUG
 - `src/components/notes/NotesFeed.astro` -- public notes feed renderer
 - `src/lib/content-admin.ts` -- local content authoring operations and page templates
 - `scripts/content.ts` -- CLI wrapper for content operations
+- `scripts/content-watch.ts` -- live external-editor watcher for frontmatter initialization and `modified` updates
 - `content.just` -- `just content ...` module
 - `src/content/pages/` -- local MDX content
 - `src/lib/relations.ts` -- relation types, link extraction, `buildGraphFromPages()`, breadcrumbs

@@ -3,7 +3,7 @@ part_of:
   - page: blog
 is:
   - page: classes/blog-note
-title: AI-aware software design
+title: AI-aware Software Design
 created: '2026-06-20'
 modified: '2026-06-21'
 ---
@@ -35,8 +35,9 @@ confuse the agents, and don't create situations susceptible to
 hallucination. Put links to where each section of your config, registry
 and state is documented.
 
-> **Info:** Posthaste puts account registry in a .toml file, instead of
-> using a more convenient SQLite. It points agents to documentation at
+> [!info]
+> Posthaste puts account registry in a .toml file, instead of using a
+> more convenient SQLite. It points agents to documentation at
 > [https://theoryzhenkov.github.io/posthaste](https://theoryzhenkov.github.io/posthaste/).
 
 **Ex:** Though not designed with LLMs in mind, git, notmuch, Maildir,
@@ -55,9 +56,10 @@ to arbitrary events, fetch data by trigger, and so forth. You wouldn't
 bother, but now it is mostly your agent that has to debug and read my
 API. Cool!
 
-> **Danger:** Just don't forget to require authentication, and enable
-> same origin by default, otherwise any website from your browser will be
-> able to interact with your app with privileged rights. No, no users were
+> [!danger]
+> Just don't forget to require authentication, and enable same origin by
+> default, otherwise any website from your browser will be able to
+> interact with your app with privileged rights. No, no users were
 > compromised due to Posthaste, I caught this early.
 
 **Ex:** Syncthing is almost a line-for-line match for what I described.
@@ -117,8 +119,9 @@ in the client? Ask codex to fork it and add the feature — I already did
 the hard part in the runtime underneath, so you point the fork at it and
 you're done.
 
-> **Info:** In the future Posthaste will take JS extensions to the
-> frontend directly, so you won't even need to rebuild.
+> [!info]
+> In the future Posthaste will take JS extensions to the frontend
+> directly, so you won't even need to rebuild.
 
 **Ex:** notmuch. The library does the indexing and search, and the
 frontends are independent — emacs, vim, and mutt integrations, aerc,
@@ -127,4 +130,5 @@ and web frontends written in Clojure, PHP, and JS.
 
 ## 2. You have a tireless, mediocre coder
 
-> **Warning:** This section is under construction. Come back later!
+> [!warning]
+> This section is under construction. Come back later!

@@ -4,11 +4,16 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
   archivePage,
+  bumpPageModified,
+  contentRootFromEnv,
   createPage,
+  ensurePageFrontmatter,
   listPages,
   normalizePagePath,
   renderNewPage,
   slugifyTitle,
+  titleFromSlug,
+  updateModifiedFrontmatter,
 } from './content-admin';
 
 const tempDirs: string[] = [];
@@ -21,6 +26,22 @@ async function makeTempDir(): Promise<string> {
 
 afterEach(async () => {
   await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+});
+
+describe('contentRootFromEnv', () => {
+  it('uses the default content root when no override is set', () => {
+    expect(contentRootFromEnv({})).toBe('src/content/pages');
+  });
+
+  it('uses CONTENT_PAGES_DIR when set', () => {
+    expect(contentRootFromEnv({ CONTENT_PAGES_DIR: 'notes/pages' })).toBe('notes/pages');
+  });
+});
+
+describe('titleFromSlug', () => {
+  it('creates a readable title from the last slug segment', () => {
+    expect(titleFromSlug('notes/small-thought')).toBe('Small Thought');
+  });
 });
 
 describe('slugifyTitle', () => {
@@ -61,12 +82,105 @@ describe('renderNewPage', () => {
 title: "Small Thought"
 description: ""
 created: 2026-05-24
+modified: 2026-05-24
 part_of: []
 is: []
 subject: []
 ---
 
 `);
+  });
+});
+
+describe('ensurePageFrontmatter', () => {
+  it('prepends default frontmatter when a new editor-created file has none', () => {
+    expect(ensurePageFrontmatter({
+      content: 'Body.\n',
+      title: 'Small Thought',
+      today: '2026-06-22',
+    })).toBe(`---
+title: "Small Thought"
+description: ""
+created: 2026-06-22
+modified: 2026-06-22
+part_of: []
+is: []
+subject: []
+---
+
+Body.
+`);
+  });
+
+  it('preserves existing created date and bumps modified', () => {
+    expect(ensurePageFrontmatter({
+      content: `---
+title: "Draft"
+created: 2026-05-24
+modified: 2026-05-25
+---
+
+Body.
+`,
+      title: 'Ignored',
+      today: '2026-06-22',
+    })).toBe(`---
+title: "Draft"
+created: 2026-05-24
+modified: 2026-06-22
+---
+
+Body.
+`);
+  });
+});
+
+describe('updateModifiedFrontmatter', () => {
+  it('replaces an existing modified field', () => {
+    expect(updateModifiedFrontmatter(`---
+title: "Draft"
+created: 2026-05-24
+modified: 2026-05-24
+---
+
+Body.
+`, '2026-06-22')).toBe(`---
+title: "Draft"
+created: 2026-05-24
+modified: 2026-06-22
+---
+
+Body.
+`);
+  });
+
+  it('inserts modified after created when missing', () => {
+    expect(updateModifiedFrontmatter(`---
+title: "Draft"
+created: 2026-05-24
+---
+
+Body.
+`, '2026-06-22')).toBe(`---
+title: "Draft"
+created: 2026-05-24
+modified: 2026-06-22
+---
+
+Body.
+`);
+  });
+
+  it('does not rewrite when modified is already current', () => {
+    const content = `---
+title: "Draft"
+created: 2026-05-24
+modified: 2026-06-22
+---
+
+Body.
+`;
+    expect(updateModifiedFrontmatter(content, '2026-06-22')).toBe(content);
   });
 });
 
@@ -82,6 +196,8 @@ describe('createPage and listPages', () => {
 
     const content = await readFile(join(root, 'web-browsing.mdx'), 'utf8');
     expect(content).toContain('title: "Web Browsing"');
+    expect(content).toContain('created: 2026-05-24');
+    expect(content).toContain('modified: 2026-05-24');
 
     const pages = await listPages(root);
     expect(pages).toEqual([{ 
@@ -101,6 +217,25 @@ describe('createPage and listPages', () => {
     await createPage(root, input);
 
     await expect(createPage(root, input)).rejects.toThrow('Page already exists: about');
+  });
+});
+
+describe('bumpPageModified', () => {
+  it('updates modified for an existing page', async () => {
+    const root = await makeTempDir();
+    await createPage(root, { path: 'about', name: 'About', today: '2026-05-24' });
+
+    await expect(bumpPageModified(root, 'about', '2026-06-22')).resolves.toBe(true);
+
+    const content = await readFile(join(root, 'about.mdx'), 'utf8');
+    expect(content).toContain('modified: 2026-06-22');
+  });
+
+  it('returns false when modified is already current', async () => {
+    const root = await makeTempDir();
+    await createPage(root, { path: 'about', name: 'About', today: '2026-06-22' });
+
+    await expect(bumpPageModified(root, 'about', '2026-06-22')).resolves.toBe(false);
   });
 });
 
