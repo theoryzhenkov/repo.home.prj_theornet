@@ -28,7 +28,7 @@ const body = entry.body ?? '';
 const Content = entry.mdx.Content;
 const mdxComponents = { ContentTable, LinkCards, NotesFeed };
 const baseHeadings = entry.mdx.headings
-  .filter((heading) => heading.depth === 2 || heading.depth === 3)
+  .filter((heading) => heading.depth >= 2 && heading.depth <= 5)
   .map((heading) => ({
     depth: heading.depth,
     slug: heading.slug,
