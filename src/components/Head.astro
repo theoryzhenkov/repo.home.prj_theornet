@@ -10,13 +10,13 @@ interface Props {
 
 const { title, description, image } = Astro.props;
 
-function currentPageName(pathname: string) {
-  const segments = pathname.split('/').filter(Boolean);
-  return segments.length === 0 ? 'index' : segments.join('.');
+function pageSlug(pathname: string) {
+  return pathname.split('/').filter(Boolean).join('.');
 }
 
-const siteName = `theornet.home.${currentPageName(Astro.url.pathname)}`;
-const fullTitle = siteName;
+const siteName = 'theor.net';
+const slug = pageSlug(Astro.url.pathname);
+const fullTitle = slug ? `${siteName}.${slug}` : siteName;
 const themeBootScript = getThemeBootScript();
 ---
 
