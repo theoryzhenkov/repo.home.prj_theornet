@@ -7,13 +7,13 @@ const navItems = [
   { href: '/contact', label: 'contact' }
 ];
 
-function currentPageName(pathname: string) {
-  const segments = pathname.split('/').filter(Boolean);
-  return segments.length === 0 ? 'index' : segments.join('.');
+function pageSlug(pathname: string) {
+  return pathname.split('/').filter(Boolean).join('.');
 }
 
 const currentPath = Astro.url.pathname;
-const siteName = `theornet.home.${currentPageName(currentPath)}`;
+const slug = pageSlug(currentPath);
+const siteName = slug ? `theor.net.${slug}` : 'theor.net';
 ---
 
 <header class="header" data-header>
