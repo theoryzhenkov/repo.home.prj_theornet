@@ -1,4 +1,4 @@
-const DEFAULT_TANGENT_API_URL = 'https://feed.theor.net';
+const DEFAULT_TANGENT_API_URL = 'https://ap.theor.net';
 const DEFAULT_NOTE_PERMALINK_BASE = 'https://theor.net/notes';
 
 export interface TangentApiAttachment {
