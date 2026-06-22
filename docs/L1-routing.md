@@ -32,7 +32,7 @@ At runtime, nginx serves only generated static files and directories. Missing pa
 
 ## Relations graph per page
 
-Both `index.astro` and `[...slug].astro` follow the same data-loading pattern: call `buildRelationsGraph()` to get the full graph and page metadata map, then derive the current page's breadcrumbs via `getBreadcrumbs(slug, graph, pages)` and its direct relations via `getPageRelations(slug, graph)`. These are passed as props to the `Page` layout component.
+Both `index.astro` and `[...slug].astro` follow the same data-loading pattern: load the current entry through `src/lib/site-pages.ts`, render its MDX component with the route-provided component map (`ContentTable`, `LinkCards`, `NotesFeed`), call `buildRelationsGraph()` to get the full graph and page metadata map, then derive the current page's breadcrumbs via `getBreadcrumbs(slug, graph, pages)` and its direct relations via `getPageRelations(slug, graph)`. These are passed as props to the `Page` layout component.
 
 `buildRelationsGraph()` reads the local MDX page set through `getAllSitePageInputs()`.
 
@@ -67,11 +67,11 @@ Code blocks use the `github-light` theme via Shiki, configured under `markdown.s
 ## Key files
 
 - `astro.config.ts` -- build config, plugin pipeline, Shiki theme
-- `src/content.config.ts` -- collection schema, glob loader for `**/*.mdx`
+- `src/content.config.ts` -- MDX content collection schema for pages
 - `src/pages/index.astro` -- home route
 - `src/pages/[...slug].astro` -- catch-all local content route with `getStaticPaths()`
 - `src/pages/graph.astro` -- graph visualization route
 - `src/pages/popup-index.json.ts` -- JSON endpoint for link previews
 - `src/lib/site-pages.ts` -- local page input loader
-- `src/lib/html-content.ts` -- HTML heading/read-time helpers for imported HTML bodies
+- `src/lib/html-content.ts` -- read-time helper and legacy HTML heading utilities
 - `src/lib/remark-todo.ts` -- custom TODO marker plugin

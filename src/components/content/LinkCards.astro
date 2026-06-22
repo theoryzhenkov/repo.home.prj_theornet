@@ -2,12 +2,35 @@
 import { resolveLinkCards, type LinkCardInput, type LinkCardKind } from '@/lib/link-cards';
 
 interface Props {
-  links: LinkCardInput[];
+  links?: LinkCardInput[];
   label?: string;
+  github?: string;
+  chrome?: string;
+  firefox?: string;
+  release?: string;
+  website?: string;
+  docs?: string;
 }
 
-const { links, label = 'External links' } = Astro.props;
-const linkCards = resolveLinkCards(links);
+const {
+  links = [],
+  label = 'External links',
+  github,
+  chrome,
+  firefox,
+  release,
+  website,
+  docs,
+} = Astro.props;
+const shorthandLinks: LinkCardInput[] = [
+  github ? { kind: 'github', href: github } : null,
+  chrome ? { kind: 'chrome', href: chrome } : null,
+  firefox ? { kind: 'firefox', href: firefox } : null,
+  release ? { kind: 'release', href: release } : null,
+  website ? { kind: 'website', href: website } : null,
+  docs ? { kind: 'docs', href: docs } : null,
+].filter((link): link is LinkCardInput => Boolean(link));
+const linkCards = resolveLinkCards([...links, ...shorthandLinks]);
 const iconLabels: Record<LinkCardKind, string> = {
   github: 'gh',
   chrome: 'cr',

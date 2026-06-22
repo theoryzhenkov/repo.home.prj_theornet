@@ -12,7 +12,7 @@ dependents:
 
 # Content System
 
-The site has one canonical page/content source: local MDX files in `src/content/pages/`, loaded by Astro's content collections via the glob loader in `src/content.config.ts`.
+The site has one canonical page/content source: local MDX files in `src/content/pages/`, loaded by Astro's content collection in `src/content.config.ts` and rendered through Astro's MDX pipeline.
 
 Short-form social notes are not stored in this repository. They live in the tangent service and are fetched from tangent's public JSON API during static builds for the `/notes/` feed.
 
@@ -55,9 +55,21 @@ Breadcrumbs walk the `part_of` chain first and fall back to legacy `up` when `pa
 
 `relations.ts` parses each page's MDX body for internal markdown links and populates `ref` (references) and `refi` (referenced-by) arrays. External links, anchors, and mailto are excluded.
 
+## Embedded components
+
+Routes pass a small component set into MDX pages, so authors can embed site components directly without per-page imports:
+
+```mdx
+<ContentTable classSlug="classes/project" />
+<NotesFeed />
+<LinkCards github="https://github.com/theoryzhenkov/blank" />
+```
+
+`ContentTable` lists pages by path prefix or semantic class relation. `LinkCards` renders compact external action cards and accepts either a `links` array or shorthand props such as `github`, `website`, `docs`, `release`, `chrome`, and `firefox`.
+
 ## Notes feed
 
-The `/notes/` MDX page renders the `::notes-feed{}` shortcode. `src/components/notes/NotesFeed.astro` calls `src/lib/tangent-notes.ts`, which fetches tangent's public API:
+The `/notes/` MDX page renders `<NotesFeed />`. `src/components/notes/NotesFeed.astro` calls `src/lib/tangent-notes.ts`, which fetches tangent's public API:
 
 - `GET https://feed.theor.net/api/notes`
 - `GET https://feed.theor.net/api/notes/:id/thread`

@@ -1,5 +1,4 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
-import { marked } from 'marked';
 import type { PageInput } from './relations';
 
 export interface LocalPageEntry extends PageInput {
@@ -7,6 +6,7 @@ export interface LocalPageEntry extends PageInput {
   html: string;
   body: string;
   data: CollectionEntry<'pages'>['data'];
+  mdx: Awaited<ReturnType<CollectionEntry<'pages'>['render']>>;
 }
 
 let localPagesCache: Promise<LocalPageEntry[]> | null = null;
@@ -19,40 +19,23 @@ function pageBody(entry: CollectionEntry<'pages'>): string {
     .trim();
 }
 
-function renderPageMarkdown(body: string): string {
-  const shortcodes: string[] = [];
-  const protectedBody = body.replace(
-    /::(content-table|notes-feed|link-cards)\\?\{([^\n}]*)\\?\}/g,
-    (_full, name: string, attrs: string) => {
-      const token = `@@HOME_SHORTCODE_${shortcodes.length}@@`;
-      shortcodes.push(`::${name}{${attrs}}`);
-      return token;
-    },
-  );
-
-  let html = marked.parse(protectedBody, { async: false });
-  shortcodes.forEach((shortcode, index) => {
-    const token = `@@HOME_SHORTCODE_${index}@@`;
-    html = html.replace(`<p>${token}</p>`, `<p>${shortcode}</p>`).replace(token, shortcode);
-  });
-  return html;
-}
-
 export async function getLocalPages(): Promise<LocalPageEntry[]> {
   if (localPagesCache) return localPagesCache;
 
   localPagesCache = (async () => {
     const entries = await getCollection('pages');
-    return entries.map((entry) => {
+    return await Promise.all(entries.map(async (entry) => {
       const body = pageBody(entry);
-      const html = entry.rendered?.html ?? renderPageMarkdown(body);
+      const mdx = await entry.render();
+      const html = entry.rendered?.html ?? body;
       return {
-        id: entry.id,
+        id: entry.slug ?? entry.id,
         html,
         body,
         data: entry.data,
+        mdx,
       };
-    });
+    }));
   })();
 
   return localPagesCache;

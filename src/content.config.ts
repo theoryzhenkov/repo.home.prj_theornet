@@ -1,5 +1,4 @@
 import { defineCollection, z } from 'astro:content';
-import { glob } from 'astro/loaders';
 
 const relationEntry = z.object({
   page: z.string(),
@@ -9,7 +8,7 @@ const relationList = z.array(relationEntry).optional();
 const maturity = z.enum(['stub', 'rough', 'developed']);
 
 const pages = defineCollection({
-  loader: glob({ pattern: '**/*.mdx', base: './src/content/pages' }),
+  type: 'content',
   schema: z.object({
     title: z.string(),
     description: z.string().optional(),

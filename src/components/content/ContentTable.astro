@@ -19,12 +19,24 @@ interface RelationEntry {
 interface Props {
   path?: string;
   classSlug?: string;
-  columns: Column[];
+  columns?: Column[];
   defaultSort?: { field: string; direction: 'asc' | 'desc' };
   linkToPage?: boolean;
 }
 
-const { path, classSlug, columns, defaultSort, linkToPage = true } = Astro.props;
+const defaultColumns: Column[] = [
+  { field: 'title', label: 'Title', sortable: true, type: 'link' },
+  { field: 'description', label: 'Description' },
+  { field: 'created', label: 'Created', sortable: true, type: 'date' },
+];
+
+const {
+  path,
+  classSlug,
+  columns = defaultColumns,
+  defaultSort = { field: classSlug ? 'created' : 'title', direction: classSlug ? 'desc' : 'asc' },
+  linkToPage = true,
+} = Astro.props;
 
 if (!path && !classSlug) {
   throw new Error('ContentTable requires path or classSlug.');
