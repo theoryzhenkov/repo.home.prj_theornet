@@ -1,0 +1,26 @@
+---
+import type { TocNode } from './toc-tree';
+
+interface Props {
+  nodes: TocNode[];
+}
+
+const { nodes } = Astro.props;
+---
+
+<ul class="toc-list">
+  {nodes.map((node) => (
+    <li class="toc-item">
+      <a
+        class="toc-entry"
+        data-state="unread"
+        data-depth={node.heading.depth}
+        href={`#${node.heading.slug}`}
+      >
+        <span class="toc-text">{node.heading.text}</span>
+        {node.time && <span class="toc-time">{node.time}</span>}
+      </a>
+      {node.children.length > 0 && <Astro.self nodes={node.children} />}
+    </li>
+  ))}
+</ul>

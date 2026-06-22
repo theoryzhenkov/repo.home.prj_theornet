@@ -445,7 +445,8 @@
     & > * {
       position: sticky;
       top: var(--toc-top);
-      width: var(--width-sidebar);
+      width: fit-content;
+      max-width: 20rem;
       max-height: calc(100vh - var(--toc-top) - var(--header-gap));
       overflow-y: auto;
       margin-left: auto;
@@ -470,16 +471,11 @@
     overflow-y: auto;
   }
 
-  .toc-items {
-  }
-
-  .toc-group {
-    margin-bottom: 0;
-  }
-
   .toc-text {
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
+    max-width: 25ch;
+    overflow-wrap: break-word;
   }
 
   .toc-time {
@@ -1071,19 +1067,75 @@
     margin: 0.5rem 0;
   }
 
+  /*
+   * TOC tree: nested <ul>/<li>. Each entry's branch point sits at a fixed
+   * offset from the top of its row so connectors line up regardless of the
+   * per-depth font size. Rows are single-line (text is ellipsised), so the
+   * branch point is stable.
+   *   --toc-indent: horizontal step per nesting level
+   *   --toc-branch: vertical center of a row, measured from its top
+   */
+  .toc {
+    --toc-indent: 0.85rem;
+    --toc-branch: 11px;
+  }
+
   .toc-list {
     list-style: none;
     padding: 0;
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+  }
+
+  .toc-item {
+    position: relative;
+  }
+
+  /* Nested levels are indented and draw tree guides to their parent. */
+  .toc-list .toc-list {
+    margin-left: var(--toc-indent);
+  }
+
+  .toc-list .toc-list > .toc-item {
+    padding-left: var(--toc-indent);
+  }
+
+  /* Vertical guide: spans this item, joining it to its siblings. The guide
+     of an ancestor naturally extends past its descendants because the
+     ancestor's <li> wraps them. */
+  .toc-list .toc-list > .toc-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background-color: var(--color-border-subtle);
+  }
+
+  /* Last sibling: stop the vertical guide at the branch point (└ not ├). */
+  .toc-list .toc-list > .toc-item:last-child::before {
+    bottom: auto;
+    height: var(--toc-branch);
+  }
+
+  /* Horizontal branch into each item. */
+  .toc-list .toc-list > .toc-item::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: var(--toc-branch);
+    width: var(--toc-indent);
+    height: 1px;
+    background-color: var(--color-border-subtle);
   }
 
   .toc-entry {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
+    gap: 0.5rem;
+    line-height: 16px;
+    padding: 3px 0 3px 6px;
     color: var(--color-text-subtle);
     text-decoration: none;
     border-left: 2px solid transparent;
@@ -1099,28 +1151,17 @@
   .toc-entry[data-depth="2"] {
     font-family: var(--font-serif);
     font-size: var(--text-xs);
-    padding: 4px 0 4px 10px;
   }
 
-  .toc-entry[data-depth="3"] {
+  .toc-entry[data-depth="3"],
+  .toc-entry[data-depth="4"] {
     font-family: var(--font-serif);
     font-size: var(--text-2xs);
-    padding: 3px 0 3px 22px;
   }
 
-  /* TOC depth connector: vertical line connecting h3 children to parent h2 */
-  .toc-entry[data-depth="3"] {
-    position: relative;
-
-    &::before {
-      content: "";
-      position: absolute;
-      left: 10px;
-      top: 0;
-      bottom: 0;
-      width: 1px;
-      background-color: var(--color-border-subtle);
-    }
+  .toc-entry[data-depth="5"] {
+    font-family: var(--font-serif);
+    font-size: var(--text-3xs);
   }
 
   /* TOC entry states via data-state attribute */
