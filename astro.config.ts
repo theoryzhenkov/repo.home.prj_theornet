@@ -7,7 +7,7 @@ import rehypeCalloutIcons from './src/lib/rehype-callout-icons';
 
 
 export default defineConfig({
-  site: 'https://home.theor.net',
+  site: 'https://theor.net',
   output: 'static',
 
   vite: {
