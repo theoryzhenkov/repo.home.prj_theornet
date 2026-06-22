@@ -49,7 +49,7 @@ function blockFor(name: string, rawAttributes: string): Exclude<HomeContentBlock
 
 export function parseHomeShortcodes(html: string): HomeContentBlock[] {
   const blocks: HomeContentBlock[] = [];
-  const shortcodePattern = /<p>\s*::(content-table|notes-feed|link-cards)\{([^}]*)\}\s*<\/p>|::(content-table|notes-feed|link-cards)\{([^}]*)\}/g;
+  const shortcodePattern = /<p>\s*::(content-table|notes-feed|link-cards)\\?\{([\s\S]*?)\\?\}\s*<\/p>|::(content-table|notes-feed|link-cards)\\?\{([\s\S]*?)\\?\}/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 

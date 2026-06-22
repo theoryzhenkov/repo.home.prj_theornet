@@ -16,6 +16,12 @@ describe('parseHomeShortcodes', () => {
     ]);
   });
 
+  it('parses MDX-escaped shortcode braces', () => {
+    expect(parseHomeShortcodes('::content-table\\{classSlug="classes/project"\\}')).toEqual([
+      { type: 'content-table', classSlug: 'classes/project' },
+    ]);
+  });
+
   it('parses notes feed and link card shortcodes', () => {
     expect(parseHomeShortcodes('::notes-feed{}\n::link-cards{github="https://github.com/x" chrome="https://chrome.example"}')).toEqual([
       { type: 'notes-feed' },
