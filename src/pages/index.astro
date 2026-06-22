@@ -5,11 +5,11 @@ import LinkCards from '@components/content/LinkCards.astro';
 import GhostNotesFeed from '@components/ghost/GhostNotesFeed.astro';
 import { getBreadcrumbs, getPageRelations } from '@/lib/relations';
 import { buildRelationsGraph } from '@/lib/relations-graph';
-import { getGhostRouteEntry } from '@/lib/site-pages';
+import { getSiteRouteEntry } from '@/lib/site-pages';
 import { addHeadingIds, estimateHtmlReadTimeMinutes, extractHtmlHeadings } from '@/lib/ghost';
 import { parseHomeShortcodes } from '@/lib/home-shortcodes';
 
-const entry = await getGhostRouteEntry('index');
+const entry = await getSiteRouteEntry('index');
 if (!entry) {
   return Astro.redirect('/404');
 }

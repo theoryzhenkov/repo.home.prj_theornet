@@ -1,17 +1,17 @@
 ---
-import { getGhostNotes, type GhostNote } from '@/lib/ghost';
+import { getTangentNotes, type SiteNote } from '@/lib/tangent-notes';
 
 interface NoteThread {
-  root: GhostNote;
-  replies: GhostNote[];
+  root: SiteNote;
+  replies: SiteNote[];
   lastActivity: Date;
   tags: string[];
   searchText: string;
 }
 
-const notes = await getGhostNotes();
+const notes = await getTangentNotes();
 
-const fediverseHandle = import.meta.env.PUBLIC_FEDIVERSE_HANDLE || '@theoryzhenkov@ap.theor.net';
+const fediverseHandle = import.meta.env.PUBLIC_FEDIVERSE_HANDLE || '@theor@theor.net';
 const mastodonInstance = (import.meta.env.PUBLIC_MASTODON_INSTANCE_URL || 'https://mastodon.social').replace(/\/$/, '');
 const mastodonHandlePath = fediverseHandle.replace(/^@/, '');
 const mastodonProfileUrl = `${mastodonInstance}/@${mastodonHandlePath}`;
@@ -27,15 +27,15 @@ function formatDateTime(date: Date): string {
   }).format(date);
 }
 
-function noteTimestamp(note: GhostNote): Date {
+function noteTimestamp(note: SiteNote): Date {
   return note.updated ?? note.published;
 }
 
-function noteKeys(note: GhostNote): string[] {
+function noteKeys(note: SiteNote): string[] {
   return [note.id, note.sourceUrl].filter(Boolean);
 }
 
-function replyIntentUrl(note: GhostNote): string {
+function replyIntentUrl(note: SiteNote): string {
   const url = new URL('/share', mastodonInstance);
   url.searchParams.set('text', `${fediverseHandle} ${note.sourceUrl}`);
   return url.toString();
@@ -45,14 +45,14 @@ function uniqueSorted(values: string[]): string[] {
   return [...new Set(values)].sort((a, b) => a.localeCompare(b));
 }
 
-function groupThreads(items: GhostNote[]): NoteThread[] {
-  const noteByKey = new Map<string, GhostNote>();
+function groupThreads(items: SiteNote[]): NoteThread[] {
+  const noteByKey = new Map<string, SiteNote>();
   for (const note of items) {
     for (const key of noteKeys(note)) noteByKey.set(key, note);
   }
 
-  const rootById = new Map<string, GhostNote>();
-  function rootFor(note: GhostNote): GhostNote {
+  const rootById = new Map<string, SiteNote>();
+  function rootFor(note: SiteNote): SiteNote {
     const cached = rootById.get(note.id);
     if (cached) return cached;
 
@@ -62,7 +62,7 @@ function groupThreads(items: GhostNote[]): NoteThread[] {
     return root;
   }
 
-  const repliesByRoot = new Map<string, GhostNote[]>();
+  const repliesByRoot = new Map<string, SiteNote[]>();
   const childIds = new Set<string>();
 
   for (const note of items) {

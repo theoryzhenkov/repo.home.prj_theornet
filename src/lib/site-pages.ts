@@ -1,23 +1,55 @@
-import { getGhostHomeEntries, type GhostHomeEntry } from './ghost';
+import { getCollection, type CollectionEntry } from 'astro:content';
 import type { PageInput } from './relations';
 
-export async function getLocalPages(): Promise<[]> {
-  return [];
+export interface LocalPageEntry extends PageInput {
+  id: string;
+  html: string;
+  body: string;
+  data: CollectionEntry<'pages'>['data'];
+}
+
+let localPagesCache: Promise<LocalPageEntry[]> | null = null;
+
+function pageBody(entry: CollectionEntry<'pages'>): string {
+  const body = 'body' in entry && typeof entry.body === 'string' ? entry.body : '';
+  return body
+    .replace(/&#123;/g, '{')
+    .replace(/&#125;/g, '}')
+    .trim();
+}
+
+export async function getLocalPages(): Promise<LocalPageEntry[]> {
+  if (localPagesCache) return localPagesCache;
+
+  localPagesCache = (async () => {
+    const entries = await getCollection('pages');
+    return entries.map((entry) => {
+      const body = pageBody(entry);
+      return {
+        id: entry.id,
+        html: body,
+        body,
+        data: entry.data,
+      };
+    });
+  })();
+
+  return localPagesCache;
 }
 
 export async function getLocalPageSlugs(): Promise<Set<string>> {
-  return new Set();
+  return new Set((await getLocalPages()).map((entry) => entry.id));
 }
 
-export async function getGhostRouteEntries(): Promise<GhostHomeEntry[]> {
-  return getGhostHomeEntries();
+export async function getSiteRouteEntries(): Promise<LocalPageEntry[]> {
+  return getLocalPages();
 }
 
-export async function getGhostRouteEntry(slug: string): Promise<GhostHomeEntry | undefined> {
-  const ghostEntries = await getGhostRouteEntries();
-  return ghostEntries.find((entry) => entry.id === slug);
+export async function getSiteRouteEntry(slug: string): Promise<LocalPageEntry | undefined> {
+  const entries = await getSiteRouteEntries();
+  return entries.find((entry) => entry.id === slug);
 }
 
 export async function getAllSitePageInputs(): Promise<PageInput[]> {
-  return await getGhostHomeEntries() as PageInput[];
+  return await getLocalPages();
 }

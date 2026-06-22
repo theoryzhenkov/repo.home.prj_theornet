@@ -347,9 +347,7 @@ async function fetchGhostCollection(resource: 'posts' | 'pages'): Promise<GhostC
 
     const payload = await response.json() as GhostCollectionResponse<GhostContentItem>;
     const pageItems = payload[resource] ?? [];
-    items.push(...(resource === 'pages'
-      ? pageItems.filter((item) => item.slug !== 'ghost-integration')
-      : pageItems));
+    items.push(...pageItems);
 
     pageCount = payload.meta?.pagination?.pages ?? page;
     page += 1;

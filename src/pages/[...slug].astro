@@ -5,12 +5,12 @@ import LinkCards from '@components/content/LinkCards.astro';
 import GhostNotesFeed from '@components/ghost/GhostNotesFeed.astro';
 import { getBreadcrumbs, getPageRelations } from '@/lib/relations';
 import { buildRelationsGraph } from '@/lib/relations-graph';
-import { getGhostRouteEntries, getGhostRouteEntry } from '@/lib/site-pages';
+import { getSiteRouteEntries, getSiteRouteEntry } from '@/lib/site-pages';
 import { addHeadingIds, estimateHtmlReadTimeMinutes, extractHtmlHeadings } from '@/lib/ghost';
 import { parseHomeShortcodes } from '@/lib/home-shortcodes';
 
 export async function getStaticPaths() {
-  return (await getGhostRouteEntries())
+  return (await getSiteRouteEntries())
     .filter((entry) => entry.id !== 'index')
     .map((entry) => ({
       params: { slug: entry.id },
@@ -18,15 +18,15 @@ export async function getStaticPaths() {
 }
 
 const { slug } = Astro.params;
-const ghostEntry = await getGhostRouteEntry(slug!);
+const entry = await getSiteRouteEntry(slug!);
 
-if (!ghostEntry) {
+if (!entry) {
   return Astro.redirect('/404');
 }
 
-const data = ghostEntry.data;
-const body = ghostEntry.body ?? '';
-const ghostHtml = addHeadingIds(ghostEntry.html);
+const data = entry.data;
+const body = entry.body ?? '';
+const ghostHtml = addHeadingIds(entry.html);
 const ghostBlocks = parseHomeShortcodes(ghostHtml);
 const baseHeadings = extractHtmlHeadings(ghostHtml);
 
