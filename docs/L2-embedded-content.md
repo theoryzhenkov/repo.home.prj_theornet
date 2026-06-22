@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Visual treatment for embedded content types: callouts, code, images, iframes, details, tables, blockquotes, and TODO markers"
-modified: 2026-06-20
-reviewed: 2026-06-20
+modified: 2026-06-22
+reviewed: 2026-06-22
 depends:
   - path: docs/L1-design-vision
   - path: docs/L1-styles
@@ -51,7 +51,7 @@ Callouts are structurally important interruptions -- they break the prose flow t
 ### Title bar
 
 - **Typography.** Monospace (`var(--font-mono)`), `var(--text-sm)` (0.875rem), `font-weight: 600`. The mono face signals "metadata/system information," consistent with how the site uses monospace for non-prose elements.
-- **Icon.** Optional inline Lucide-style SVG at `1em`, monochrome, placed before the title text. Icons are allowed when authored by Ghost/Home integrations but should remain secondary to the left border and title text; no emoji icons.
+- **Icon.** Optional inline Lucide-style SVG at `1em`, monochrome, placed before the title text. Icons should remain secondary to the left border and title text; no emoji icons.
 - **Separator.** A `1px solid var(--color-border-subtle)` line between the title and the body. This creates a micro-hierarchy within the callout without using additional background colors.
 
 ### Body

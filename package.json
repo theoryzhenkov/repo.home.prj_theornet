@@ -14,7 +14,6 @@
     "content:edit": "bun run scripts/content.ts edit",
     "content:archive": "bun run scripts/content.ts archive",
     "content:delete": "bun run scripts/content.ts delete",
-    "ghost:import:pages": "bun run scripts/import-astro-pages-to-ghost.ts",
     "test": "bun test",
     "test:build": "astro build"
   },

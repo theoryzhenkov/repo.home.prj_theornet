@@ -1,8 +1,8 @@
 ---
 scope: L1
 summary: "Route structure, static path generation, and remark plugin pipeline"
-modified: 2026-06-19
-reviewed: 2026-06-20
+modified: 2026-06-22
+reviewed: 2026-06-22
 depends:
   - path: docs/L0-content
   - path: docs/L0-ui
@@ -19,24 +19,22 @@ The site generates fully static HTML at build time (`output: 'static'` in `astro
 
 | File | URL pattern | Purpose |
 |---|---|---|
-| `src/pages/index.astro` | `/` | Home page. Fetches the `index` entry from the `pages` collection directly via `getEntry`. |
-| `src/pages/[...slug].astro` | `/<slug>/` | Catch-all for every other local or Ghost-backed content page. Uses `getStaticPaths()` to enumerate routes. |
+| `src/pages/index.astro` | `/` | Home page. Fetches the `index` entry from the `pages` collection. |
+| `src/pages/[...slug].astro` | `/<slug>/` | Catch-all for every other local MDX content page. Uses `getStaticPaths()` to enumerate routes. |
 | `src/pages/graph.astro` | `/graph/` | Full-page interactive relations graph. No `getStaticPaths` needed (single route). |
 | `src/pages/popup-index.json.ts` | `/popup-index.json` | JSON endpoint consumed by client-side code for link previews and graph popups. |
 
 ## Static path generation
 
-`[...slug].astro` defines `getStaticPaths()` which combines local MDX pages with Ghost-backed pages/posts. Local pages come from `getCollection('pages')`; the entry with `id === 'index'` is excluded because `index.astro` handles `/`. The slug corresponds to the file path under `src/content/pages/` with the `.mdx` extension stripped -- so `src/content/pages/projects/blank.mdx` becomes the slug `projects/blank` and the URL `/projects/blank/`.
+`[...slug].astro` defines `getStaticPaths()` from local MDX pages. The entry with `id === 'index'` is excluded because `index.astro` handles `/`. The slug corresponds to the file path under `src/content/pages/` with the `.mdx` extension stripped -- so `src/content/pages/projects/blank.mdx` becomes the slug `projects/blank` and the URL `/projects/blank/`.
 
-Ghost pages/posts come from `src/lib/site-pages.ts`, which wraps `src/lib/ghost.ts`. Ghost posts and pages both default to `/{ghost-slug}/`; blog membership is expressed by metadata (`is: classes/blog-note`, `part_of: blog`) rather than by a `/blog/` path prefix. Ghost `frontmatter` metadata can override the home route with `homePath` or `homeSlug`. Local MDX slugs win over Ghost-derived slugs to prevent duplicate static paths.
-
-At runtime, nginx serves only generated static files and directories. Missing paths return 404 instead of falling back to `/`, so stale Ghost paths such as `/blog/{ghost-slug}/` do not masquerade as the homepage.
+At runtime, nginx serves only generated static files and directories. Missing paths return 404 instead of falling back to `/`.
 
 ## Relations graph per page
 
 Both `index.astro` and `[...slug].astro` follow the same data-loading pattern: call `buildRelationsGraph()` to get the full graph and page metadata map, then derive the current page's breadcrumbs via `getBreadcrumbs(slug, graph, pages)` and its direct relations via `getPageRelations(slug, graph)`. These are passed as props to the `Page` layout component.
 
-`buildRelationsGraph()` reads the merged local/Ghost page set through `getAllSitePageInputs()`. This makes Ghost-backed pages visible to graph search, relation pages, breadcrumbs, and popup metadata whenever the Ghost Content API key is configured.
+`buildRelationsGraph()` reads the local MDX page set through `getAllSitePageInputs()`.
 
 `graph.astro` also calls `buildRelationsGraph()` but transforms the result through `buildGraphData()` for the D3/canvas renderer rather than extracting per-page relations.
 
@@ -51,7 +49,7 @@ The endpoint returns a JSON object keyed by URL path. The `index` entry uses `/`
 }
 ```
 
-The response includes every merged local/Ghost page input with no filtering. It is pretty-printed with two-space indentation.
+The response includes every local page input with no filtering. It is pretty-printed with two-space indentation.
 
 ## Remark plugin pipeline
 
@@ -71,9 +69,9 @@ Code blocks use the `github-light` theme via Shiki, configured under `markdown.s
 - `astro.config.ts` -- build config, plugin pipeline, Shiki theme
 - `src/content.config.ts` -- collection schema, glob loader for `**/*.mdx`
 - `src/pages/index.astro` -- home route
-- `src/pages/[...slug].astro` -- catch-all local/Ghost content route with `getStaticPaths()`
+- `src/pages/[...slug].astro` -- catch-all local content route with `getStaticPaths()`
 - `src/pages/graph.astro` -- graph visualization route
 - `src/pages/popup-index.json.ts` -- JSON endpoint for link previews
-- `src/lib/site-pages.ts` -- merged local/Ghost page input loader
-- `src/lib/ghost.ts` -- Ghost route/content helpers
+- `src/lib/site-pages.ts` -- local page input loader
+- `src/lib/html-content.ts` -- HTML heading/read-time helpers for imported HTML bodies
 - `src/lib/remark-todo.ts` -- custom TODO marker plugin
