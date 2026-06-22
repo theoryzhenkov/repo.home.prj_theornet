@@ -22,6 +22,12 @@ describe('parseHomeShortcodes', () => {
     ]);
   });
 
+  it('parses rendered Markdown shortcode attributes', () => {
+    expect(parseHomeShortcodes('<p>::content-table{classSlug=&quot;classes/project&quot;}</p>')).toEqual([
+      { type: 'content-table', classSlug: 'classes/project' },
+    ]);
+  });
+
   it('parses notes feed and link card shortcodes', () => {
     expect(parseHomeShortcodes('::notes-feed{}\n::link-cards{github="https://github.com/x" chrome="https://chrome.example"}')).toEqual([
       { type: 'notes-feed' },

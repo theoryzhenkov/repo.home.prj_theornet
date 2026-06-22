@@ -1,4 +1,5 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { marked } from 'marked';
 import type { PageInput } from './relations';
 
 export interface LocalPageEntry extends PageInput {
@@ -18,6 +19,25 @@ function pageBody(entry: CollectionEntry<'pages'>): string {
     .trim();
 }
 
+function renderPageMarkdown(body: string): string {
+  const shortcodes: string[] = [];
+  const protectedBody = body.replace(
+    /::(content-table|notes-feed|link-cards)\\?\{([^\n}]*)\\?\}/g,
+    (_full, name: string, attrs: string) => {
+      const token = `@@HOME_SHORTCODE_${shortcodes.length}@@`;
+      shortcodes.push(`::${name}{${attrs}}`);
+      return token;
+    },
+  );
+
+  let html = marked.parse(protectedBody, { async: false });
+  shortcodes.forEach((shortcode, index) => {
+    const token = `@@HOME_SHORTCODE_${index}@@`;
+    html = html.replace(`<p>${token}</p>`, `<p>${shortcode}</p>`).replace(token, shortcode);
+  });
+  return html;
+}
+
 export async function getLocalPages(): Promise<LocalPageEntry[]> {
   if (localPagesCache) return localPagesCache;
 
@@ -25,9 +45,10 @@ export async function getLocalPages(): Promise<LocalPageEntry[]> {
     const entries = await getCollection('pages');
     return entries.map((entry) => {
       const body = pageBody(entry);
+      const html = entry.rendered?.html ?? renderPageMarkdown(body);
       return {
         id: entry.id,
-        html: body,
+        html,
         body,
         data: entry.data,
       };

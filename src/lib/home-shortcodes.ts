@@ -20,9 +20,18 @@ export interface LinkCardsBlock {
 
 export type HomeContentBlock = HtmlBlock | ContentTableBlock | NotesFeedBlock | LinkCardsBlock;
 
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
 function parseAttributes(raw: string): Record<string, string> {
   const attrs: Record<string, string> = {};
-  for (const match of raw.matchAll(/([A-Za-z_][A-Za-z0-9_-]*)\s*=\s*("([^"]*)"|'([^']*)')/g)) {
+  for (const match of decodeHtmlEntities(raw).matchAll(/([A-Za-z_][A-Za-z0-9_-]*)\s*=\s*("([^"]*)"|'([^']*)')/g)) {
     attrs[match[1]] = match[3] ?? match[4] ?? '';
   }
   return attrs;
