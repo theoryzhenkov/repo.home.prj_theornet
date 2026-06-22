@@ -9,6 +9,7 @@ import Backlinks from '@components/Backlinks.astro';
 import Search from '@components/Search.astro';
 import Breadcrumb from '@components/Breadcrumb.astro';
 import type { PageInfo, PageRelations, PageInfoMap } from '@/lib/relations';
+import { resolveBanner } from '@/lib/banners';
 
 interface BacklinkEntry {
   title: string;
@@ -23,6 +24,9 @@ interface Props {
   created: Date;
   modified?: Date;
   maturity?: 'stub' | 'rough' | 'developed';
+  banner?: string;
+  bannerAlt?: string;
+  bannerCaption?: string;
   headings: { depth: number; slug: string; text: string; wordCount?: number }[];
   breadcrumbs?: PageInfo[];
   currentSlug?: string;
@@ -38,6 +42,9 @@ const {
   created,
   modified,
   maturity,
+  banner,
+  bannerAlt,
+  bannerCaption,
   headings,
   breadcrumbs = [],
   currentSlug = '',
@@ -46,6 +53,11 @@ const {
   readTimeMinutes,
   backlinks = [],
 } = Astro.props;
+
+const resolvedBanner = await resolveBanner(banner);
+const bannerUrl = resolvedBanner
+  ? new URL(resolvedBanner.src, Astro.site ?? Astro.url).href
+  : undefined;
 
 const descriptionHtml = description ? marked.parseInline(description) : undefined;
 const descriptionPlain = description?.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
@@ -56,7 +68,7 @@ const backlinksCount = backlinks.length || (relations?.refi?.length ?? 0);
 
 <!DOCTYPE html>
 <html lang="en">
-  <Head title={title} description={descriptionPlain} />
+  <Head title={title} description={descriptionPlain} image={bannerUrl} />
 
   <body class="has-site-header">
     <Header />
@@ -68,6 +80,19 @@ const backlinksCount = backlinks.length || (relations?.refi?.length ?? 0);
 
       <main class="min-w-0 py-4">
         <article>
+          {resolvedBanner && (
+            <figure class="page-banner">
+              <img
+                src={resolvedBanner.src}
+                width={resolvedBanner.width}
+                height={resolvedBanner.height}
+                alt={bannerAlt ?? ''}
+                loading="eager"
+                decoding="async"
+              />
+              {bannerCaption && <figcaption>{bannerCaption}</figcaption>}
+            </figure>
+          )}
           <header class="mb-4">
             <Breadcrumb breadcrumbs={breadcrumbs} currentSlug={currentSlug} />
             <h1>{title}</h1>

@@ -17,6 +17,30 @@
     }
   }
 
+  /* ─── Page Banner ─── */
+  .page-banner {
+    margin: 0 0 1.5rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--color-bg-subtle);
+  }
+
+  .page-banner img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 1;
+    object-fit: cover;
+  }
+
+  .page-banner figcaption {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    color: var(--color-text-muted);
+    padding: 0.4rem 0.6rem;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
   /* ─── Interaction Primitives ─── */
   .ui-sheet {
     background-color: color-mix(in oklch, var(--color-bg) 94%, white);

@@ -15,6 +15,11 @@ const pages = defineCollection({
     created: z.coerce.date(),
     modified: z.coerce.date().optional(),
     maturity: maturity.optional(),
+    // Banner: a wide image shown at the top of the page. `banner` is a path to
+    // an image in /public (e.g. /banners/foo.jpg).
+    banner: z.string().optional(),
+    bannerAlt: z.string().optional(),
+    bannerCaption: z.string().optional(),
     // Relations
     // `up` / `down` are legacy route-hierarchy affordances. Prefer `part_of` / `has_part` for new content.
     up: relationList,
