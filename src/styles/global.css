@@ -142,6 +142,26 @@
   --toc-top: calc(var(--header-offset) + var(--header-gap));
   --scroll-padding-top: var(--header-scroll-clearance);
   --color-overlay: rgba(0, 0, 0, 0.3);
+
+  /* Viewport-fixed page sheen (light theme): faint top light, neutral middle,
+     a whisper of shade at the very bottom. Near mean-neutral so overall page
+     brightness is unchanged. */
+  --page-sheen: linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 24%, rgba(0, 0, 0, 0) 82%, rgba(0, 0, 0, 0.035) 100%);
+
+  /* Reading surface: the central column sits on "paper" a hair lighter than the
+     page "desk", giving the body presence (and a touch more text contrast)
+     without any texture over the prose. */
+  --color-paper: #F8F8F6;
+  --reading-pad: 1.5rem;
+  --paper-shadow: 0 1px 4px rgba(20, 24, 30, 0.05);
+
+  /* Header texture: a symmetric vertical sheen (lighten top / darken bottom by
+     equal amounts, so the mean brightness stays on the base header colour) plus
+     fine desaturated grain. Lives only on the header strip — no long-form text
+     there — so it adds material distinction without touching prose readability. */
+  --header-texture:
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.13), rgba(0, 0, 0, 0.13)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='h'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.0' numOctaves='1' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23h)' opacity='0.07'/%3E%3C/svg%3E");
 }
 
 :root[data-theme='dark'] {
@@ -189,6 +209,21 @@
   --color-rel-reference: #7A756C;
 
   --color-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Dark theme: a cooler top lift that reads as ambient light on charcoal,
+     fading to a slightly deeper base at the bottom. */
+  --page-sheen: linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 24%, rgba(0, 0, 0, 0) 80%, rgba(0, 0, 0, 0.10) 100%);
+
+  /* Dark paper: a small lift above the charcoal base, kept below bg-subtle so
+     inset surfaces (callouts, code) still read as recessed. */
+  --color-paper: #1F1E1C;
+  --paper-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+
+  /* Dark: subtler top highlight so the sheen doesn't glow against charcoal;
+     mean stays at or just below the base header colour, never lighter. */
+  --header-texture:
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.14)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='h'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.0' numOctaves='1' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23h)' opacity='0.14'/%3E%3C/svg%3E");
 }
 
 :root[data-header-visible='false'] {

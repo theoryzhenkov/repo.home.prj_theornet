@@ -5,10 +5,21 @@
     line-height: 1.6;
     color: var(--color-text);
     background-color: var(--color-bg);
+    /* Shared "lit from top" cue: a smooth, viewport-fixed sheen that lights the
+       top of the page and faintly grounds the bottom. Ties the textured header
+       into the body so it doesn't read as an object on a flat plane. Smooth
+       gradient only — no grain — so prose contrast is untouched. */
+    background-image: var(--page-sheen);
+    background-attachment: fixed;
     scroll-padding-top: var(--scroll-padding-top);
     transition: scroll-padding-top var(--transition-duration-medium) var(--ease-out);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Serif prose uses old-style proportional figures + common ligatures for
+       an editorial, less mechanical texture. Mono chrome resets below. */
+    font-variant-ligatures: common-ligatures contextual;
+    font-variant-numeric: oldstyle-nums proportional-nums;
+    font-kerning: normal;
   }
 
   body {
@@ -107,6 +118,18 @@
   }
 
   /* ─── Code ─── */
+
+  /* Monospace and tabular chrome opts out of old-style figures: code,
+     listing tables, and metadata read better with aligned lining numerals. */
+  code,
+  pre,
+  table,
+  .metadata-strip,
+  .content-table,
+  .toc,
+  .breadcrumb {
+    font-variant-numeric: lining-nums tabular-nums;
+  }
 
   code {
     font-family: var(--font-mono);

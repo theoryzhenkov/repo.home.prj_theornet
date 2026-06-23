@@ -72,6 +72,8 @@
       letter-spacing: -0.008em;
       margin-top: var(--prose-h2-margin-top);
       margin-bottom: var(--prose-h2-margin-bottom);
+      padding-bottom: calc(0.3rem * var(--prose-space-scale));
+      border-bottom: 1px solid var(--color-border-subtle);
     }
 
     & h3 {
