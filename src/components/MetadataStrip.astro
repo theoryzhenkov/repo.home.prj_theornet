@@ -1,6 +1,8 @@
 ---
-import type { PageRelations, PageInfoMap, RelationTarget } from '@/lib/relations';
+import type { PageRelations, PageInfoMap, RelationTarget, PageInfo } from '@/lib/relations';
 import { slugToHref } from '@/lib/slugs';
+import Breadcrumb from '@components/Breadcrumb.astro';
+import PanelToggle from '@components/PanelToggle.astro';
 
 interface Props {
   created: Date;
@@ -9,6 +11,7 @@ interface Props {
   readTimeMinutes?: number;
   backlinksCount?: number;
   currentSlug: string;
+  breadcrumbs?: PageInfo[];
   relations?: PageRelations;
   pageInfoMap?: PageInfoMap;
 }
@@ -20,6 +23,7 @@ const {
   readTimeMinutes,
   backlinksCount = 0,
   currentSlug,
+  breadcrumbs = [],
   relations,
   pageInfoMap,
 } = Astro.props;
@@ -105,7 +109,13 @@ if (relations) {
 const hasRelationRows = relationRows.length > 0;
 ---
 
-<aside class="metadata-strip">
+<aside class="metadata-strip" data-collapsible data-panel="metadata">
+  <div class="panel-head">
+    <PanelToggle label="metadata" />
+    <span class="metadata-title">METADATA</span>
+  </div>
+  <div class="metadata-separator"></div>
+  <Breadcrumb breadcrumbs={breadcrumbs} currentSlug={currentSlug} />
   <div class="metadata-context">
     {maturity && (
         <span class="metadata-item metadata-maturity">
@@ -143,7 +153,7 @@ const hasRelationRows = relationRows.length > 0;
     <div class="metadata-relations">
       {relationRows.map((row) => (
         <div class="metadata-relation-row">
-          <a href={relationHref(row.key)} class="metadata-relation-label metadata-link">{row.label}:</a>
+          <a href={relationHref(row.key)} class="metadata-relation-label metadata-link">{row.label}</a><span class="metadata-relation-sep" aria-hidden="true">:</span>
           <div class="metadata-relation-values">
             {row.targets.map((target, index) => (
               <span class="metadata-relation-item">

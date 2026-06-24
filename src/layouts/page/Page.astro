@@ -7,7 +7,6 @@ import TOC from '@components/TOC.astro';
 import Footnotes from '@components/Footnotes.astro';
 import Backlinks from '@components/Backlinks.astro';
 import Search from '@components/Search.astro';
-import Breadcrumb from '@components/Breadcrumb.astro';
 import type { PageInfo, PageRelations, PageInfoMap } from '@/lib/relations';
 import { resolveBanner } from '@/lib/banners';
 
@@ -94,20 +93,21 @@ const backlinksCount = backlinks.length || (relations?.refi?.length ?? 0);
             </figure>
           )}
           <header class="mb-4">
-            <Breadcrumb breadcrumbs={breadcrumbs} currentSlug={currentSlug} />
             <h1>{title}</h1>
             {descriptionHtml && <p class="text-text-muted italic mb-2" set:html={descriptionHtml} />}
-            <MetadataStrip
-              created={created}
-              modified={modified}
-              maturity={maturity}
-              readTimeMinutes={readTimeMinutes}
-              backlinksCount={backlinksCount}
-              currentSlug={currentSlug}
-              relations={relations}
-              pageInfoMap={pageInfoMap}
-            />
           </header>
+
+          <MetadataStrip
+            created={created}
+            modified={modified}
+            maturity={maturity}
+            readTimeMinutes={readTimeMinutes}
+            backlinksCount={backlinksCount}
+            currentSlug={currentSlug}
+            breadcrumbs={breadcrumbs}
+            relations={relations}
+            pageInfoMap={pageInfoMap}
+          />
 
           <div class="prose">
             <slot />
@@ -124,6 +124,7 @@ const backlinksCount = backlinks.length || (relations?.refi?.length ?? 0);
     <script>
       import '@/scripts/popups/index';
       import '@/scripts/footnotes';
+      import '@/scripts/panel-collapse';
 
       function initHeadingLinks() {
         const headings = document.querySelectorAll('.prose h1[id], .prose h2[id], .prose h3[id], .prose h4[id], .prose h5[id], .prose h6[id]');

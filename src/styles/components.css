@@ -27,6 +27,7 @@
      past the text. Soft shadow + tonal lift read as a sheet on the desk, not a
      boxed card. */
   .reading-surface {
+    position: relative;
     margin-bottom: 3rem;
     padding: 1.75rem var(--reading-pad) 2.5rem;
     background-color: var(--color-paper);
@@ -486,7 +487,7 @@
 
   /* ─── Aside Margin (TOC sidebar on wide, inline on narrow) ─── */
   .aside-margin {
-    padding-inline-end: 3rem;
+    padding-inline-end: calc(var(--margin-gap) - var(--reading-pad));
 
     & > * {
       position: sticky;
@@ -1098,13 +1099,99 @@
   }
 
   /* ─── Table of Contents ─── */
-  .toc-label {
+  .toc-label,
+  .metadata-title {
     font-family: var(--font-mono);
     font-size: var(--text-3xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--color-text-subtle);
+  }
+
+  .metadata-separator {
+    border: none;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  /* ─── Collapsible panel header (TOC / metadata) ─── */
+  .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  /* Metadata sits in the right gutter: right-align its header so the label hugs
+     the outer edge and the eye points inward toward the content, mirroring the
+     left TOC header. */
+  .metadata-strip .panel-head {
+    justify-content: flex-end;
+  }
+
+  .panel-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    color: var(--color-text-subtle);
+    cursor: pointer;
+    opacity: 0.55;
+    transition:
+      opacity var(--transition-duration-normal) var(--ease-out),
+      color var(--transition-duration-normal) var(--ease-out);
+
+    &:hover {
+      opacity: 1;
+      color: var(--color-accent);
+    }
+
+    &:focus-visible {
+      outline: 2px solid color-mix(in oklch, var(--color-accent) 60%, white);
+      outline-offset: 2px;
+      opacity: 1;
+    }
+  }
+
+  .panel-toggle .icon {
+    display: inline-flex;
+  }
+
+  .panel-toggle .icon svg {
+    display: block;
+    width: 13px;
+    height: 13px;
+  }
+
+  /* Open eye when visible, closed eye when collapsed. */
+  .panel-toggle .icon-eye-off {
+    display: none;
+  }
+
+  [data-collapsed="true"] .panel-toggle .icon-eye {
+    display: none;
+  }
+
+  [data-collapsed="true"] .panel-toggle .icon-eye-off {
+    display: inline-flex;
+  }
+
+  /* Collapsed: keep only the header line. */
+  .toc[data-collapsed="true"] > :not(.panel-head),
+  .metadata-strip[data-collapsed="true"] > :not(.panel-head) {
+    display: none;
+  }
+
+  /* The collapse script freezes a px width on the panel (so the right-anchored
+     TOC header doesn't shift when its items hide). That only applies to the
+     wide margin layout; inline on narrow it must return to natural width. */
+  @media (width <= 1024px) {
+    .toc,
+    .metadata-strip {
+      width: auto !important;
+    }
   }
 
   .toc-separator {
@@ -1272,7 +1359,7 @@
 
   .sidenote {
     position: absolute;
-    left: calc(100% + 3rem);
+    left: calc(100% + var(--margin-gap));
     width: 220px;
     font-family: var(--font-serif);
     font-size: var(--text-xs);
@@ -1578,12 +1665,18 @@
     color: var(--color-text-subtle);
     white-space: nowrap;
     text-decoration: none;
-    margin-right: theme(spacing.2);
 
     &:hover {
       color: var(--color-accent);
       text-decoration: underline;
     }
+  }
+
+  /* Colon belongs to the prose, not the link — plain text, dimmed. */
+  .metadata-relation-sep {
+    flex: 0 0 auto;
+    color: var(--color-text-subtle);
+    margin-right: theme(spacing.2);
   }
 
   .metadata-relation-values {
@@ -1606,6 +1699,44 @@
 
     &:hover {
       text-decoration: underline;
+    }
+  }
+
+  /* ─── Metadata as a right-margin panel (wide viewports) ─── */
+  /* Mirrors the TOC in the left margin: the strip lifts out of the reading
+     column into the right gutter, aligned with the sidenote column. On narrow
+     viewports it stays the inline strip defined above. The sidenote engine
+     (scripts/footnotes.ts) reserves this panel's vertical band so notes never
+     collide with it. */
+  @media (width > 1024px) {
+    .metadata-strip {
+      position: absolute;
+      top: 0;
+      left: calc(100% - var(--reading-pad) + var(--margin-gap));
+      width: 220px;
+      margin: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+      gap: 0.85rem;
+    }
+
+    /* Scoped to the strip: the .metadata-* classes are shared with the
+       Breadcrumb, which must stay an inline row. */
+    .metadata-strip .metadata-context {
+      flex-direction: column;
+      align-items: flex-start;
+      column-gap: 0;
+      row-gap: 0.3rem;
+    }
+
+    .metadata-strip .metadata-relations {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.3rem;
+    }
+
+    .metadata-strip .metadata-relation-row {
+      flex-wrap: wrap;
     }
   }
 

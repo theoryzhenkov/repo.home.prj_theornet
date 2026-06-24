@@ -1,6 +1,7 @@
 ---
 import { buildTocTree, type Heading } from './toc-tree';
 import TocList from './TocList.astro';
+import PanelToggle from './PanelToggle.astro';
 
 interface Props {
   headings: Heading[];
@@ -14,8 +15,11 @@ const tree = buildTocTree(tocHeadings);
 ---
 
 {tocHeadings.length > 0 && (
-  <nav class="toc" aria-label="Table of contents">
-    <span class="toc-label">CONTENTS</span>
+  <nav class="toc" aria-label="Table of contents" data-collapsible data-panel="contents">
+    <div class="panel-head">
+      <span class="toc-label">CONTENTS</span>
+      <PanelToggle label="contents" />
+    </div>
     <div class="toc-separator"></div>
     <div class="toc-items">
       <TocList nodes={tree} />

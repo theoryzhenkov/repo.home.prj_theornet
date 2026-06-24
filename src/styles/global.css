@@ -153,6 +153,10 @@
      without any texture over the prose. */
   --color-paper: #F8F8F6;
   --reading-pad: 1.5rem;
+  /* Symmetric gap between the text edge and the margin furniture (TOC left,
+     metadata/sidenotes right). Measured from the prose edge on both sides so
+     the eye doesn't drift to one margin while reading. */
+  --margin-gap: 5rem;
   --paper-shadow: 0 1px 4px rgba(20, 24, 30, 0.05);
 
   /* Header texture: a symmetric vertical sheen (lighten top / darken bottom by
