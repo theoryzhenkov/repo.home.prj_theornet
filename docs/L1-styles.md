@@ -1,8 +1,8 @@
 ---
 scope: L1
 summary: "CSS architecture, design tokens, and style invariants"
-modified: 2026-05-24
-reviewed: 2026-05-24
+modified: 2026-06-24
+reviewed: 2026-06-24
 depends:
   - path: docs/L0-ui
   - path: docs/L1-design-vision
@@ -280,10 +280,23 @@ Heading sizes use raw `rem` values in `base.css`: h1 = 1.875rem (30px), h2 = 1.3
 
 | Token | Value | Purpose |
 | ----- | ----- | ------- |
-| `--width-content` | 70ch | Main content measure; page grid centers this column with responsive `width: min(100% - gutter, var(--width-content))` behavior on narrow viewports |
+| `--width-content` | 65ch | Prose measure. The center grid track is `min(100%, calc(var(--width-content) + 2 * var(--reading-pad)))` so the padded reading surface keeps the text at this measure |
 | `--width-sidebar` | 12rem | Aside margin sidebar width |
 | `--width-page` | 85rem | Overall page max-width |
 | `--height-header` | 2.5rem | Sticky header height (`:root`, used for scroll-padding) |
+
+### Reading surface and gutters
+
+The reading column is a "paper" surface floating on the page "desk"; the TOC and metadata panels sit in the gutters as marginalia. See **Texture and grain** for the rationale.
+
+| Token | Value (light / dark) | Purpose |
+| ----- | ----- | ------- |
+| `--color-paper` | `#FBFBF9` / `#1F1E1C` | Reading-column surface, a step off `--color-bg` (the desk) |
+| `--paper-shadow` | layered soft / single soft | Lifts the column off the desk; light leans on the shadow because its tone gap is tiny |
+| `--reading-pad` | 1.5rem | Inline padding of the reading column; the center grid track is widened by `2 × --reading-pad` so the prose measure stays at `--width-content` |
+| `--margin-gap` | 5rem | Gap from the prose edge to the margin furniture (TOC left, metadata/sidenotes right). Derived once and applied to both sides so the eye does not drift to one margin while reading |
+| `--page-sheen` | gradient | Viewport-fixed smooth page lighting |
+| `--header-texture` | sheen + grain | Header strip material |
 
 ### Border radii
 
@@ -390,13 +403,23 @@ Both are declared as nested `@media` rules inside `.page-grid` in `components.cs
 
 ## Texture and grain
 
-The scrapbook aesthetic comes from layered subtle textures, not bold visual effects:
+Texture lives on **chrome surfaces only — never over prose.** A page-wide noise grain over the reading column was tried and rejected: speckle lowers text contrast and reads busy. Depth and warmth come instead from smooth, contrast-safe treatments:
 
-- Subtle paper-like noise/grain on page backgrounds (CSS `background-image` with SVG noise or a tiny repeating texture)
-- Varied content framing: relations block uses a surface-tinted background, sidenotes use a left border, backlinks use a top border separator
-- Typographic contrast between serif prose and mono metadata creates visual variety within each page
+- **Header strip** (`--header-texture`): a symmetric vertical sheen (lighten top / darken bottom by equal amounts, mean-neutral so brightness is unchanged) plus fine, single-octave desaturated grain. The header carries no long-form text, so grain there is safe.
+- **Page sheen** (`--page-sheen`): a viewport-fixed, smooth, near mean-neutral vertical gradient — a faint top light and a whisper of shade at the bottom. Smooth gradient only, so prose contrast is untouched. This shared "lit from top" cue ties the textured header into the body.
+- **Reading surface / paper column** (`--color-paper`, `--paper-shadow`): the central column sits a hair lighter than the page desk (`--color-bg`), lifted by a soft shadow. The TOC and metadata panels sit on the desk as marginalia; the header chrome belongs to the same recessed layer. This realizes the three-zone structure from `L1-design-vision`.
+- Typographic contrast between serif prose and mono metadata adds per-page variety.
 
-These textures should be barely noticeable but add warmth. Different textures for light vs dark themes.
+**Per-theme depth, not inversion.** In dark, the paper's tone lift off the charcoal desk carries the depth on its own. In light, near-white paper barely differs from the desk in tone, so the **shadow does the lifting** (a layered contact + ambient soft shadow). The two themes therefore use different `--color-paper` and `--paper-shadow` values — do not assume one is an inversion of the other, and verify both themes when touching the shading.
+
+### Assertions
+
+| ID | Sev. | Assertion |
+| -- | ---- | --------- |
+| no-prose-grain | MUST | No noise/grain texture is applied over the reading column; reading-surface texture is limited to smooth gradients or tonal surfaces |
+| chrome-texture-ok | MAY | Grain/sheen texture may be applied to chrome surfaces (header) that carry no long-form text |
+| paper-lift-both-themes | MUST | The reading column is perceptibly lifted off the page in both light and dark themes |
+| symmetric-gutters | MUST | The gap from the prose edge to the margin furniture is equal on the left and right |
 
 ## Graph color resolution
 

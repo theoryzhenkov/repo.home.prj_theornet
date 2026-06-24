@@ -1,8 +1,8 @@
 ---
 scope: L1
 summary: "Aesthetic direction, visual language, and design rules for the site redesign"
-modified: 2026-03-24
-reviewed: 2026-03-24
+modified: 2026-06-24
+reviewed: 2026-06-24
 depends:
   - path: docs/L0-ui
 dependents:
@@ -22,7 +22,7 @@ Target aesthetic for home.theor.net — a content-first personal knowledge site 
 
 **Scrapbook with coherent bones.** The site should feel like a collage — different content types have visually distinct treatments — but everything sits on a shared structural grid. The variety is organic, not chaotic. A patchwork that grew over time, held together by consistent typography and spatial rhythm.
 
-**Texture over saturation.** The visual richness comes from layered texture (subtle grain, varied content framing, typographic contrast), not from saturated color palettes. Color is present but quiet — used as a secondary signal that reinforces shape, icon, and typography. Content types get barely-there background tints; relation types get muted hues in the graph; maturity indicators get the loudest color. Nothing garish, but not monochrome either.
+**Texture over saturation.** The visual richness comes from layered texture — but **texture stays on chrome and surfaces, never as grain over prose** (a page-wide grain over the reading column was tried and rejected for hurting contrast; see `L1-styles` "Texture and grain"). Depth comes from a lifted "paper" reading column, a textured header strip, smooth page lighting, and the serif/mono typographic contrast — not from saturated color palettes. Color is present but quiet — used as a secondary signal that reinforces shape, icon, and typography. Content types get barely-there background tints; relation types get muted hues in the graph; maturity indicators get the loudest color. Nothing garish, but not monochrome either.
 
 **Practical density.** Optimized for people who read. Information-dense but structured. Nothing decorative that doesn't serve comprehension or navigation.
 
@@ -93,11 +93,13 @@ Narrow content column (max ~65-70ch) with generous margins. Tufte-style: the mar
 
 ### Three-zone structure
 
-1. **Left margin**: navigation context, table of contents
-2. **Center column**: content (prose, headings, inline interactives)
-3. **Right margin**: sidenotes, margin notes, relation hints
+1. **Left margin**: the collapsible table of contents ("CONTENTS")
+2. **Center column**: the reading surface — a "paper" column lifted off the page "desk", holding prose, headings, and inline interactives
+3. **Right margin**: the collapsible metadata panel ("METADATA": dates, maturity, read time, breadcrumbs, typed relations), plus sidenotes and margin notes
 
-Collapses to single column on narrow viewports, with sidenotes inlining into the flow.
+The two margin panels mirror each other: each carries an eye/eye-off toggle to hide its body (state persisted), and the gap from the text to either margin is equal (`--margin-gap`) so the eye stays in the column. Sidenotes reserve the metadata panel's vertical band and stack below it rather than overlapping.
+
+Collapses to single column on narrow viewports, with the margin panels and sidenotes inlining into the flow.
 
 ## Header: scroll-reveal navigation frame
 
@@ -105,7 +107,7 @@ The header is the site's only piece of persistent chrome. It frames the page on 
 
 ### Role
 
-Site identity, quicklinks, search, theme toggle. No article-specific metadata — maturity, read time, dates, and freshness belong in the MetadataStrip below the page title, and reading progress is tracked by the TOC's scroll-spy states. The header does one job: orient you within the site and give you an escape hatch.
+Site identity, quicklinks, search, theme toggle. No article-specific metadata — maturity, read time, dates, freshness, breadcrumbs, and relations belong in the MetadataStrip, a collapsible panel in the right margin (mirroring the TOC), and reading progress is tracked by the TOC's scroll-spy states. The header does one job: orient you within the site and give you an escape hatch.
 
 ### Behavior
 
@@ -117,7 +119,7 @@ At **scroll position zero** (top of page), the header is always visible in its n
 
 ### Visual distinction
 
-The header has a **different background** from the page surface — perceptibly darker or more muted — so it reads as a distinct strip, not as the page bleeding upward. When it appears as a fixed overlay on scroll-up, this background also prevents content from showing through.
+The header has a **different background** from the page surface — perceptibly darker or more muted — so it reads as a distinct strip, not as the page bleeding upward. This is realized as a sheen + fine grain texture (`--header-texture`) over a muted background: the strip reads as a distinct material from the flat reading surface, and grain is acceptable here because the header carries no long-form text. When it appears as a fixed overlay on scroll-up, this background also prevents content from showing through.
 
 ### No reading progress bar
 
