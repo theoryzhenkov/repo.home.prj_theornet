@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Reading experience mechanics: TOC scroll-spy, sidenote alignment, link previews, and their interplay in the three-column layout"
-modified: 2026-05-24
-reviewed: 2026-05-24
+modified: 2026-06-24
+reviewed: 2026-06-24
 depends:
   - path: docs/L1-design-vision
   - path: docs/L1-styles
@@ -23,11 +23,11 @@ The page uses a three-zone structure:
 
 | Zone | Width | Contents |
 | ---- | ----- | -------- |
-| Left margin | ~200px, fixed | TOC navigation |
-| Center column | max 70ch, fluid below that | Prose, headings, inline elements |
-| Right margin | ~250px | Sidenotes, link preview popups |
+| Left margin | ~200px | Collapsible TOC ("CONTENTS") |
+| Center column | 65ch measure on a lifted "paper" surface | Prose, headings, inline elements |
+| Right margin | ~250px | Collapsible metadata panel ("METADATA") at the top, then sidenotes and link preview popups |
 
-The left and right margins collapse below the `1024px` breakpoint. The center column keeps a normalized reading measure with `width: min(100% - gutter, var(--width-content))`, so text wraps naturally before lines become too long. Prose enables `text-wrap: pretty`, heading balance, automatic hyphenation, and `overflow-wrap: break-word` for graceful line breaks. At 900px and wider, prose paragraphs and list items use justified alignment, matching the Gwern-style dense reading measure while hyphenation prevents large word gaps. Everything described below assumes wide viewport unless the mobile fallback section says otherwise.
+The left and right margins collapse below the `1024px` breakpoint. The center column is a lifted "paper" surface (`--color-paper`) padded by `--reading-pad`; the grid track is widened by `2 × --reading-pad` so the prose measure stays at `--width-content` (65ch). The gap from the text to either margin is equal (`--margin-gap`, 5rem), measured from the prose edge, so the eye stays in the column. See `L1-styles` "Reading surface and gutters". Prose enables `text-wrap: pretty`, heading balance, automatic hyphenation, and `overflow-wrap: break-word` for graceful line breaks. At 900px and wider, prose paragraphs and list items use justified alignment, matching the Gwern-style dense reading measure while hyphenation prevents large word gaps. Everything described below assumes wide viewport unless the mobile fallback section says otherwise.
 
 ---
 
@@ -62,6 +62,10 @@ When no heading has been crossed (the reader is above the first section), no TOC
 The transition between states uses `transition: opacity 150ms ease, border-color 150ms ease, font-weight 0ms`. Font weight changes are instant (no transition) to avoid rendering artifacts.
 
 **Click behavior.** Clicking a TOC entry scrolls the corresponding heading into view with `scroll-behavior: smooth` and `scroll-margin-top` equal to the header height plus `1rem` of breathing room.
+
+### Collapse toggle
+
+The TOC header ("CONTENTS") carries an eye/eye-off toggle that hides its body; state persists per panel in `localStorage`. Because the TOC is `width: fit-content` and right-anchored in the gutter, the collapse script freezes the panel's resolved width before hiding the items, so the header does not shift sideways. The metadata panel mirrors this. See `L1-design-vision` "Three-zone structure".
 
 ### Mobile fallback
 
@@ -220,8 +224,11 @@ The goal: sidenote N appears at the same vertical position as its `<sup>` refere
 **Positioning pass** (runs in `layoutSidenotes()`):
 
 ```
-let prevBottom = 0
 const SIDENOTE_GAP = 8  // px between stacked sidenotes
+// Seed with the metadata panel's reserved band: the panel shares the right
+// margin and occupies its top, so any sidenote that would land within it is
+// pushed below. Returns 0 when the panel is inline (narrow) or absent.
+let prevBottom = metadataReservedBottom(prose)
 
 for each sidenote in DOM order:
     ref = document.getElementById(`fnref-${sidenote.dataset.footnoteId}`)
@@ -231,7 +238,9 @@ for each sidenote in DOM order:
     prevBottom = actualTop + sidenote.offsetHeight + SIDENOTE_GAP
 ```
 
-Sidenotes use `position: absolute` within the `.prose` container (which is `position: relative`). They are offset into the right margin via `left: calc(100% + 3rem)`.
+The metadata panel's bottom is measured via `getBoundingClientRect()` relative to `.prose` (it is positioned against the reading column, not inside `.prose`). Collapsing the panel fires a resize, which reflows the sidenotes to reclaim the freed band.
+
+Sidenotes use `position: absolute` within the `.prose` container (which is `position: relative`). They are offset into the right margin via `left: calc(100% + var(--margin-gap))`.
 
 **When to run.** The positioning pass runs on:
 - Initial page load (`DOMContentLoaded` and `astro:page-load`)
@@ -252,7 +261,7 @@ This addresses the known edge case from L3-footnotes-layout: "a page with many t
 
 Each sidenote is styled as follows:
 
-- **Width.** Fixed at `var(--sidenote-width, 220px)`. The right margin zone accommodates this plus `3rem` of gutter from the prose edge.
+- **Width.** Fixed at `var(--sidenote-width, 220px)`. The right margin zone accommodates this plus `--margin-gap` (5rem) of gutter from the prose edge, matching the left TOC gutter.
 - **Typography.** Serif body font at `0.8rem` (smaller than body text), with `line-height: 1.4`. This creates a clear hierarchy: sidenotes are subordinate to the main prose.
 - **Number label.** The sidenote's number (rendered via CSS counter `sidenote-counter`) appears as the first inline element, in semi-bold weight, matching the superscript reference in the prose.
 - **Background.** None. Sidenotes sit directly on the page background with no card, border, or shadow. They are part of the page surface, not floating above it. This follows L1-design-vision's principle of "texture over color" -- the typographic scale difference is sufficient to distinguish sidenotes from prose.
@@ -326,11 +335,11 @@ The three systems -- TOC, sidenotes, and link previews -- share the page's horiz
 | ---- | ---------------- | ------------------ |
 | Left margin | TOC | None |
 | Center column | Prose | Link preview popups (when margin is occupied) |
-| Right margin | Sidenotes | Link preview popups (when no sidenote conflict) |
+| Right margin | Metadata panel (top) + sidenotes | Link preview popups (when no sidenote conflict) |
 
 The left margin is exclusively for the TOC. Nothing else is placed there.
 
-The right margin is primarily for sidenotes. Link previews may use the right margin only when no sidenote occupies the same vertical band (within a tolerance of `2rem` above and below the popup's intended bounds).
+The right margin holds the metadata panel at its top and sidenotes aligned to their references; sidenotes reserve the panel's band and stack below it. Link previews may use the right margin only when no sidenote occupies the same vertical band (within a tolerance of `2rem` above and below the popup's intended bounds).
 
 ### Z-index layering
 
@@ -383,7 +392,9 @@ Popup z-indices are managed dynamically by `updateZOrder()` — sequential assig
 | toc-readstate-sticky | MUST | Once marked read, an entry stays read for the page session |
 | toc-readstate-no-persist | MUST | Read state is not persisted to localStorage or any storage; it resets on navigation |
 | toc-width-fit | MUST | All TOC content fits within the ~200px left margin without horizontal overflow |
-| sidenote-sync | MUST | Each sidenote's top position equals its reference's offsetTop or the bottom of the previous sidenote, whichever is greater |
+| sidenote-sync | MUST | Each sidenote's top position equals its reference's offsetTop, the bottom of the previous sidenote, or the bottom of the metadata panel's reserved band, whichever is greater |
+| sidenote-meta-no-collide | MUST | No sidenote overlaps the right-margin metadata panel |
+| toc-collapse-no-shift | SHOULD | Collapsing the TOC does not shift its header sideways (resolved width is frozen) |
 | sidenote-gap | MUST | Stacked sidenotes have at least 8px gap between them |
 | sidenote-no-overlap | MUST | No two sidenotes overlap vertically |
 | sidenote-drift-line | SHOULD | Sidenotes pushed more than 4rem from their reference show a connecting line |

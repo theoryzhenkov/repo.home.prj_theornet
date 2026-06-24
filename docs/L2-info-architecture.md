@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Metadata model, spatial layout rules, and information density strategy for page chrome"
-modified: 2026-05-24
-reviewed: 2026-05-24
+modified: 2026-06-24
+reviewed: 2026-06-24
 depends:
   - path: docs/L1-design-vision
   - path: docs/L1-relations
@@ -60,12 +60,16 @@ All page chrome between the title and prose body consolidates into a single dens
 
 ### Structure
 
+On wide viewports the metadata strip is lifted out of the content flow into the **right margin** as a collapsible panel ("METADATA"), mirroring the TOC in the left margin. The breadcrumb moves into the panel as its first row, so the title connects directly to the prose. On narrow viewports the panel inlines below the title.
+
 ```
-[Breadcrumb path]
-[Title (h1)]
-[Description]
-[Metadata strip]
-[Prose content, including optional manual content components]
+Wide layout (panel sits at the top of the right gutter):
+
+  [Title (h1)]                       ┌─ METADATA ──────┐
+  [Description]                      │ breadcrumbs: a / b  │
+  [Prose content ...]                │ rough · created ...  │
+                                     │ part of: ...        │
+                                     └──────────────────┘
 ```
 
 The metadata strip itself is a compact monospace block with no extra spacing between its rows. Every row uses the same typographic treatment: `--text-xs`, monospace, muted text color. This creates a single visual "panel" rather than scattered chrome.
@@ -83,11 +87,13 @@ Row 2+ are **relation rows**: only shown when non-empty. Each row is `label: lin
 
 ### Why not the header?
 
-The design vision describes the header as an "ambient status bar." That concept is sound, but the header is persistent chrome visible on scroll. Putting per-page metadata there means it competes for attention during reading. The metadata strip places context exactly where the reader needs it: at the point of commitment, between title and content. The header retains: site identity, navigation, search, and reading progress bar. It does not duplicate per-page metadata.
+The design vision describes the header as an "ambient status bar." That concept is sound, but the header is persistent chrome visible on scroll. Putting per-page metadata there means it competes for attention during reading. The metadata strip places context exactly where the reader needs it: at orientation time, in the right margin beside the title and the opening of the prose. The header retains: site identity, navigation, search, and theme toggle. It does not duplicate per-page metadata. (Reading progress is tracked by the TOC scroll-spy, not a header bar — see `L1-design-vision`.)
 
-### Why not margins?
+### Why the right margin? (revised 2026-06-24)
 
-The right margin is reserved for sidenotes (Tufte-style). The left margin holds the TOC. Cramming metadata into margins would compete with these higher-value uses. Metadata is read once at the top; sidenotes and TOC are referenced throughout reading. The margins serve the ongoing reading experience; the metadata strip serves the initial orientation.
+Originally the strip sat between the title and the prose, and the right margin was reserved exclusively for sidenotes. That was reversed: the metadata strip now lives in the **right margin** as a collapsible panel mirroring the TOC, so the title connects directly to the prose and the page gains a symmetric three-zone frame (TOC left, paper column center, metadata right).
+
+The original objection — that metadata would compete with sidenotes — is handled structurally: the panel occupies the top of the right margin, and the sidenote engine reserves its band so notes stack below it rather than overlapping (see `L2-reading-experience`). Both margin panels are collapsible via an eye toggle for readers who want a clean column, and the gap from the text to either margin is equal (`--margin-gap`). Metadata is still read once at orientation time; placing it at the top of the margin keeps it out of the reading column without burying it.
 
 ## Relation display rules
 
@@ -215,7 +221,7 @@ The metadata strip should occupy no more than 3-4 lines of monospace text for a 
 
 1. **Kill the separate Metadata component.** Merge its content (dates) into the context line of the metadata strip.
 2. **Kill the separate relation heading.** Relations are rows in the strip, not a titled section.
-3. **Merge breadcrumbs and `part_of:` display.** The breadcrumb path is derived from the `part_of` chain, falling back to legacy `up`. Showing both is redundant. Keep breadcrumbs as the navigation element above the title. Remove `part_of:` from the metadata strip ONLY IF the breadcrumb is visible. When breadcrumbs are hidden (0 or 1 ancestors), show `part_of:` in the strip.
+3. **Breadcrumbs live in the metadata panel.** The breadcrumb path is derived from the `part_of` chain, falling back to legacy `up`. It renders as the first row of the metadata panel (`breadcrumbs: a / b / c`), not as a separate band above the title. The colon is plain text, not part of the link. (Note: the panel currently renders both the breadcrumb and a `part_of:` relation row; the original `breadcrumb-part-of-dedup` suppression is not applied in the margin panel — revisit whether the dedup still earns its complexity now that both sit together in the panel.)
 4. **Move backlinks to page bottom.** They are reference material, not orientation. The reader does not need to see "5 pages link here" before deciding to read.
 5. **Move the graph visualization to the bottom.** The per-page relation graph is supplementary, not primary navigation. Position it near backlinks, after the prose content.
 
@@ -226,8 +232,9 @@ The header bar retains only persistent, scroll-visible information:
 - Site identity (logo/name)
 - Primary navigation links
 - Search trigger
-- Reading progress bar (the one piece of ambient metadata that benefits from persistence)
 - Theme toggle
+
+(Reading progress is tracked by the TOC scroll-spy states, not a header bar.)
 
 Everything else moves to the metadata strip or page bottom.
 

@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Header component: non-sticky scroll-reveal bar with site identity, quicklinks, search, and theme toggle"
-modified: 2026-03-24
-reviewed: 2026-03-24
+modified: 2026-06-24
+reviewed: 2026-06-24
 depends:
   - path: docs/L1-design-vision
     section: "Header: scroll-reveal navigation frame"
@@ -30,7 +30,7 @@ This behavior is the same on all viewports. Desktop and mobile share one interac
 
 ### Why a distinct background?
 
-The previous header used the same background as the page (`--color-bg`), making it visually indistinct — a thin border was the only separator. A perceptibly different background (slightly darker or more muted) makes the header read as a frame around the page content, gives it visual weight proportional to its role, and prevents content from showing through when it overlays as a fixed element on scroll-up.
+The previous header used the same background as the page (`--color-bg`), making it visually indistinct — a thin border was the only separator. A perceptibly different, textured background makes the header read as a frame around the page content, gives it visual weight proportional to its role, and prevents content from showing through when it overlays as a fixed element on scroll-up. The header is the one place texture is applied as grain (see Visual treatment below): unlike the reading column, it carries no long-form text, so a fine grain does not cost legibility. This is the "texture on chrome, never over prose" rule from `L1-styles`.
 
 ### Why no reading progress bar?
 
@@ -137,7 +137,7 @@ Same behavior as desktop. Scroll up reveals the header; scroll down hides it. No
 
 ### Background
 
-A distinct surface color, perceptibly different from `--color-bg`. Use `--color-bg-muted` or a custom token slightly darker than the page background. The difference should be subtle but unambiguous — the header should be recognizable as a separate zone without needing a border.
+A distinct, textured surface. The base is a muted mix (`color-mix(--color-bg-muted, --color-bg)`), perceptibly different from `--color-bg`, overlaid with `--header-texture`: a symmetric vertical sheen (mean-neutral, so it adds dimensionality without lightening the bar) plus fine, single-octave desaturated grain. This reads as a distinct material from the flat reading surface. The difference should be subtle but unambiguous — the header should be recognizable as a separate zone without needing a border. Both `--header-texture` and the base mix are theme-specific.
 
 A 1px bottom border in `--color-border` reinforces the separation. On scroll-reveal, a subtle box-shadow (1-2px, low opacity) can appear to lift the header above the content it overlays.
 
@@ -180,5 +180,6 @@ All hover/focus transitions: 120ms ease.
 | mobile-dropdown | MUST | Nav links move to a revealed panel below 768px viewport width |
 | keyboard-accessible | MUST | All header interactive elements are reachable via Tab and operable via Enter |
 | distinct-background | SHOULD | Header background is visually distinct from the page surface color |
+| header-texture-chrome | MAY | The header may carry grain/sheen texture (`--header-texture`); it is the only surface where grain is applied, as it holds no long-form text |
 | no-decorative-animation | SHOULD | Header contains no decorative animation; only functional transitions under 150ms |
 | monospace-only | SHOULD | All header text uses the monospace typeface |
