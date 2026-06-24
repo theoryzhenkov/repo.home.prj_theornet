@@ -1,6 +1,7 @@
 /** Content extraction from cached documents — page, section, footnote */
 
 import type { PopupContent, PopupTarget, CachedDocument, PopupContentType } from './types';
+import { getAnnotation } from './annotations';
 
 const REMOVE_SELECTORS = '.sidenote, script, style, .todo-marker';
 
@@ -104,6 +105,9 @@ export function extractContent(cached: CachedDocument, target: PopupTarget): Pop
       return target.footnoteId
         ? extractFootnoteContent(cached.doc, target.footnoteId)
         : null;
+    case 'external':
+      // External content is built from annotations, not the cached document.
+      return null;
   }
 }
 
@@ -136,8 +140,25 @@ export function classifyTarget(anchor: HTMLAnchorElement): PopupTarget | null {
     return null;
   }
 
-  // Skip external links
-  if (url.origin !== window.location.origin) return null;
+  // External links: preview from build-time annotations when one exists.
+  // Opt out per-link with `no-annotation`, and skip the README-style link cards
+  // which already present their own treatment.
+  if (url.origin !== window.location.origin) {
+    if (
+      anchor.classList.contains('no-annotation') ||
+      anchor.classList.contains('external-link-card')
+    ) {
+      return null;
+    }
+    if (!getAnnotation(anchor.href)) return null;
+    return {
+      anchor,
+      path: anchor.href,
+      hash: null,
+      contentType: 'external',
+      footnoteId: null,
+    };
+  }
 
   // Normalize path
   let path = url.pathname;

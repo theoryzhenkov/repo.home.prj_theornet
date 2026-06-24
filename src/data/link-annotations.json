@@ -1,0 +1,237 @@
+{
+  "https://astro.build/": {
+    "url": "https://astro.build/",
+    "domain": "astro.build",
+    "title": "Astro",
+    "description": "Astro builds fast content sites, powerful web applications, dynamic server APIs, and everything in-between.",
+    "siteName": "Astro",
+    "favicon": "/link-assets/dd056253081dbc2b.svg",
+    "image": "/link-assets/436de2df1dae8d26.jpg",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:30.851Z"
+  },
+  "https://bsky.app/profile/theor.net": {
+    "url": "https://bsky.app/profile/theor.net",
+    "domain": "bsky.app",
+    "title": "Theo Ryzhenkov (@theor.net)",
+    "description": "https://theor.net",
+    "siteName": "Bluesky Social",
+    "favicon": "/link-assets/01089937f8bab184.png",
+    "image": "/link-assets/f074a68cf7f23bf6.webp",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:35.832Z"
+  },
+  "https://buymeacoffee.com/theoryzhenkov": {
+    "url": "https://buymeacoffee.com/theoryzhenkov",
+    "domain": "buymeacoffee.com",
+    "title": "Theo Ryzhenkov",
+    "description": "I'm an semi-independent researcher, developer,  and an aspiring rationalist. Your donation here enables me to create open &amp; free things with less worry about my immediate financial future.",
+    "siteName": "Buy Me a Coffee",
+    "favicon": "/link-assets/c99e30e1196cd951.png",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:40.906Z"
+  },
+  "https://chromewebstore.google.com/detail/mapecaogkkiimjgllmojbcjcblmoflch": {
+    "url": "https://chromewebstore.google.com/detail/mapecaogkkiimjgllmojbcjcblmoflch",
+    "domain": "chromewebstore.google.com",
+    "title": "Blank - Chrome Web Store",
+    "description": "Give yourself some time to reflect before you browse",
+    "favicon": "/link-assets/8905d78d1a63638a.png",
+    "image": "/link-assets/04d4e5ce0b0a601f.jpg",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:22.222Z"
+  },
+  "https://earendil.com/": {
+    "url": "https://earendil.com/",
+    "domain": "earendil.com",
+    "title": "Welcome | EARENDIL",
+    "description": "Earendil is a public benefit corporation crafting software and open protocols to strengthen human agency, bridge division, and cultivate lasting joy.",
+    "siteName": "Earendil",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:25.931Z"
+  },
+  "https://en.wikipedia.org/wiki/Gogol_Center": {
+    "url": "https://en.wikipedia.org/wiki/Gogol_Center",
+    "domain": "en.wikipedia.org",
+    "title": "Gogol Center - Wikipedia",
+    "favicon": "/link-assets/14c2faea69968e46.ico",
+    "image": "/link-assets/c7e1b7f13b3b30ff.jpg",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:27.046Z"
+  },
+  "https://github.com/BFO-ontology/BFO-2020": {
+    "url": "https://github.com/BFO-ontology/BFO-2020",
+    "domain": "github.com",
+    "title": "GitHub - BFO-ontology/BFO-2020: A repository for BFO 2020 artifacts specified in ISO 21838-2:2020",
+    "description": "A repository for BFO 2020 artifacts specified in ISO 21838-2:2020 - BFO-ontology/BFO-2020",
+    "siteName": "GitHub",
+    "favicon": "/link-assets/b5e52454b813a83d.png",
+    "image": "/link-assets/bf1a000e04cb707a.png",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:24.204Z"
+  },
+  "https://github.com/theoryzhenkov": {
+    "url": "https://github.com/theoryzhenkov",
+    "domain": "github.com",
+    "title": "theoryzhenkov - Overview",
+    "description": "Engineer, scientist, rationalist. NeurIPS, Posthaste, Trail.  - theoryzhenkov",
+    "siteName": "GitHub",
+    "favicon": "/link-assets/b5e52454b813a83d.png",
+    "image": "/link-assets/ae417477b05c9800.png",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:33.179Z"
+  },
+  "https://github.com/theoryzhenkov/blank": {
+    "url": "https://github.com/theoryzhenkov/blank",
+    "domain": "github.com",
+    "title": "GitHub - theoryzhenkov/blank: A tiny chromium extension for increasing friction accessing restricted URLs",
+    "description": "A tiny chromium extension for increasing friction accessing restricted URLs - theoryzhenkov/blank",
+    "siteName": "GitHub",
+    "favicon": "/link-assets/b5e52454b813a83d.png",
+    "image": "/link-assets/904ab635d4fb22c8.png",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:19.560Z"
+  },
+  "https://github.com/theoryzhenkov/repo.tangent": {
+    "url": "https://github.com/theoryzhenkov/repo.tangent",
+    "domain": "github.com",
+    "title": "GitHub - theoryzhenkov/repo.tangent",
+    "description": "Contribute to theoryzhenkov/repo.tangent development by creating an account on GitHub.",
+    "siteName": "GitHub",
+    "favicon": "/link-assets/b5e52454b813a83d.png",
+    "image": "/link-assets/2cfb7681f30a42aa.png",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:41.902Z"
+  },
+  "https://indieweb.org/POSSE": {
+    "url": "https://indieweb.org/POSSE",
+    "domain": "indieweb.org",
+    "title": "POSSE",
+    "description": "POSSE is an abbreviation for Publish (on your) Own Site, Syndicate Elsewhere, the practice of posting content on your own site first, then publishing copies or sharing links to third parties (like social media silos) with original post links to provide viewers a path to directly interacting with your content.",
+    "siteName": "IndieWeb",
+    "favicon": "/link-assets/22037e86f1adcdb0.ico",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:30.031Z"
+  },
+  "https://maggieappleton.com/garden-history": {
+    "url": "https://maggieappleton.com/garden-history",
+    "domain": "maggieappleton.com",
+    "title": "A Brief History & Ethos of the Digital Garden",
+    "description": "A newly revived philosophy for publishing personal knowledge on the web",
+    "favicon": "/link-assets/cd6fe136f9437cb3.png",
+    "image": "/link-assets/26f1a090e0fbe0d2.png",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:24.764Z"
+  },
+  "https://medama.mintlify.app/introduction": {
+    "url": "https://medama.mintlify.app/introduction",
+    "domain": "medama.mintlify.app",
+    "title": "Introduction - Medama Analytics",
+    "description": "Medama Analytics is an open-source project dedicated to providing self-hostable, cookie-free website analytics. With a lightweight tracker of less than 1KB, it aims to offer useful analytics while prioritising user privacy.",
+    "siteName": "Medama Analytics",
+    "favicon": "/link-assets/1aeb36679453402e.png",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:31.820Z"
+  },
+  "https://palisaderesearch.org/": {
+    "url": "https://palisaderesearch.org/",
+    "domain": "palisaderesearch.org",
+    "title": "Home",
+    "description": "AI capabilities are improving rapidly. We study the capabilities and motivations of AI agents today to better understand the risk of losing control to AI agents forever.",
+    "siteName": "Palisade Research",
+    "favicon": "/link-assets/860d3e1f46723555.svg",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:24.868Z"
+  },
+  "https://pmc.ncbi.nlm.nih.gov/articles/PMC10162369/": {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10162369/",
+    "domain": "pmc.ncbi.nlm.nih.gov",
+    "title": "Should We Turn off the Music? Music with Lyrics Interferes with Cognitive Tasks",
+    "description": "People often listen to music while doing cognitive tasks. Yet, whether music harms or helps performance is still debated. Here, we assessed the objective and subjective effects of music with and without lyrics on four cognitive tasks. College ...",
+    "siteName": "PubMed Central (PMC)",
+    "favicon": "/link-assets/edafdd4d914ef996.png",
+    "image": "/link-assets/6b3409da6f05dd7a.jpg",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:17.764Z"
+  },
+  "https://posthaste.theor.net/": {
+    "url": "https://posthaste.theor.net/",
+    "domain": "posthaste.theor.net",
+    "title": "Posthaste — Your email, delivered at Posthaste",
+    "description": "Posthaste is local-first, open-source mail you own and can build on — a Rust backend, a local replica, and a programmable local API for custom clients, scripts, and agents.",
+    "favicon": "/link-assets/6ef056c81c0132ae.svg",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:15.916Z"
+  },
+  "https://rateyourmusic.com/~theor": {
+    "url": "https://rateyourmusic.com/~theor",
+    "domain": "rateyourmusic.com",
+    "title": "rateyourmusic.com",
+    "ok": false,
+    "fetchedAt": "2026-06-24T06:29:38.826Z"
+  },
+  "https://theoryzhenkov.github.io/posthaste": {
+    "url": "https://theoryzhenkov.github.io/posthaste",
+    "domain": "theoryzhenkov.github.io",
+    "title": "Posthaste - PostHaste",
+    "description": "Your mail, delivered at Posthaste",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:16.407Z"
+  },
+  "https://theoryzhenkov.github.io/posthaste/": {
+    "url": "https://theoryzhenkov.github.io/posthaste/",
+    "domain": "theoryzhenkov.github.io",
+    "title": "Posthaste - PostHaste",
+    "description": "Your mail, delivered at Posthaste",
+    "favicon": "/link-assets/0e24d97b37f64715.png",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:16.834Z"
+  },
+  "https://www.goodreads.com/user/show/200790142-theo-ryzhenkov": {
+    "url": "https://www.goodreads.com/user/show/200790142-theo-ryzhenkov",
+    "domain": "goodreads.com",
+    "title": "Theo Ryzhenkov",
+    "description": "Theo Ryzhenkov has 3 books on Goodreads, and is currently reading The Dispossessed: An Ambiguous Utopia by Ursula K. Le Guin",
+    "siteName": "Goodreads",
+    "favicon": "/link-assets/69efdc53d7f42012.ico",
+    "image": "/link-assets/3d349d910767a942.png",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:38.826Z"
+  },
+  "https://www.hetzner.com/": {
+    "url": "https://www.hetzner.com/",
+    "domain": "hetzner.com",
+    "title": "Günstige Dedicated Server, Cloud & Hosting aus Deutschland",
+    "description": "Günstige Hosting-Lösungen, Dedicated Server und Cloud-Services bei Hetzner ✓ DSGVO-konform ✓ günstige Preise  ✓ 100 % grüne Energie",
+    "favicon": "/link-assets/b28f76fff1083dbf.ico",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:31.288Z"
+  },
+  "https://www.lesswrong.com/posts/gvNnE6Th594kfdB3z/on-green": {
+    "url": "https://www.lesswrong.com/posts/gvNnE6Th594kfdB3z/on-green",
+    "domain": "lesswrong.com",
+    "title": "On green — LessWrong",
+    "description": "Examining a philosophical vibe that I think contrasts in interesting ways with \"deep atheism.\"",
+    "favicon": "/link-assets/7306b1da680d2207.ico",
+    "image": "/link-assets/810e4649b7aec98c.png",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:29.284Z"
+  },
+  "https://www.linkedin.com/in/theo-ryzhenkov": {
+    "url": "https://www.linkedin.com/in/theo-ryzhenkov",
+    "domain": "linkedin.com",
+    "title": "linkedin.com",
+    "ok": false,
+    "fetchedAt": "2026-06-24T06:29:33.179Z"
+  },
+  "https://x.com/theoryzhenkov": {
+    "url": "https://x.com/theoryzhenkov",
+    "domain": "x.com",
+    "title": "Theo Ryzhenkov (@theoryzhenkov) on X",
+    "siteName": "X (formerly Twitter)",
+    "favicon": "/link-assets/23cd330841919f5a.ico",
+    "image": "/link-assets/ce10f5c962a6badc.jpg",
+    "ok": true,
+    "fetchedAt": "2026-06-24T06:29:37.006Z"
+  }
+}

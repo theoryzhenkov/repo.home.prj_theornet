@@ -1,6 +1,6 @@
 /** Popup system types and configuration constants */
 
-type PopupContentType = 'page' | 'section' | 'footnote';
+type PopupContentType = 'page' | 'section' | 'footnote' | 'external';
 type PopupState = 'ephemeral' | 'pinned';
 type TilePosition = 'top-left' | 'top' | 'top-right' | 'left' | 'center' | 'right' | 'bottom-left' | 'bottom' | 'bottom-right';
 type ResizeEdge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';

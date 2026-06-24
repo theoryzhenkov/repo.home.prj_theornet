@@ -8,6 +8,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "brand:generate": "bun run scripts/generate-brand-assets.ts",
+    "annotate": "bun run scripts/annotate-links.ts",
     "content": "bun run scripts/content.ts",
     "content:new": "bun run scripts/content.ts new",
     "content:list": "bun run scripts/content.ts list",

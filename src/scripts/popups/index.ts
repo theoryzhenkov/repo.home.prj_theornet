@@ -6,6 +6,7 @@ import {
   handlePopupFocus, resetState,
 } from './events';
 import { clearCache } from './cache';
+import { loadAnnotations } from './annotations';
 import { destroyTaskbar, handleTaskbarResize } from './taskbar';
 
 let boundArticle: HTMLElement | null = null;
@@ -17,6 +18,9 @@ function init(): void {
   if (!article) return;
 
   boundArticle = article as HTMLElement;
+
+  // Ensure external-link annotations are loading before the first hover.
+  loadAnnotations();
 
   // Mouse events for desktop hover popups — on article for page links
   boundArticle.addEventListener('mouseover', handleMouseOver as EventListener);

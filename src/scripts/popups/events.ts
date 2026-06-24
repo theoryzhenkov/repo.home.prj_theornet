@@ -4,6 +4,7 @@ import type { PopupContent, PopupInstance, TilePosition } from './types';
 import { POPUP_CONFIG } from './types';
 import { fetchAndCache, prefetch, getCurrentPageDoc } from './cache';
 import { classifyTarget, extractContent } from './extract';
+import { loadAnnotations, getAnnotation, type LinkAnnotation } from './annotations';
 import { calculatePosition, getTileRect } from './position';
 import {
   createLoadingPopup, upgradeLoadingPopup,
@@ -83,6 +84,29 @@ async function loadPopupIndex(): Promise<PopupIndex> {
     });
 
   return popupIndexPromise;
+}
+
+function buildExternalContent(ann: LinkAnnotation): PopupContent {
+  const parts: string[] = ['<div class="link-card">'];
+  parts.push('<div class="link-card-head">');
+  if (ann.favicon) {
+    parts.push(
+      `<img class="link-card-favicon" src="${escapeHtml(ann.favicon)}" alt="" width="16" height="16" loading="lazy">`,
+    );
+  }
+  parts.push(`<span class="link-card-domain">${escapeHtml(ann.siteName || ann.domain)}</span>`);
+  parts.push('</div>');
+  if (ann.image) {
+    parts.push(`<img class="link-card-image" src="${escapeHtml(ann.image)}" alt="" loading="lazy">`);
+  }
+  if (ann.description) {
+    parts.push(`<p class="link-card-desc">${escapeHtml(ann.description)}</p>`);
+  } else if (!ann.ok) {
+    parts.push('<p class="link-card-desc popup-no-content">No preview available — open the link directly.</p>');
+  }
+  parts.push('</div>');
+
+  return { title: ann.title, bodyHtml: parts.join(''), href: ann.url, contentType: 'external' };
 }
 
 function buildFallbackContent(path: string, entry: PopupIndexEntry): PopupContent {
@@ -309,6 +333,12 @@ async function spawnPopup(anchor: HTMLAnchorElement, parentPopupEl: HTMLElement 
 async function fetchContent(target: ReturnType<typeof classifyTarget>): Promise<PopupContent | null> {
   if (!target) return null;
 
+  if (target.contentType === 'external') {
+    await loadAnnotations();
+    const ann = getAnnotation(target.path);
+    return ann ? buildExternalContent(ann) : null;
+  }
+
   let content: PopupContent | null = null;
 
   try {
@@ -399,7 +429,9 @@ export function handleMouseOver(event: MouseEvent): void {
     return;
   }
 
-  if (classified.contentType !== 'footnote') {
+  // Only same-origin pages are prefetchable; external URLs are CORS-blocked and
+  // footnotes are already on the page.
+  if (classified.contentType === 'page' || classified.contentType === 'section') {
     prefetchTimer = setTimeout(() => {
       prefetch(classified.path);
     }, POPUP_CONFIG.prefetchDelay);

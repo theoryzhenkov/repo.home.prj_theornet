@@ -8,11 +8,25 @@ function getPreviewWidth(contentType: PopupContentType, config: PopupConfig): st
     return 'min(280px, calc(100vw - 24px))';
   }
 
+  if (contentType === 'external') {
+    return 'min(360px, calc(100vw - 24px))';
+  }
+
   return `min(${config.maxWidth}px, calc(100vw - 24px))`;
 }
 
 function renderPreviewDocument(content: PopupContent, surface: 'popup' | 'popin'): string {
   const surfaceClass = surface === 'popup' ? 'popup-document' : 'popin-document';
+
+  // External link cards carry their own markup (built in events.ts), not prose.
+  if (content.contentType === 'external') {
+    return `
+    <article class="preview-document ${surfaceClass} preview-external" data-preview-type="external">
+      ${content.bodyHtml}
+    </article>
+  `;
+  }
+
   const proseClasses = [
     'prose',
     'preview-prose',
