@@ -146,7 +146,7 @@
   /* Viewport-fixed page sheen (light theme): faint top light, neutral middle,
      a whisper of shade at the very bottom. Near mean-neutral so overall page
      brightness is unchanged. */
-  --page-sheen: linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 24%, rgba(0, 0, 0, 0) 82%, rgba(0, 0, 0, 0.035) 100%);
+  --page-sheen: linear-gradient(to bottom, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 20%, rgba(0, 0, 0, 0) 66%, rgba(0, 0, 0, 0.06) 100%);
 
   /* Reading surface: the central column sits on "paper" a hair lighter than the
      page "desk", giving the body presence (and a touch more text contrast)
