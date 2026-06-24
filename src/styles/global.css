@@ -151,13 +151,15 @@
   /* Reading surface: the central column sits on "paper" a hair lighter than the
      page "desk", giving the body presence (and a touch more text contrast)
      without any texture over the prose. */
-  --color-paper: #F8F8F6;
+  --color-paper: #FBFBF9;
   --reading-pad: 1.5rem;
   /* Symmetric gap between the text edge and the margin furniture (TOC left,
      metadata/sidenotes right). Measured from the prose edge on both sides so
      the eye doesn't drift to one margin while reading. */
   --margin-gap: 5rem;
-  --paper-shadow: 0 1px 4px rgba(20, 24, 30, 0.05);
+  /* Light: near-white paper barely differs from the desk in tone, so the soft
+     drop shadow carries the lift (contact + ambient layer). */
+  --paper-shadow: 0 1px 2px rgba(30, 33, 38, 0.05), 0 10px 28px -10px rgba(30, 33, 38, 0.16);
 
   /* Header texture: a symmetric vertical sheen (lighten top / darken bottom by
      equal amounts, so the mean brightness stays on the base header colour) plus
