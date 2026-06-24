@@ -505,4 +505,22 @@
       color: var(--color-accent);
     }
   }
+
+  /* One-shot 360° spin confirming the link was copied to the clipboard. */
+  @keyframes heading-link-copied-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .heading-link-icon.is-copied {
+    animation: heading-link-copied-spin 320ms var(--ease-out);
+    color: var(--color-accent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .heading-link-icon.is-copied {
+      animation: none;
+    }
+  }
 }

@@ -145,10 +145,17 @@ const backlinksCount = backlinks.length || (relations?.refi?.length ?? 0);
             window.location.hash = h.id;
           });
 
+          icon.addEventListener('animationend', () => icon.classList.remove('is-copied'));
+
           icon.addEventListener('click', async (e) => {
             e.stopPropagation();
             try {
               await navigator.clipboard.writeText(`${location.origin}${location.pathname}#${h.id}`);
+              // Restart the spin even on rapid re-clicks: drop the class, force a
+              // reflow, then re-add so the animation replays from 0.
+              icon.classList.remove('is-copied');
+              void icon.offsetWidth;
+              icon.classList.add('is-copied');
             } catch { window.location.hash = h.id; }
           });
         });
