@@ -1649,6 +1649,81 @@
     }
   }
 
+  /* ─── Metadata as an aligned key/value grid ─── */
+  /* Quiet uppercase labels in the auto-sized first column; brighter values in
+     the second so the information reads, and links (accent) stay distinct from
+     static values (plain text). */
+  .metadata-grid {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 0.9rem;
+    row-gap: 0.4rem;
+    margin: 0;
+    align-items: baseline;
+  }
+
+  .metadata-grid-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-3xs);
+    line-height: 1.5;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+    white-space: nowrap;
+  }
+
+  .metadata-rel-label-link {
+    color: var(--color-link);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-link-hover);
+      text-decoration: underline;
+    }
+  }
+
+  .metadata-grid-value {
+    min-width: 0;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    line-height: 1.5;
+    color: var(--color-text);
+    overflow-wrap: break-word;
+  }
+
+  .metadata-grid-value .metadata-maturity-dot {
+    margin-right: 0.4rem;
+  }
+
+  .metadata-path-sep,
+  .metadata-sep {
+    color: var(--color-text-subtle);
+  }
+
+  .metadata-path-sep {
+    margin: 0 0.3rem;
+  }
+
+  .metadata-current {
+    color: var(--color-text-muted);
+  }
+
+  .metadata-relation-more {
+    color: var(--color-text-subtle);
+    white-space: nowrap;
+  }
+
+  .metadata-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.8rem;
+    margin-top: 0.65rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-3xs);
+    letter-spacing: 0.03em;
+  }
+
   .metadata-relations {
     display: flex;
     flex-wrap: wrap;
@@ -1720,24 +1795,6 @@
       gap: 0.85rem;
     }
 
-    /* Scoped to the strip: the .metadata-* classes are shared with the
-       Breadcrumb, which must stay an inline row. */
-    .metadata-strip .metadata-context {
-      flex-direction: column;
-      align-items: flex-start;
-      column-gap: 0;
-      row-gap: 0.3rem;
-    }
-
-    .metadata-strip .metadata-relations {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.3rem;
-    }
-
-    .metadata-strip .metadata-relation-row {
-      flex-wrap: wrap;
-    }
   }
 
   /* ─── External Link Cards ─── */

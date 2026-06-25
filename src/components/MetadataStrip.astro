@@ -106,7 +106,6 @@ if (relations) {
   }
 }
 
-const hasRelationRows = relationRows.length > 0;
 ---
 
 <aside class="metadata-strip" data-collapsible data-panel="metadata">
@@ -115,57 +114,72 @@ const hasRelationRows = relationRows.length > 0;
     <span class="metadata-title">METADATA</span>
   </div>
   <div class="metadata-separator"></div>
-  <Breadcrumb breadcrumbs={breadcrumbs} currentSlug={currentSlug} />
-  <div class="metadata-context">
+
+  <dl class="metadata-grid">
     {maturity && (
-        <span class="metadata-item metadata-maturity">
+      <>
+        <dt class="metadata-grid-label">status</dt>
+        <dd class="metadata-grid-value">
           <span class="metadata-maturity-dot" data-maturity={maturity}></span>
           <span class="metadata-maturity-label" data-maturity={maturity}>{maturity}</span>
-        </span>
+        </dd>
+      </>
     )}
-    {readTimeMinutes !== undefined && readTimeMinutes >= 2 && (
-      <span class="metadata-item">
-        <span class="metadata-item-value">{readTimeMinutes} min</span>
-      </span>
-    )}
-    <span class="metadata-item">
-      <span class="metadata-item-label">created</span>
-      <time class="metadata-item-value" datetime={created.toISOString()}>{formatDate(created)}</time>
-    </span>
-    {showUpdated && modified && (
-      <span class="metadata-item">
-        <span class="metadata-item-label">updated</span>
-        <time class="metadata-item-value" datetime={modified.toISOString()}>{formatDate(modified)}</time>
-        {freshness && (
-          <span class:list={['metadata-freshness', { stale: freshness.stale }]}>
-            ({freshness.text})
-          </span>
-        )}
-      </span>
-    )}
-    {backlinksCount > 0 && (
-      <a href="#backlinks" class="metadata-item metadata-link">{backlinksCount} backlinks</a>
-    )}
-    <a href={`/graph/?focus=${currentSlug}`} class="metadata-item metadata-link">graph</a>
-  </div>
 
-  {hasRelationRows && (
-    <div class="metadata-relations">
-      {relationRows.map((row) => (
-        <div class="metadata-relation-row">
-          <a href={relationHref(row.key)} class="metadata-relation-label metadata-link">{row.label}</a><span class="metadata-relation-sep" aria-hidden="true">:</span>
-          <div class="metadata-relation-values">
-            {row.targets.map((target, index) => (
-              <span class="metadata-relation-item">
-                <a href={slugToHref(target.slug)} class="metadata-link">{target.label ? `${target.label}: ` : ''}{getTitle(target.slug)}</a>{(index < row.targets.length - 1 || row.extraCount) ? ', ' : ''}
-              </span>
-            ))}
-            {row.extraCount ? (
-              <span class="metadata-relation-more">+{row.extraCount} more</span>
-            ) : null}
-          </div>
-        </div>
-      ))}
-    </div>
-  )}
+    {breadcrumbs.length > 1 && (
+      <>
+        <dt class="metadata-grid-label">path</dt>
+        <dd class="metadata-grid-value">
+          <Breadcrumb breadcrumbs={breadcrumbs} currentSlug={currentSlug} />
+        </dd>
+      </>
+    )}
+
+    <dt class="metadata-grid-label">created</dt>
+    <dd class="metadata-grid-value">
+      <time datetime={created.toISOString()}>{formatDate(created)}</time>
+    </dd>
+
+    {showUpdated && modified && (
+      <>
+        <dt class="metadata-grid-label">updated</dt>
+        <dd class="metadata-grid-value">
+          <time datetime={modified.toISOString()}>{formatDate(modified)}</time>
+          {freshness && (
+            <span class:list={['metadata-freshness', { stale: freshness.stale }]}> ({freshness.text})</span>
+          )}
+        </dd>
+      </>
+    )}
+
+    {readTimeMinutes !== undefined && readTimeMinutes >= 2 && (
+      <>
+        <dt class="metadata-grid-label">read</dt>
+        <dd class="metadata-grid-value">{readTimeMinutes} min</dd>
+      </>
+    )}
+
+    {relationRows.map((row) => (
+      <>
+        <dt class="metadata-grid-label">
+          <a href={relationHref(row.key)} class="metadata-rel-label-link">{row.label}</a>
+        </dt>
+        <dd class="metadata-grid-value">
+          {row.targets.map((target, index) => (
+            <span class="metadata-relation-item">
+              <a href={slugToHref(target.slug)} class="metadata-link">{target.label ? `${target.label}: ` : ''}{getTitle(target.slug)}</a>{(index < row.targets.length - 1 || row.extraCount) ? <span class="metadata-sep" aria-hidden="true"> · </span> : ''}
+            </span>
+          ))}
+          {row.extraCount ? <span class="metadata-relation-more">+{row.extraCount} more</span> : null}
+        </dd>
+      </>
+    ))}
+  </dl>
+
+  <div class="metadata-actions">
+    {backlinksCount > 0 && (
+      <a href="#backlinks" class="metadata-link">{backlinksCount} backlinks</a>
+    )}
+    <a href={`/graph/?focus=${currentSlug}`} class="metadata-link">graph</a>
+  </div>
 </aside>
