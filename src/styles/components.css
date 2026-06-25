@@ -1682,14 +1682,27 @@
     }
   }
 
+  /* Page-link values (relations, breadcrumb path) are serif, matching the TOC's
+     serif entries — both panels share the rule "serif = page-link content, mono
+     = chrome/labels/factual". Dates and read time stay mono (tabular). */
   .metadata-grid-value {
     min-width: 0;
     margin: 0;
-    font-family: var(--font-mono);
-    font-size: var(--text-2xs);
+    font-family: var(--font-serif);
+    font-size: var(--text-xs);
     line-height: 1.5;
     color: var(--color-text);
     overflow-wrap: break-word;
+  }
+
+  .metadata-grid-value :is(time, .metadata-num, .metadata-freshness),
+  .metadata-relation-more {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+  }
+
+  .metadata-relation-more {
+    font-size: var(--text-3xs);
   }
 
   .metadata-grid-value .metadata-maturity-dot {
