@@ -531,40 +531,13 @@
     color: var(--color-text-subtle);
   }
 
-  /* ─── MetadataStrip (mzxsqzlr: additional classes) ─── */
-  .metadata-maturity {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .metadata-item {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.35rem;
-    white-space: nowrap;
-  }
-
-  .metadata-item-label {
-    color: var(--color-text-subtle);
-  }
-
-  .metadata-item-value {
-    color: var(--color-text-muted);
-  }
-
+  /* ─── MetadataStrip ─── */
   .metadata-freshness {
     color: var(--color-text-subtle);
 
     &.stale {
       color: var(--color-status-draft);
     }
-  }
-
-  .metadata-relation-row {
-    display: inline-flex;
-    min-width: 0;
-    align-items: baseline;
   }
 
   /* ─── Backlinks (mzxsqzlr: additional classes) ─── */
@@ -1595,16 +1568,6 @@
     gap: 8px;
   }
 
-  .metadata-context {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    column-gap: 0.9rem;
-    row-gap: 0.4rem;
-    font-family: var(--font-mono);
-    font-size: var(--text-2xs);
-  }
-
   .metadata-maturity-dot {
     display: inline-block;
     width: 6px;
@@ -1718,41 +1681,6 @@
     font-family: var(--font-mono);
     font-size: var(--text-3xs);
     letter-spacing: 0.03em;
-  }
-
-  .metadata-relations {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.35rem 0.95rem;
-    font-family: var(--font-mono);
-    font-size: var(--text-2xs);
-    line-height: 1.45;
-  }
-
-  .metadata-relation-label {
-    flex: 0 0 auto;
-    font-weight: 500;
-    color: var(--color-text-subtle);
-    white-space: nowrap;
-    text-decoration: none;
-
-    &:hover {
-      color: var(--color-accent);
-      text-decoration: underline;
-    }
-  }
-
-  /* Colon belongs to the prose, not the link — plain text, dimmed. */
-  .metadata-relation-sep {
-    flex: 0 0 auto;
-    color: var(--color-text-subtle);
-    margin-right: theme(spacing.2);
-  }
-
-  .metadata-relation-values {
-    display: inline;
-    min-width: 0;
   }
 
   .metadata-relation-item {
@@ -1958,36 +1886,4 @@
     color: var(--color-status-stable);
   }
 
-  /* ─── Breadcrumb ─── */
-  .breadcrumb {
-    margin-bottom: theme(spacing.3);
-  }
-
-  .breadcrumb-list {
-    display: inline-flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.15rem 0.35rem;
-    min-width: 0;
-  }
-
-  .breadcrumb-item {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.35rem;
-  }
-
-  .breadcrumb-link {
-    color: var(--color-accent);
-    text-decoration: none;
-  }
-
-  .breadcrumb-separator {
-    color: var(--color-text-subtle);
-    user-select: none;
-  }
-
-  .breadcrumb-current {
-    color: var(--color-text-muted);
-  }
 }

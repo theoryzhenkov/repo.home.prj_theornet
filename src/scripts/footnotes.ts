@@ -14,17 +14,6 @@ function isWide(): boolean {
 
 // ── Wide mode: position sidenotes alongside their reference ──
 
-// Bottom of the right-margin metadata panel, expressed in .prose coordinates.
-// The panel lives outside .prose (positioned against the reading column), so we
-// measure via rects rather than offsetTop. Returns 0 when the panel is not in
-// margin mode (narrow viewports) or sits entirely above the prose.
-function metadataReservedBottom(prose: HTMLElement): number {
-  const meta = document.querySelector<HTMLElement>('.metadata-strip');
-  if (!meta || getComputedStyle(meta).position !== 'absolute') return 0;
-  const bottom = meta.getBoundingClientRect().bottom - prose.getBoundingClientRect().top;
-  return Math.max(0, bottom);
-}
-
 function layoutSidenotes() {
   const prose = document.querySelector('.prose') as HTMLElement | null;
   if (!prose) return;
@@ -34,11 +23,9 @@ function layoutSidenotes() {
   prose.style.paddingBottom = '';
 
   const sidenotes = prose.querySelectorAll<HTMLElement>('.sidenote');
-  const metaBottom = metadataReservedBottom(prose);
+  if (sidenotes.length === 0) return;
 
-  // Seed the stack with the metadata panel's band: any sidenote that would land
-  // within it is pushed below, never overlapping.
-  let prevBottom = metaBottom > 0 ? metaBottom + SIDENOTE_GAP : 0;
+  let prevBottom = 0;
 
   sidenotes.forEach((note) => {
     const id = note.dataset.footnoteId;
@@ -47,7 +34,7 @@ function layoutSidenotes() {
     // Desired top = ref's offsetTop relative to .prose
     let top = ref ? ref.offsetTop : prevBottom;
 
-    // Push down if overlapping the previous sidenote (or the metadata panel)
+    // Push down if overlapping the previous sidenote
     if (top < prevBottom) {
       top = prevBottom;
     }
@@ -56,12 +43,11 @@ function layoutSidenotes() {
     prevBottom = top + note.offsetHeight + SIDENOTE_GAP;
   });
 
-  // Extend .prose so the tallest of the last sidenote or the metadata panel is
-  // covered by the reading surface on short pages.
-  const needed = Math.max(prevBottom, metaBottom);
+  // Extend .prose so the last sidenote is covered by the reading surface on
+  // short pages.
   const proseHeight = prose.scrollHeight;
-  if (needed > proseHeight) {
-    prose.style.paddingBottom = `${needed - proseHeight + SIDENOTE_GAP}px`;
+  if (prevBottom > proseHeight) {
+    prose.style.paddingBottom = `${prevBottom - proseHeight + SIDENOTE_GAP}px`;
   }
 }
 
