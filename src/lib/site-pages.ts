@@ -1,4 +1,4 @@
-import { getCollection, type CollectionEntry } from 'astro:content';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
 import type { PageInput } from './relations';
 
 export interface LocalPageEntry extends PageInput {
@@ -6,7 +6,7 @@ export interface LocalPageEntry extends PageInput {
   html: string;
   body: string;
   data: CollectionEntry<'pages'>['data'];
-  mdx: Awaited<ReturnType<CollectionEntry<'pages'>['render']>>;
+  mdx: Awaited<ReturnType<typeof render>>;
 }
 
 let localPagesCache: Promise<LocalPageEntry[]> | null = null;
@@ -26,10 +26,10 @@ export async function getLocalPages(): Promise<LocalPageEntry[]> {
     const entries = await getCollection('pages');
     return await Promise.all(entries.map(async (entry) => {
       const body = pageBody(entry);
-      const mdx = await entry.render();
+      const mdx = await render(entry);
       const html = entry.rendered?.html ?? body;
       return {
-        id: entry.slug ?? entry.id,
+        id: entry.id,
         html,
         body,
         data: entry.data,

@@ -20,15 +20,16 @@
     "test:build": "astro build"
   },
   "dependencies": {
-    "@astrojs/mdx": "^4.3.13",
+    "@astrojs/markdown-remark": "^7.2.0",
+    "@astrojs/mdx": "^7.0.0",
     "@astrojs/sitemap": "^3.7.3",
     "@r4ai/remark-callout": "^0.6.2",
-    "@tailwindcss/vite": "^4.1.18",
-    "astro": "5.17.1",
+    "@tailwindcss/vite": "^4.3.1",
+    "astro": "^7.0.2",
     "d3": "^7.9.0",
     "js-yaml": "^4.2.0",
     "marked": "^17.0.1",
-    "tailwindcss": "^4.1.18",
+    "tailwindcss": "^4.3.1",
     "unist-util-visit": "^5.1.0"
   },
   "devDependencies": {
