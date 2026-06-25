@@ -1,0 +1,84 @@
+---
+import Head from '@components/Head.astro';
+import Header from '@components/Header.astro';
+import MetadataStrip from '@components/MetadataStrip.astro';
+import Backlinks from '@components/Backlinks.astro';
+import Search from '@components/Search.astro';
+import { slugToHref } from '@/lib/slugs';
+import type { PageRelations, PageInfoMap, PageInfo } from '@/lib/relations';
+
+interface BacklinkEntry {
+  title: string;
+  slug: string;
+  type?: string;
+  snippet?: string;
+}
+
+interface Props {
+  title: string;
+  currentSlug: string;
+  created: Date;
+  modified?: Date;
+  maturity?: 'stub' | 'rough' | 'developed';
+  readTimeMinutes?: number;
+  breadcrumbs?: PageInfo[];
+  relations?: PageRelations;
+  pageInfoMap?: PageInfoMap;
+  backlinks?: BacklinkEntry[];
+}
+
+const {
+  title,
+  currentSlug,
+  created,
+  modified,
+  maturity,
+  readTimeMinutes,
+  breadcrumbs = [],
+  relations,
+  pageInfoMap,
+  backlinks = [],
+} = Astro.props;
+
+const pageHref = currentSlug === 'index' ? '/' : slugToHref(currentSlug);
+const backlinksCount = backlinks.length || (relations?.refi?.length ?? 0);
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <Head title={`${title} Metadata`} description={`All metadata and relations for ${title}.`} />
+
+  <body class="has-site-header">
+    <Header />
+
+    <div class="metadata-page">
+      <main class="reading-surface min-w-0">
+        <article>
+          <header class="mb-4">
+            <p class="metadata-page-back">
+              <a href={pageHref} class="metadata-link">← {title}</a>
+            </p>
+            <h1>{title} Metadata</h1>
+          </header>
+
+          <MetadataStrip
+            created={created}
+            modified={modified}
+            maturity={maturity}
+            readTimeMinutes={readTimeMinutes}
+            backlinksCount={backlinksCount}
+            currentSlug={currentSlug}
+            breadcrumbs={breadcrumbs}
+            relations={relations}
+            pageInfoMap={pageInfoMap}
+            variant="full"
+          />
+
+          <Backlinks backlinks={backlinks} />
+        </article>
+      </main>
+    </div>
+
+    <Search />
+  </body>
+</html>

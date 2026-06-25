@@ -1121,13 +1121,6 @@
     gap: 0.45rem;
   }
 
-  /* Metadata sits in the right gutter: right-align its header so the label hugs
-     the outer edge and the eye points inward toward the content, mirroring the
-     left TOC header. */
-  .metadata-strip .panel-head {
-    justify-content: flex-end;
-  }
-
   .panel-toggle {
     display: inline-flex;
     align-items: center;
@@ -1672,16 +1665,6 @@
     white-space: nowrap;
   }
 
-  .metadata-rel-label-link {
-    color: var(--color-link);
-    text-decoration: none;
-
-    &:hover {
-      color: var(--color-link-hover);
-      text-decoration: underline;
-    }
-  }
-
   /* Page-link values (relations, breadcrumb path) are serif, matching the TOC's
      serif entries — both panels share the rule "serif = page-link content, mono
      = chrome/labels/factual". Dates and read time stay mono (tabular). */
@@ -1790,24 +1773,90 @@
     }
   }
 
-  /* ─── Metadata as a right-margin panel (wide viewports) ─── */
-  /* Mirrors the TOC in the left margin: the strip lifts out of the reading
-     column into the right gutter, aligned with the sidenote column. On narrow
-     viewports it stays the inline strip defined above. The sidenote engine
-     (scripts/footnotes.ts) reserves this panel's vertical band so notes never
-     collide with it. */
-  @media (width > 1024px) {
-    .metadata-strip {
-      position: absolute;
-      top: 0;
-      left: calc(100% - var(--reading-pad) + var(--margin-gap));
-      width: 220px;
-      margin: 0;
-      padding-bottom: 0;
-      border-bottom: none;
-      gap: 0.85rem;
-    }
+  /* Inline metadata block (below the title). A horizontal, wrapping flow of
+     middot-separated items; the full set lives on /<slug>/metadata. */
+  .metadata-strip {
+    margin-top: 0.5rem;
+  }
 
+  .metadata-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.5rem;
+    row-gap: 0.15rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    line-height: 1.7;
+    color: var(--color-text);
+  }
+
+  /* Items are separated by a semicolon hugging the left item; flex collapses
+     the inter-item whitespace so spacing is exact. */
+  .metadata-inline-item:not(:last-child)::after {
+    content: ";";
+    color: var(--color-text-subtle);
+  }
+
+  /* Labels are the quiet anchors: small uppercase mono, dimmed, each followed
+     by a colon (e.g. IS: Page). Values stay brighter. */
+  .metadata-inline-label,
+  .metadata-inline .metadata-rel-label {
+    font-size: var(--text-3xs);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+    text-decoration: none;
+  }
+
+  .metadata-inline-label::after,
+  .metadata-inline .metadata-rel-label::after {
+    content: ":";
+  }
+
+  .metadata-inline-item time {
+    color: var(--color-text);
+  }
+
+  .metadata-inline .metadata-maturity-dot {
+    margin-right: 0.35rem;
+  }
+
+  /* Page-link values stay serif (family with the TOC); labels/dates stay mono. */
+  .metadata-inline .metadata-value-link {
+    font-family: var(--font-serif);
+    font-size: var(--text-xs);
+  }
+
+  .metadata-inline .metadata-relation-more {
+    margin-left: 0.3rem;
+    color: var(--color-text-subtle);
+  }
+
+  .metadata-inline .metadata-sep {
+    color: var(--color-text-subtle);
+  }
+
+  .metadata-more-link {
+    font-style: italic;
+  }
+
+  /* Dedicated /<slug>/metadata page: a single centered reading column. */
+  .metadata-page {
+    width: min(100% - 2rem, calc(var(--width-content) + 2 * var(--reading-pad)));
+    margin-inline: auto;
+  }
+
+  .metadata-page-back {
+    margin-bottom: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+  }
+
+  .metadata-full .metadata-strip,
+  .metadata-strip.metadata-full {
+    border-bottom: none;
+    padding-bottom: 0;
   }
 
   /* ─── External Link Cards ─── */

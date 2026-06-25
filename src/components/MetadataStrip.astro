@@ -2,7 +2,6 @@
 import type { PageRelations, PageInfoMap, RelationTarget, PageInfo } from '@/lib/relations';
 import { slugToHref } from '@/lib/slugs';
 import Breadcrumb from '@components/Breadcrumb.astro';
-import PanelToggle from '@components/PanelToggle.astro';
 
 interface Props {
   created: Date;
@@ -14,6 +13,10 @@ interface Props {
   breadcrumbs?: PageInfo[];
   relations?: PageRelations;
   pageInfoMap?: PageInfoMap;
+  // `inline` shows only the most important fields plus a link to the full
+  // metadata page; `full` shows everything (used on /<slug>/metadata).
+  variant?: 'inline' | 'full';
+  metadataHref?: string;
 }
 
 const {
@@ -26,7 +29,15 @@ const {
   breadcrumbs = [],
   relations,
   pageInfoMap,
+  variant = 'inline',
+  metadataHref,
 } = Astro.props;
+
+const isInline = variant !== 'full';
+
+// Inline keeps only the highest-value relations; the rest live on the
+// dedicated metadata page.
+const IMPORTANT_RELATIONS = new Set<keyof PageRelations>(['part_of', 'has_part', 'is']);
 
 function formatDate(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -60,10 +71,6 @@ function getTitle(slug: string): string {
   return pageInfoMap?.get(slug)?.title ?? slug;
 }
 
-function relationHref(key: keyof PageRelations): string {
-  return `/relations/${currentSlug}/${key}/`;
-}
-
 const relationOrder: { key: keyof PageRelations; label: string }[] = [
   { key: 'part_of', label: 'part of' },
   { key: 'has_part', label: 'has part' },
@@ -87,15 +94,15 @@ const relationOrder: { key: keyof PageRelations; label: string }[] = [
 const relationRows: RelationRow[] = [];
 if (relations) {
   for (const { key, label } of relationOrder) {
+    if (isInline && !IMPORTANT_RELATIONS.has(key)) continue;
     const val = relations[key];
     if (!val) continue;
     if (Array.isArray(val)) {
       if (val.length === 0) continue;
-      // val is RelationTarget[] or string[]
       const targets = val.map((v: RelationTarget | string) =>
         typeof v === 'string' ? { slug: v } : v,
       );
-      const visibleTargets = targets.slice(0, 6);
+      const visibleTargets = isInline ? targets.slice(0, 6) : targets;
       const extraCount = targets.length > visibleTargets.length
         ? targets.length - visibleTargets.length
         : undefined;
@@ -105,16 +112,28 @@ if (relations) {
     }
   }
 }
-
 ---
 
-<aside class="metadata-strip" data-collapsible data-panel="metadata">
-  <div class="panel-head">
-    <PanelToggle label="metadata" />
-    <span class="metadata-title">METADATA</span>
-  </div>
-  <div class="metadata-separator"></div>
-
+<aside class:list={['metadata-strip', { 'metadata-full': !isInline }]}>
+  {isInline ? (
+    <div class="metadata-inline">
+      {/* Items end adjacent to </span> on purpose: trailing whitespace inside an
+         item would render a space before the ::after semicolon. */}
+      {maturity && (
+        <span class="metadata-inline-item metadata-maturity-label" data-maturity={maturity}><span class="metadata-maturity-dot" data-maturity={maturity}></span>{maturity}</span>
+      )}
+      {showUpdated && modified && (
+        <span class="metadata-inline-item"><span class="metadata-inline-label">updated</span> <time datetime={modified.toISOString()}>{formatDate(modified)}</time>{freshness && (<span class:list={['metadata-freshness', { stale: freshness.stale }]}> ({freshness.text})</span>)}</span>
+      )}
+      {relationRows.map((row) => (
+        <span class="metadata-inline-item"><span class="metadata-rel-label">{row.label}</span> {row.targets.map((target, index) => (<span class="metadata-relation-item"><a href={slugToHref(target.slug)} class="metadata-link metadata-value-link">{target.label ? `${target.label}: ` : ''}{getTitle(target.slug)}</a>{(index < row.targets.length - 1) ? <span class="metadata-sep" aria-hidden="true">, </span> : ''}</span>))}{row.extraCount ? <span class="metadata-relation-more">+{row.extraCount} more</span> : null}</span>
+      ))}
+      <span class="metadata-inline-item"><a href={`/graph/?focus=${currentSlug}`} class="metadata-link">graph</a></span>
+      {metadataHref && (
+        <span class="metadata-inline-item"><a href={metadataHref} class="metadata-link metadata-more-link">all metadata →</a></span>
+      )}
+    </div>
+  ) : (
   <dl class="metadata-grid">
     {maturity && (
       <>
@@ -126,7 +145,7 @@ if (relations) {
       </>
     )}
 
-    {breadcrumbs.length > 1 && (
+    {!isInline && breadcrumbs.length > 1 && (
       <>
         <dt class="metadata-grid-label">path</dt>
         <dd class="metadata-grid-value">
@@ -135,10 +154,14 @@ if (relations) {
       </>
     )}
 
-    <dt class="metadata-grid-label">created</dt>
-    <dd class="metadata-grid-value">
-      <time datetime={created.toISOString()}>{formatDate(created)}</time>
-    </dd>
+    {!isInline && (
+      <>
+        <dt class="metadata-grid-label">created</dt>
+        <dd class="metadata-grid-value">
+          <time datetime={created.toISOString()}>{formatDate(created)}</time>
+        </dd>
+      </>
+    )}
 
     {showUpdated && modified && (
       <>
@@ -152,7 +175,7 @@ if (relations) {
       </>
     )}
 
-    {readTimeMinutes !== undefined && readTimeMinutes >= 2 && (
+    {!isInline && readTimeMinutes !== undefined && readTimeMinutes >= 2 && (
       <>
         <dt class="metadata-grid-label">read</dt>
         <dd class="metadata-grid-value"><span class="metadata-num">{readTimeMinutes} min</span></dd>
@@ -161,13 +184,11 @@ if (relations) {
 
     {relationRows.map((row) => (
       <>
-        <dt class="metadata-grid-label">
-          <a href={relationHref(row.key)} class="metadata-rel-label-link">{row.label}</a>
-        </dt>
+        <dt class="metadata-grid-label">{row.label}</dt>
         <dd class="metadata-grid-value">
           {row.targets.map((target, index) => (
             <span class="metadata-relation-item">
-              <a href={slugToHref(target.slug)} class="metadata-link">{target.label ? `${target.label}: ` : ''}{getTitle(target.slug)}</a>{(index < row.targets.length - 1 || row.extraCount) ? <span class="metadata-sep" aria-hidden="true"> · </span> : ''}
+              <a href={slugToHref(target.slug)} class="metadata-link">{target.label ? `${target.label}: ` : ''}{getTitle(target.slug)}</a>{(index < row.targets.length - 1) ? <span class="metadata-sep" aria-hidden="true">, </span> : ''}
             </span>
           ))}
           {row.extraCount ? <span class="metadata-relation-more">+{row.extraCount} more</span> : null}
@@ -175,11 +196,14 @@ if (relations) {
       </>
     ))}
   </dl>
+  )}
 
-  <div class="metadata-actions">
-    {backlinksCount > 0 && (
-      <a href="#backlinks" class="metadata-link">{backlinksCount} backlinks</a>
-    )}
-    <a href={`/graph/?focus=${currentSlug}`} class="metadata-link">graph</a>
-  </div>
+  {!isInline && (
+    <div class="metadata-actions">
+      <a href={`/graph/?focus=${currentSlug}`} class="metadata-link">graph</a>
+      {backlinksCount > 0 && (
+        <a href="#backlinks" class="metadata-link">{backlinksCount} backlinks</a>
+      )}
+    </div>
+  )}
 </aside>

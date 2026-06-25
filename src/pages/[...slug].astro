@@ -1,5 +1,6 @@
 ---
 import Page from '@layouts/page/Page.astro';
+import MetadataPage from '@layouts/metadata/MetadataPage.astro';
 import ContentTable from '@components/content/ContentTable.astro';
 import LinkCards from '@components/content/LinkCards.astro';
 import NotesFeed from '@components/notes/NotesFeed.astro';
@@ -9,15 +10,25 @@ import { getSiteRouteEntries, getSiteRouteEntry } from '@/lib/site-pages';
 import { estimateHtmlReadTimeMinutes } from '@/lib/html-content';
 
 export async function getStaticPaths() {
-  return (await getSiteRouteEntries())
-    .filter((entry) => entry.id !== 'index')
-    .map((entry) => ({
-      params: { slug: entry.id },
-    }));
+  const entries = await getSiteRouteEntries();
+  const paths = [];
+  for (const entry of entries) {
+    // Index has its own route (src/pages/index.astro); everything else is here.
+    if (entry.id !== 'index') {
+      paths.push({ params: { slug: entry.id }, props: { metadataFor: null } });
+    }
+    // Every page has a dedicated metadata page at <slug>/metadata (/metadata
+    // for the index).
+    const metaSlug = entry.id === 'index' ? 'metadata' : `${entry.id}/metadata`;
+    paths.push({ params: { slug: metaSlug }, props: { metadataFor: entry.id } });
+  }
+  return paths;
 }
 
 const { slug } = Astro.params;
-const entry = await getSiteRouteEntry(slug!);
+const { metadataFor } = Astro.props as { metadataFor: string | null };
+const targetSlug = metadataFor ?? slug!;
+const entry = await getSiteRouteEntry(targetSlug);
 
 if (!entry) {
   return Astro.redirect('/404');
@@ -37,8 +48,8 @@ const baseHeadings = entry.mdx.headings
 
 // Build relations graph
 const { graph, pages } = await buildRelationsGraph();
-const breadcrumbs = getBreadcrumbs(slug!, graph, pages);
-const relations = getPageRelations(slug!, graph);
+const breadcrumbs = getBreadcrumbs(targetSlug, graph, pages);
+const relations = getPageRelations(targetSlug, graph);
 const readTimeMinutes = estimateHtmlReadTimeMinutes(body);
 
 const enrichedHeadings = baseHeadings;
@@ -54,22 +65,37 @@ const backlinks = (relations?.refi ?? []).map((refSlug) => {
 
 ---
 
-<Page
-  title={data.title}
-  description={data.description}
-  created={data.created}
-  modified={data.modified}
-  maturity={data.maturity}
-  banner={data.banner}
-  bannerAlt={data.bannerAlt}
-  bannerCaption={data.bannerCaption}
-  headings={enrichedHeadings}
-  breadcrumbs={breadcrumbs}
-  currentSlug={slug!}
-  relations={relations}
-  pageInfoMap={pages}
-  readTimeMinutes={readTimeMinutes}
-  backlinks={backlinks}
->
-  <Content components={mdxComponents} />
-</Page>
+{metadataFor ? (
+  <MetadataPage
+    title={data.title}
+    currentSlug={targetSlug}
+    created={data.created}
+    modified={data.modified}
+    maturity={data.maturity}
+    breadcrumbs={breadcrumbs}
+    relations={relations}
+    pageInfoMap={pages}
+    readTimeMinutes={readTimeMinutes}
+    backlinks={backlinks}
+  />
+) : (
+  <Page
+    title={data.title}
+    description={data.description}
+    created={data.created}
+    modified={data.modified}
+    maturity={data.maturity}
+    banner={data.banner}
+    bannerAlt={data.bannerAlt}
+    bannerCaption={data.bannerCaption}
+    headings={enrichedHeadings}
+    breadcrumbs={breadcrumbs}
+    currentSlug={slug!}
+    relations={relations}
+    pageInfoMap={pages}
+    readTimeMinutes={readTimeMinutes}
+    backlinks={backlinks}
+  >
+    <Content components={mdxComponents} />
+  </Page>
+)}
