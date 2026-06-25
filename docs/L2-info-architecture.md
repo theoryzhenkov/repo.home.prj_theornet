@@ -1,8 +1,8 @@
 ---
 scope: L2
 summary: "Metadata model, spatial layout rules, and information density strategy for page chrome"
-modified: 2026-06-24
-reviewed: 2026-06-24
+modified: 2026-06-25
+reviewed: 2026-06-25
 depends:
   - path: docs/L1-design-vision
   - path: docs/L1-relations
@@ -58,21 +58,23 @@ Maturity is a qualitative signal (how confident/complete is this?). Dates are fa
 
 All page chrome between the title and prose body consolidates into a single dense region called the **metadata strip**. It replaces the current three-zone layout (breadcrumb row, relations block, metadata row) with a unified block that reads top-to-bottom in one visual pass.
 
-### Structure
+### Structure (inline strip + dedicated metadata page)
 
-On wide viewports the metadata strip is lifted out of the content flow into the **right margin** as a collapsible panel ("METADATA"), mirroring the TOC in the left margin. The breadcrumb moves into the panel as its first row, so the title connects directly to the prose. On narrow viewports the panel inlines below the title.
+Metadata sits **inline below the title** as a compact, horizontal, wrapping strip showing only the most important fields; the full set lives on a dedicated metadata page.
 
 ```
-Wide layout (panel sits at the top of the right gutter):
-
-  [Title (h1)]                       ┌─ METADATA ──────┐
-  [Description]                      │ breadcrumbs: a / b  │
-  [Prose content ...]                │ rough · created ...  │
-                                     │ part of: ...        │
-                                     └──────────────────┘
+  [Title (h1)]
+  [Description]
+  rough; UPDATED: 2026-06-22; PART OF: Projects; IS: Project; graph; all metadata ->
+  [Prose content ...]
 ```
 
-The metadata strip itself is a compact monospace block with no extra spacing between its rows. Every row uses the same typographic treatment: `--text-xs`, monospace, muted text color. This creates a single visual "panel" rather than scattered chrome.
+- **Inline (every page):** `status`, `updated`, and the relations `part_of` / `has_part` / `is`, then a `graph` link and an `all metadata` link. Items are separated by semicolons hugging the left item, section labels are followed by a colon (`IS: Page`), and multi-value lists use commas with no space before the comma.
+- **Dedicated page** at `/<slug>/metadata` (titled `<page> Metadata`): the full vertical key/value grid -- all dates, read time, breadcrumb path, and every relation, plus backlinks.
+
+Styling follows the family rule (see `L1-design-vision` Typography): mono uppercase labels, serif page-link values, mono dates; labels are dimmed, values brighter.
+
+> Earlier iterations placed the strip between the title and prose, then briefly as a right-margin panel mirroring the TOC. Both were retired: the inline strip keeps metadata in the reading column without a tall panel, and the dedicated page absorbs the long tail.
 
 ### Metadata strip contents (in order)
 
@@ -89,11 +91,9 @@ Row 2+ are **relation rows**: only shown when non-empty. Each row is `label: lin
 
 The design vision describes the header as an "ambient status bar." That concept is sound, but the header is persistent chrome visible on scroll. Putting per-page metadata there means it competes for attention during reading. The metadata strip places context exactly where the reader needs it: at orientation time, in the right margin beside the title and the opening of the prose. The header retains: site identity, navigation, search, and theme toggle. It does not duplicate per-page metadata. (Reading progress is tracked by the TOC scroll-spy, not a header bar — see `L1-design-vision`.)
 
-### Why the right margin? (revised 2026-06-24)
+### Why inline (not the margin)?
 
-Originally the strip sat between the title and the prose, and the right margin was reserved exclusively for sidenotes. That was reversed: the metadata strip now lives in the **right margin** as a collapsible panel mirroring the TOC, so the title connects directly to the prose and the page gains a symmetric three-zone frame (TOC left, paper column center, metadata right).
-
-The original objection — that metadata would compete with sidenotes — is handled structurally: the panel occupies the top of the right margin, and the sidenote engine reserves its band so notes stack below it rather than overlapping (see `L2-reading-experience`). Both margin panels are collapsible via an eye toggle for readers who want a clean column, and the gap from the text to either margin is equal (`--margin-gap`). Metadata is still read once at orientation time; placing it at the top of the margin keeps it out of the reading column without burying it.
+The right margin is reserved for sidenotes; the metadata strip lives inline in the reading column. A right-margin metadata panel was tried and reverted — it competed with sidenotes (requiring band-reservation logic) and a tall vertical panel was less readable than a short horizontal strip. The inline strip shows only the high-value fields, and the `all metadata →` link defers the rest to `/<slug>/metadata`, so the reading column stays light while the full graph remains one click away.
 
 ## Relation display rules
 
@@ -221,7 +221,7 @@ The metadata strip should occupy no more than 3-4 lines of monospace text for a 
 
 1. **Kill the separate Metadata component.** Merge its content (dates) into the context line of the metadata strip.
 2. **Kill the separate relation heading.** Relations are rows in the strip, not a titled section.
-3. **Breadcrumbs live in the metadata panel.** The breadcrumb path is derived from the `part_of` chain, falling back to legacy `up`. It renders as the first row of the metadata panel (`breadcrumbs: a / b / c`), not as a separate band above the title. The colon is plain text, not part of the link. (Note: the panel currently renders both the breadcrumb and a `part_of:` relation row; the original `breadcrumb-part-of-dedup` suppression is not applied in the margin panel — revisit whether the dedup still earns its complexity now that both sit together in the panel.)
+3. **Breadcrumbs live on the metadata page.** The breadcrumb path is derived from the `part_of` chain, falling back to legacy `up`. It renders as the `PATH` row on the dedicated `/<slug>/metadata` page (only when a page has ancestors), not as a band above the title. The inline strip omits the path; `part_of` covers the immediate parent there.
 4. **Move backlinks to page bottom.** They are reference material, not orientation. The reader does not need to see "5 pages link here" before deciding to read.
 5. **Move the graph visualization to the bottom.** The per-page relation graph is supplementary, not primary navigation. Position it near backlinks, after the prose content.
 

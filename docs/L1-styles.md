@@ -1,8 +1,8 @@
 ---
 scope: L1
 summary: "CSS architecture, design tokens, and style invariants"
-modified: 2026-06-24
-reviewed: 2026-06-24
+modified: 2026-06-25
+reviewed: 2026-06-25
 depends:
   - path: docs/L0-ui
   - path: docs/L1-design-vision
@@ -235,8 +235,10 @@ Typography is the primary source of patchwork texture: serif for prose, monospac
 
 | Token | Value | Role |
 | ----- | ----- | ---- |
-| `--font-serif` | `'Source Serif 4', 'Georgia', serif` | Prose body, headings, article titles, backlinks |
-| `--font-mono` | `'Commit Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace` | Metadata, dates, relation labels, breadcrumbs, code, tags, status bar, navigation, TOC |
+| `--font-serif` | `'Source Serif 4', 'Georgia', serif` | Prose body, headings, article titles, backlinks, **page-link content** (relation values, breadcrumb path, TOC entries) |
+| `--font-mono` | `'Commit Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace` | Metadata/relation **labels**, dates, read time, code, tags, status bar, navigation, TOC labels |
+
+**Serif = page-link content, mono = chrome.** Links to pages read as serif (relation *values*, breadcrumb path, TOC entries); labels, dates, and factual chrome are mono. Relation *labels* (`PART OF`, `IS`) are mono; their *values* are serif. This single rule is what makes the inline metadata strip and the TOC read as one family — see `L1-design-vision` Typography.
 
 **Single-mono-font rule.** Every monospace context — code blocks, metadata chrome, navigation, breadcrumbs, TOC labels, relation labels, table headers — uses `--font-mono` (Commit Mono). No secondary monospace font (IBM Plex Mono, JetBrains Mono, etc.) should appear anywhere. The two-font system (Source Serif 4 + Commit Mono) is the design; mixing in a third typeface fragments the visual identity.
 

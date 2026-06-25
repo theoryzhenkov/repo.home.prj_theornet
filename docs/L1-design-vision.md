@@ -1,8 +1,8 @@
 ---
 scope: L1
 summary: "Aesthetic direction, visual language, and design rules for the site redesign"
-modified: 2026-06-24
-reviewed: 2026-06-24
+modified: 2026-06-25
+reviewed: 2026-06-25
 depends:
   - path: docs/L0-ui
 dependents:
@@ -65,8 +65,11 @@ Two typefaces, serif + monospace, creating the core patchwork texture through th
 | ---- | --------- | ----- |
 | Prose body | Serif, regular weight | Articles, essays, descriptions — the reading experience |
 | Headings | Serif, bold/heavier weight | Section headers, page titles |
-| Metadata, code, relations | Monospace | Frontmatter display, code blocks, relation labels, dates, tags |
+| Page-link content | Serif | Relation values, breadcrumb path, TOC entries — links to pages read as serif content |
+| Labels, code, factual data | Monospace | Frontmatter/metadata labels, dates, read time, code blocks, tags, nav |
 | UI chrome | Serif or mono depending on context | Navigation, buttons, controls |
+
+**Serif = page-link content, mono = chrome.** Both the TOC and the metadata strip follow one rule: links to pages (relation values, breadcrumb, TOC entries) are serif; labels, dates, and other factual chrome are monospace. This is what makes the two read as one family. Relation *labels* (`PART OF`, `IS`) are mono; their *values* are serif.
 
 Both typefaces must be **characterful and unexpected** — not Inter, Roboto, Arial, Space Grotesk, or other generic defaults.
 
@@ -94,10 +97,10 @@ Narrow content column (max ~65-70ch) with generous margins. Tufte-style: the mar
 ### Three-zone structure
 
 1. **Left margin**: the collapsible table of contents ("CONTENTS")
-2. **Center column**: the reading surface — a "paper" column lifted off the page "desk", holding prose, headings, and inline interactives
-3. **Right margin**: the collapsible metadata panel ("METADATA": dates, maturity, read time, breadcrumbs, typed relations), plus sidenotes and margin notes
+2. **Center column**: the reading surface — a "paper" column lifted off the page "desk", holding prose, headings, inline interactives, and the inline metadata strip below the title
+3. **Right margin**: sidenotes and margin notes
 
-The two margin panels mirror each other: each carries an eye/eye-off toggle to hide its body (state persisted), and the gap from the text to either margin is equal (`--margin-gap`) so the eye stays in the column. Sidenotes reserve the metadata panel's vertical band and stack below it rather than overlapping.
+Metadata is **not** a margin panel. A compact, horizontal metadata strip sits inline below the title showing the most important fields (status, updated, `part_of`, `has_part`, `is`) plus a `graph` link and an `all metadata →` link to the page's dedicated metadata page (`/<slug>/metadata`), which carries the full field/relation grid. The strip keeps the serif-value / mono-label family styling so it still relates to the TOC. The gap from the text to the left margin (TOC) uses `--margin-gap`.
 
 Collapses to single column on narrow viewports, with the margin panels and sidenotes inlining into the flow.
 
