@@ -5,7 +5,7 @@ is:
   - page: classes/blog-note
 title: AI-aware Software Design
 created: '2026-06-20'
-modified: '2026-06-21'
+modified: '2026-06-25'
 ---
 
 Preface: I've been building [Posthaste](https://posthaste.theor.net/)
@@ -62,12 +62,15 @@ API. Cool!
 > interact with your app with privileged rights. No, no users were
 > compromised due to Posthaste, I caught this early.
 
-**Ex:** Syncthing is almost a line-for-line match for what I described.
-It exposes a REST API on `localhost:8384`; you long-poll
-`GET /rest/events`, and create a subscription by adding an
-`events=TypeA,TypeB` filter for only the event types you want, plus a
-`since=<lastSeenID>` cursor so you resume exactly where you left off.
-Also look at Home Assistant.
+> [!example]
+> Syncthing is almost a line-for-line match for what I described.
+>
+> It exposes a REST API on `localhost:8384`; you long-poll
+> `GET /rest/events`, and create a subscription by adding an
+> `events=TypeA,TypeB` filter for only the event types you want, plus a
+> `since=<lastSeenID>` cursor so you resume exactly where you left off.
+>
+> Also, Home Assistant.
 
 #### 1.2.1. Write an MCP server
 
@@ -79,11 +82,13 @@ no new vulnerability surfaces, so it is essentially free.
 ### 1.3. Make your software modular
 
 Modularity always sounded nice. Now, since more users can exploit it,
-and it is cheaper for you, it is also worth it. **Ex:** Posthaste splits
-in three: a backend (talks to providers, holds canonical data), a
-runtime (holds client state), and a client (renders). They only ever
-talk over an abstract transport, which can be HTTP, WebSocket, loopback,
-whatever.
+and it is cheaper for you, it is also worth it.
+
+> [!example]
+> Posthaste splits in three: a backend (talks to providers, holds canonical data), a
+> runtime (holds client state), and a client (renders). They only ever
+> talk over an abstract transport, which can be HTTP, WebSocket, loopback,
+> whatever.
 
 This is how LSPs already work. The design goal is precisely the same:
 the language server is transport-agnostic — it adheres to the protocol
@@ -96,21 +101,24 @@ you develop on your laptop.
 #### 1.3.1. Deployment modes
 
 Because the parts don't care how they're wired, I assemble them
-differently at CD time, **Ex:**
+differently at CD time:
 
-- Split: headless backend on the server; an app with bundled runtime +
-  client connects to it over loopback. When you run the app on several
-  devices, you've got shared smart mailboxes, filters, drafts, and
-  backend-level cache.
-- Headless: backend and runtime bundled, no client, runs as a daemon on
-  your machine.
-- Bundled: everything together, for a classic application experience.
-- etc.
+> [!example]
+> Posthaste comes in different shapes:
+> - Split: headless backend on the server; an app with bundled runtime +
+>   client connects to it over loopback. When you run the app on several
+>   devices, you've got shared smart mailboxes, filters, drafts, and
+>   backend-level cache.
+> - Headless: backend and runtime bundled, no client, runs as a daemon on
+>   your machine.
+> - Bundled: everything together, for a classic application experience.
+> - etc.
 
-**Ex:** The classic example is mpd (Music Player Daemon): a headless
-daemon holds the canonical library and playback state, and any number of
-thin clients (ncmpcpp, mpc, phone apps) connect over a socket or TCP to
-control the *same* daemon from different devices.
+> [!example]
+> Classical approach for mpd (Music Player Daemon): a headless
+> daemon holds the canonical library and playback state, and any number of
+> thin clients (ncmpcpp, mpc, phone apps) connect over a socket or TCP to
+> control the *same* daemon from different devices.
 
 #### 1.3.2. Swappable parts
 
@@ -123,10 +131,11 @@ you're done.
 > In the future Posthaste will take JS extensions to the frontend
 > directly, so you won't even need to rebuild.
 
-**Ex:** notmuch. The library does the indexing and search, and the
-frontends are independent — emacs, vim, and mutt integrations, aerc,
-alot (Python/urwid), astroid (C++/GTK), bower (Mercury), meli (Rust),
-and web frontends written in Clojure, PHP, and JS.
+> [!example]
+> notmuch. The library does the indexing and search, and the
+> frontends are independent — emacs, vim, and mutt integrations, aerc,
+> alot (Python/urwid), astroid (C++/GTK), bower (Mercury), meli (Rust),
+> and web frontends written in Clojure, PHP, and JS.
 
 ## 2. You have a tireless, mediocre coder
 
